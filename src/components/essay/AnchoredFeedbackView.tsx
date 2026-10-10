@@ -223,6 +223,15 @@ export function AnchoredEssayBody({
                   <span className="text-muted-foreground text-sm">未記入</span>
                 )}
               </p>
+              <p
+                className={`text-right text-xs tabular-nums ${
+                  (span ? span.end - span.start : 0) < q.wordLimit * 0.8
+                    ? "text-amber-700"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {span ? span.end - span.start : 0} / {q.wordLimit}字
+              </p>
             </div>
           );
         })}

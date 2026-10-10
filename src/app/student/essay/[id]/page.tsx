@@ -63,6 +63,7 @@ import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import { EssayResultSummary } from "@/components/essay/EssayResultSummary";
 import { pickDisplayIssues } from "@/lib/essay/display-issues";
 import { AnchoredFeedbackView } from "@/components/essay/AnchoredFeedbackView";
+import { oralAnswerSpans } from "@/lib/essay/feedback-anchors";
 import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
@@ -177,10 +178,9 @@ interface EssayResult {
 
 /**
  * 詳細の節。並び順は「読む順」に合わせる。
- * 講評で全体像 → 赤ペンで文の直し → 弱点で何を直すか → 書き換え例 → 背景知識。
+ * 指摘付きの答案は最初の画面に出すので、詳細は書き換え例 → 背景知識だけ。
  */
 const DETAIL_SECTIONS = [
-  { id: "feedback", label: "指摘" },
   { id: "brushup", label: "書き換え例" },
   { id: "insights", label: "テーマ深掘り" },
 ] as const;
@@ -502,6 +502,9 @@ export default function EssayResultPage() {
       : oralSet && sid === "insights"
         ? "知識の整理"
         : label;
+  /** 答案の画面と同じ基準で、問ごとに分けて出せるか */
+  const oralSplit =
+    !!oralSet && oralAnswerSpans(result.ocrText ?? "", oralSet).size > 0;
   const brushedUpByQuestion =
     oralSet && result.feedback.brushedUpText
       ? splitOralExamAnswers(oralSet, result.feedback.brushedUpText)
@@ -785,21 +788,11 @@ export default function EssayResultPage() {
               correctionCount={
                 (result.feedback.languageCorrections ?? []).length
               }
-              onJump={(section) => {
-                // 詳細を開いてから、その節へスクロールする。
-                // 講評・赤ペン・弱点は「指摘」の2分割の画面にまとめた
-                setShowDetails(true);
-                const target =
-                  section === "overview" ||
-                  section === "redpen" ||
-                  section === "weaknesses"
-                    ? "feedback"
-                    : section;
-                setTimeout(() => {
-                  document
-                    .getElementById(`${target}-section`)
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }, 60);
+              onJump={() => {
+                // 講評・赤ペン・弱点はどれも、すぐ下の答案の画面にまとめてある
+                document
+                  .getElementById("feedback-section")
+                  ?.scrollIntoView({ behavior: "smooth" });
               }}
             />
 
@@ -816,13 +809,102 @@ export default function EssayResultPage() {
           </CardContent>
         </Card>
 
-        {oralSet && (
+        {/* 問ごとに分けられた答案は下の答案の画面が問ごとに出す。分けられないときだけ設問を並べる */}
+        {oralSet && !oralSplit && (
           <OralExamQuestionsCard
             set={oralSet}
             essayText={result.ocrText ?? ""}
             insights={result.feedback.oralExamInsights}
           />
         )}
+
+        {/*
+          指摘付きの答案。左に本文（すべての指摘を箇所に結び付けた印）、右に全体講評と
+          本文に結び付かない指摘を置く。以前は「詳細を見る」の中にあり、自分の答案の
+          どこが悪かったのかを見ないまま閉じられていたので、最初の画面に出す。
+        */}
+        <section id="feedback-section" className="mb-6 scroll-mt-24">
+          <AnchoredFeedbackView
+            text={result.ocrText ?? ""}
+            // この画面の講評の型は弱点の文面を省略可にしているだけで、中身は共通の型と同じ
+            feedback={result.feedback as Partial<SharedEssayFeedback>}
+            anchors={feedbackAnchors}
+            anchorsPending={anchorsPending}
+            oralExam={
+              result.questionType === "oral_exam" ? result.oralExam : null
+            }
+            rightExtra={
+              <>
+                {/* 課題文の扱い。合計50点には入れず、指標として見せる。
+              点は既存5軸の上限で下がる（source-engagement.ts） */}
+                {result.feedback.reportInsights?.engagementLevel && (
+                  <div
+                    className={`mt-6 rounded-lg border p-4 ${
+                      result.feedback.reportInsights.engagementLevel ===
+                      "grounded"
+                        ? "border-emerald-200 bg-emerald-50"
+                        : result.feedback.reportInsights.engagementLevel ===
+                            "shallow"
+                          ? "border-amber-200 bg-amber-50"
+                          : "border-rose-200 bg-rose-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold">課題文の扱い</p>
+                      <span className="text-sm font-bold">
+                        {sourceEngagementLabel(
+                          result.feedback.reportInsights.engagementLevel
+                        )}
+                      </span>
+                    </div>
+                    {result.feedback.reportInsights.engagementBasis && (
+                      <p className="text-muted-foreground mt-1.5 text-xs">
+                        {result.feedback.reportInsights.engagementBasis}
+                      </p>
+                    )}
+                    <p className="text-muted-foreground mt-2 text-[10px]">
+                      この評価は50点の合計には含まれません。課題文に触れていない場合は、
+                      構成・論理性・回答力・成熟度の上限が下がります。
+                    </p>
+                  </div>
+                )}
+
+                {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
+                {typeof result.scores.knowledgeAccuracy === "number" && (
+                  <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold">専門知識の正確性</p>
+                      <span className="text-lg font-bold tabular-nums">
+                        {result.scores.knowledgeAccuracy}
+                        <span className="text-sm font-normal text-slate-300">
+                          /10
+                        </span>
+                      </span>
+                    </div>
+                    {result.feedback.knowledgeInsights?.basis && (
+                      <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
+                        {result.feedback.knowledgeInsights.basis}
+                      </p>
+                    )}
+                    <p className="mt-2 text-[10px] text-slate-400">
+                      口頭試問型は知識を問う出題なので、この点は合計（
+                      {scoreMaximum}点満点）に入ります。
+                    </p>
+                  </div>
+                )}
+
+                {/* 課題文の読み取り (sourceType="report" のときのみ) */}
+                {result.feedback.reportInsights && (
+                  <div className="mt-6">
+                    <ReportInsightsCard
+                      insights={result.feedback.reportInsights}
+                    />
+                  </div>
+                )}
+              </>
+            }
+          />
+        </section>
 
         {/*
           講評を読んだ直後が一番聞きたいタイミングなので、詳細の中ではなく
@@ -987,98 +1069,6 @@ export default function EssayResultPage() {
                 </button>
               ))}
             </div>
-            {/*
-              指摘。左に本文（すべての指摘を箇所に結び付けた印）、右に全体講評と
-              本文に結び付かない指摘を置く。以前は講評・赤ペン・弱点が別々の節にあり、
-              同じ文への指摘が節ごとに別の名前で出て分かりにくかった。
-            */}
-            <section id="feedback-section" className="scroll-mt-24">
-              <AnchoredFeedbackView
-                text={result.ocrText ?? ""}
-                // この画面の講評の型は弱点の文面を省略可にしているだけで、中身は共通の型と同じ
-                feedback={result.feedback as Partial<SharedEssayFeedback>}
-                anchors={feedbackAnchors}
-                anchorsPending={anchorsPending}
-                oralExam={
-                  result.questionType === "oral_exam" ? result.oralExam : null
-                }
-                rightExtra={
-                  <>
-                    {/* 課題文の扱い。合計50点には入れず、指標として見せる。
-                  点は既存5軸の上限で下がる（source-engagement.ts） */}
-                    {result.feedback.reportInsights?.engagementLevel && (
-                      <div
-                        className={`mt-6 rounded-lg border p-4 ${
-                          result.feedback.reportInsights.engagementLevel ===
-                          "grounded"
-                            ? "border-emerald-200 bg-emerald-50"
-                            : result.feedback.reportInsights.engagementLevel ===
-                                "shallow"
-                              ? "border-amber-200 bg-amber-50"
-                              : "border-rose-200 bg-rose-50"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold">課題文の扱い</p>
-                          <span className="text-sm font-bold">
-                            {sourceEngagementLabel(
-                              result.feedback.reportInsights.engagementLevel
-                            )}
-                          </span>
-                        </div>
-                        {result.feedback.reportInsights.engagementBasis && (
-                          <p className="text-muted-foreground mt-1.5 text-xs">
-                            {result.feedback.reportInsights.engagementBasis}
-                          </p>
-                        )}
-                        <p className="text-muted-foreground mt-2 text-[10px]">
-                          この評価は50点の合計には含まれません。課題文に触れていない場合は、
-                          構成・論理性・回答力・成熟度の上限が下がります。
-                        </p>
-                      </div>
-                    )}
-
-                    {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
-                    {typeof result.scores.knowledgeAccuracy === "number" && (
-                      <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold">
-                            専門知識の正確性
-                          </p>
-                          <span className="text-lg font-bold tabular-nums">
-                            {result.scores.knowledgeAccuracy}
-                            <span className="text-sm font-normal text-slate-300">
-                              /10
-                            </span>
-                          </span>
-                        </div>
-                        {result.feedback.knowledgeInsights?.basis && (
-                          <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
-                            {result.feedback.knowledgeInsights.basis}
-                          </p>
-                        )}
-                        <p className="mt-2 text-[10px] text-slate-400">
-                          口頭試問型は知識を問う出題なので、この点は合計（
-                          {scoreMaximum}点満点）に入ります。
-                        </p>
-                      </div>
-                    )}
-
-                    {/* 課題文の読み取り (sourceType="report" のときのみ) */}
-                    {result.feedback.reportInsights && (
-                      <div className="mt-6">
-                        <ReportInsightsCard
-                          insights={result.feedback.reportInsights}
-                        />
-                      </div>
-                    )}
-                  </>
-                }
-              />
-            </section>
-
-            <Separator className="my-8 opacity-30" />
-
             {/* ブラッシュアップセクション */}
             <section id="brushup-section" className="scroll-mt-24">
               {/* 未生成: オンデマンド生成ボタン */}

@@ -111,7 +111,7 @@ export function OralExamQuestionsCard({
         })}
         {!answers && (
           <p className="text-muted-foreground text-xs">
-            答案を問ごとに分けられなかったため、答えは下の「赤ペン」で全文を確認してください。
+            答案を問ごとに分けられなかったため、答えは下の「あなたの答案」で全文を確認してください。
           </p>
         )}
       </CardContent>
