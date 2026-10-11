@@ -202,6 +202,18 @@ export function ResultHero({
  * 今回の課題。1つだけ、答案のどの文に出ているかを引いて見せる。
  * 引用は答案の印の範囲から取る（AIの文面を答案に見せかけて作らない）。
  */
+/** 今回の長所。答案でいちばん伸ばしがいのある一文（goodPoints の1件目） */
+export function StrengthCard({ text }: { text: string }) {
+  return (
+    <div className="grid gap-2 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/30">
+      <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
+        今回の長所
+      </p>
+      <p className="text-base leading-relaxed">{text}</p>
+    </div>
+  );
+}
+
 export function FocusCard({
   focus,
   text,

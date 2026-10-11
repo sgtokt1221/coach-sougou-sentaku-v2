@@ -31,6 +31,7 @@ import {
   FocusCard,
   NextTimeCard,
   PreviousFocusCard,
+  StrengthCard,
   ResultHero,
 } from "@/components/essay/result/ResultParts";
 import { Reveal } from "@/components/motion/Reveal";
@@ -437,6 +438,11 @@ export default function EssayResultPage() {
             {result.feedback.previousFocusCheck && (
               <Reveal delay={0.4}>
                 <PreviousFocusCard check={result.feedback.previousFocusCheck} />
+              </Reveal>
+            )}
+            {feedbackForView.goodPoints?.[0] && (
+              <Reveal delay={0.42}>
+                <StrengthCard text={feedbackForView.goodPoints[0]} />
               </Reveal>
             )}
             {focus && (

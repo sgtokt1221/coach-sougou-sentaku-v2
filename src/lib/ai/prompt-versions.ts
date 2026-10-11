@@ -281,7 +281,9 @@ export const AI_PROMPT_VERSIONS = {
     //        具体例は答案の語や出来事から引き出す、赤ペンは誤りだけ最大3件、良いところは
     //        論の芯にできる一文を40字以内で引き、今回の課題の書き直しの一言はその長所を使う
     //      - 同じ弱点が3回以上続く生徒には、原則を言い直さず、書く前・書いた後の小さな手順を示す
-    promptVersion: "essay-review-v34",
+    // v35（2026-10-12）: 今回の課題を2文（いちばんの課題・指針）にし、長所は goodPoints として
+    //      結果画面の別カード（今回の長所）に出す。v33・v34 の3文目までの答案は、画面で1文目を外す
+    promptVersion: "essay-review-v35",
     schemaVersion: "essay-review-output-v5",
   },
   interviewScore: {

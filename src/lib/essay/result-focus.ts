@@ -45,9 +45,19 @@ export interface EssayFocus {
   keys: string[];
 }
 
+/**
+ * v33・v34 の今回の課題は「長所・課題・指針」の3行で、1行目が長所だった。v35 から長所は
+ * 別カード（goodPoints）に出すので、3行あるものは1行目を外して課題だけにする。
+ * v32 までは改行の無い1段落、v35 は2行なので、そのまま出る
+ */
+function stripPraiseLine(text: string): string {
+  const lines = text.split("\n").filter((l) => l.trim().length > 0);
+  return lines.length === 3 ? lines.slice(1).join("\n") : text;
+}
+
 export function pickFocus(feedback: Partial<EssayFeedback>): EssayFocus | null {
   if (feedback.priorityImprovement) {
-    return { text: feedback.priorityImprovement, keys: ["priority:0"] };
+    return { text: stripPraiseLine(feedback.priorityImprovement), keys: ["priority:0"] };
   }
   const first = feedback.improvements?.[0];
   return first ? { text: first, keys: ["improvement:0"] } : null;
