@@ -198,7 +198,8 @@ ${input.ocrText}
     : Promise.resolve(null);
 
   /**
-   * 口頭試問型のときだけ、小問ごとに答えているかを別呼び出しで判定する（表示用。点には使わない）。
+   * 口頭試問型のときだけ、小問ごとに答えているかを別呼び出しで判定する。
+   * 画面の問ごとの判定と、回答力の上限（答えていない問の数）に使う。
    */
   const subQuestionPromise = isOralExam
     ? judgeOralExamSubQuestions({
@@ -359,10 +360,19 @@ ${input.ocrText}
    * 主題がずれている・主題の一部しか論じていない（answersQuestion=false）なら
    * 3点以下、要求が欠けているなら5点以下。ルーブリックの段と一致させている。
    */
+  /**
+   * 口頭試問型は、答えていない問の数で回答力を抑える（1問で5点以下、2問以上で3点以下）。
+   * 以前はプロンプトの依頼だけで、本体が見落とすと、問を飛ばした答案の回答力が残った。
+   */
+  const unansweredCount =
+    subQuestions?.subQuestions.filter((q) => q.verdict === "unanswered")
+      .length ?? 0;
+  const oralCap = unansweredCount >= 2 ? 3 : unansweredCount === 1 ? 5 : 10;
   const responsivenessCap = Math.min(
     offTopic || narrowed ? 3 : missingRequired ? 5 : 10,
     sourceCaps.content,
-    blankCap
+    blankCap,
+    oralCap
   );
   /**
    * 1文ずつの点検の結果を点に反映する。ルーブリックの段と一致させている
