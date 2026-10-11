@@ -288,7 +288,7 @@ export default function EssayResultPage() {
     repeatedIssues: [],
   };
   const kind = essayResultKind(result.questionType, result.sourceText);
-  const focus = pickFocus(resultFeedback, kind);
+  const focus = pickFocus(resultFeedback);
   const engagement = result.feedback.reportInsights?.engagementLevel;
   const criticalKnowledge = (
     result.feedback.knowledgeInsights?.errors ?? []
@@ -381,7 +381,7 @@ export default function EssayResultPage() {
 
         {/*
           左（スマホでは上）に、ランク・レーダー・今回の課題・次も使える書き方。
-          右に答案・ほかに直すこと・書き直しへの導線。PC では左を止めておき、
+          右に答案・直すこと・書き直しへの導線。PC では左を止めておき、
           課題を見ながら答案の印を追えるようにする。
         */}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
@@ -461,7 +461,7 @@ export default function EssayResultPage() {
             )}
           </div>
 
-          <div className="grid min-w-0 gap-4">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
             {/* 講師・管理者からのインラインコメント */}
             {(result.inlineComments?.length ?? 0) > 0 && (
               <Card className="border-teal-200 bg-teal-50/30">

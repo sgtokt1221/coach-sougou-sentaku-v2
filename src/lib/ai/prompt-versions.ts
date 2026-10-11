@@ -243,8 +243,11 @@ export const AI_PROMPT_VERSIONS = {
     //      - 事実の確認は資料と食い違う主張だけ（本人の意見に「確認できない」の印が付いていた）
     //      - 答えている答案の taskFulfillment.note は主題語だけ
     //      - 前回からの変化（improvementsSinceLast）を、前回の課題が直ったかの判定1件にした
-    promptVersion: "essay-review-v28",
-    schemaVersion: "essay-review-output-v4",
+    // v29（2026-10-11）: 今回の課題（priorityImprovement）を、ほかの欄を総合した2文にした。
+    //      以前は改善点1件目の要約で、画面側で字数・読み違い・設問への答えのどれか1件に
+    //      差し替えていた。スキーマでは最後の欄に移した（生成順が総合の前提になる）
+    promptVersion: "essay-review-v29",
+    schemaVersion: "essay-review-output-v5",
   },
   interviewScore: {
     // v1: 手書きJSONのパースから構造化出力(Zod)へ移行した（監査 P1-1）。

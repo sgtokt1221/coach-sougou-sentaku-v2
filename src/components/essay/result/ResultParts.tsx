@@ -218,11 +218,6 @@ export function FocusCard({
     <div className="grid gap-2 rounded-2xl bg-amber-50 p-5 dark:bg-amber-950/30">
       <p className="flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-300">
         今回の課題
-        {focus.tag && (
-          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs dark:bg-amber-900/50">
-            {focus.tag}
-          </span>
-        )}
       </p>
       <p className="text-base leading-relaxed">{focus.text}</p>
       {quotes.map((q) => (
@@ -259,7 +254,7 @@ const UNANCHORED_LABEL: Record<string, string> = {
 };
 
 /**
- * 今回の課題のほかに直すこと。改善点の残りと、本文に印を付けられなかった指摘。
+ * 今回の課題の内訳。改善点と、本文に印を付けられなかった指摘。
  * 文の直し（赤ペン）は答案の印で読むのでここには出さない。
  */
 export function OtherFixesCard({
@@ -282,7 +277,7 @@ export function OtherFixesCard({
     if (!skip.has(`improvement:${i}`)) items.push({ text: t });
   });
   const tf = feedback.taskFulfillment;
-  if (tf && !tf.answersQuestion && tf.note && focus?.tag !== "設問への答え") {
+  if (tf && !tf.answersQuestion && tf.note) {
     items.push({ label: "設問への答え", text: tf.note });
   }
   for (const a of model.unanchored) {
@@ -297,7 +292,7 @@ export function OtherFixesCard({
   if (items.length === 0) return null;
   return (
     <div className="bg-card grid gap-3 rounded-2xl p-5">
-      <p className="text-sm font-bold">ほかに直すこと</p>
+      <p className="text-sm font-bold">直すこと</p>
       <ul className="grid gap-3">
         {items.map((item, i) => (
           <li key={i} className="flex gap-2 text-[15px] leading-relaxed">

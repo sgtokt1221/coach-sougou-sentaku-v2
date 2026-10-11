@@ -368,7 +368,12 @@ function PanelBody({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+    // Enter は改行。送信はボタンか Cmd/Ctrl+Enter（面接・自己分析のチャットと揃える）
+    if (
+      e.key === "Enter" &&
+      (e.metaKey || e.ctrlKey) &&
+      !e.nativeEvent.isComposing
+    ) {
       e.preventDefault();
       send();
     }

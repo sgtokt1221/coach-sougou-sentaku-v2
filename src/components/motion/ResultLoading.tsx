@@ -11,7 +11,7 @@ import { SMOOTH_EASE } from "@/components/motion/Reveal";
 export function ResultLoading({
   essay = false,
 }: {
-  /** 小論文の結果画面。答案の下に「ほかに直すこと」と「書き直す」の形を足す */
+  /** 小論文の結果画面。答案の下に「直すこと」と「書き直す」の形を足す */
   essay?: boolean;
 } = {}) {
   const reduce = useReducedMotion();

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
@@ -13,6 +13,14 @@ import { cn } from "@/lib/utils";
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const mode = getAppLayoutMode(pathname);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // スクロールするのは window でなく main。main は画面をまたいで残るので、
+  // Next.js の遷移では前の画面のスクロール位置がそのまま残り、次の画面が途中から
+  // 開く（答案を出した画面の下の方から結果画面が開いていた）。画面が変わったら先頭に戻す
+  useLayoutEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     // 高さは可視ビューポート(--vvh)に追従。スマホでキーボードが出ると shell が縮み、
@@ -52,6 +60,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             - "page"  : チャット・面接などの没入画面。main は overflow-hidden、ページ内部がスクロールを所有。
             下部インセットは両モード共通で確保（BottomNav 背面に主要操作が入らないように）。 */}
         <main
+          ref={mainRef}
           className={cn(
             "bg-mesh min-h-0 min-w-0 flex-1 pb-[var(--app-mobile-bottom-inset)] lg:pb-8",
             mode.scrollOwner === "main"

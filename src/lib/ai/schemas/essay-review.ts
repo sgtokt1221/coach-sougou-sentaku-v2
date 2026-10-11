@@ -18,7 +18,6 @@ export const EssayReviewOutputSchema = z.object({
     // 添削全体が 500 になる（課題文型(report)で実際に improvements が5件を
     // 超えて発生した）。
     goodPoints: z.array(shortText).max(10),
-    priorityImprovement: boundedText,
     improvements: z.array(boundedText).max(10),
     repeatedIssues: z
       .array(
@@ -145,6 +144,11 @@ export const EssayReviewOutputSchema = z.object({
         misreadings: z.array(boundedText).max(8),
       })
       .nullable(),
+    /**
+     * 今回の課題。上の指摘を全部書いた後に、それらを総合して書く（v29〜）。
+     * 構造化出力はスキーマの順に生成されるので、最後に置かないと総合できない
+     */
+    priorityImprovement: boundedText,
   }),
 });
 

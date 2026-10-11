@@ -1,4 +1,4 @@
-import { essayResultKind, pickFocus } from "@/lib/essay/result-focus";
+import { pickFocus } from "@/lib/essay/result-focus";
 import { NextRequest, NextResponse } from "next/server";
 import {
   isMachineOnlyWeakness,
@@ -168,13 +168,7 @@ export async function POST(request: NextRequest) {
                     { partial }
                   ),
                   focus:
-                    pickFocus(
-                      pdata.feedback ?? {},
-                      essayResultKind(
-                        pdata.questionContext?.questionType,
-                        pdata.questionContext?.sourceText
-                      )
-                    )?.text ?? null,
+                    pickFocus(pdata.feedback ?? {})?.text ?? null,
                 };
               }
             }
