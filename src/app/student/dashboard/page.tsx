@@ -23,11 +23,7 @@ import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 import { UpcomingSessionCard } from "@/components/student/UpcomingSessionCard";
-import { LogicalTourHero } from "@/components/student/LogicalTourHero";
-import { ChocoSeriesAnnouncement } from "@/components/student/ChocoSeriesAnnouncement";
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
-import { GrowthTree } from "@/components/self-analysis/GrowthTree";
-import type { SelfAnalysis } from "@/lib/types/self-analysis";
 import { SkillRankPanel } from "@/components/skill-check/SkillRankPanel";
 import type { StudentRankResponse } from "@/lib/types/rank";
 
@@ -54,7 +50,7 @@ function scoreBg(total: number): string {
 }
 
 export default function StudentDashboard() {
-  const { userProfile, loading: authLoading } = useAuth();
+  const { userProfile } = useAuth();
   const studentProfile = userProfile as StudentProfile | null;
   const targetUniversities = studentProfile?.targetUniversities ?? [];
 
@@ -68,11 +64,6 @@ export default function StudentDashboard() {
       scores: { total: number } | null;
     }[];
   }>("/api/interview/history?userId=current");
-  const { data: selfAnalysisData, isLoading: loadingSelfAnalysisSWR } =
-    useAuthSWR<SelfAnalysis | null>("/api/self-analysis?userId=me");
-  // 認証ロード中は useAuthSWR の key が null → isLoading=false になるため、
-  // authLoading も含めて初回マウントを1回に抑え、GSAP タイムラインが中断されないようにする
-  const loadingSelfAnalysis = authLoading || loadingSelfAnalysisSWR;
   const { data: rank, error: rankError } =
     useAuthSWR<StudentRankResponse>("/api/student/rank");
   // 取れなかったときに「まだ提出がありません」と出すと、提出0件と見分けがつかない
@@ -80,35 +71,6 @@ export default function StudentDashboard() {
     ? "ランクを読み込めませんでした"
     : "まだ提出がありません";
   const loadingTrend = loadingHistory || loadingInterview;
-
-  const { saCompletedSteps, saStepsData } = useMemo(() => {
-    if (!selfAnalysisData)
-      return {
-        saCompletedSteps: 0,
-        saStepsData: {} as Record<number, Record<string, unknown>>,
-      };
-    const completed = selfAnalysisData.completedSteps ?? 0;
-    const data: Record<number, Record<string, unknown>> = {};
-    const STEP_KEYS = [
-      "values",
-      "strengths",
-      "weaknesses",
-      "interests",
-      "vision",
-      "identity",
-    ] as const;
-    STEP_KEYS.forEach((key, i) => {
-      const val = (selfAnalysisData as unknown as Record<string, unknown>)[key];
-      if (
-        val &&
-        typeof val === "object" &&
-        Object.keys(val as object).length > 0
-      ) {
-        data[i + 1] = val as Record<string, unknown>;
-      }
-    });
-    return { saCompletedSteps: completed, saStepsData: data };
-  }, [selfAnalysisData]);
 
   const essayTrend = useMemo(() => {
     return (essayData?.essays ?? [])
@@ -159,138 +121,88 @@ export default function StudentDashboard() {
     return allPoints.sort((a, b) => b.ts - a.ts)[0].total;
   }, [essayData, interviewData]);
 
+  /**
+   * 並び（PC）: ランク｜次回セッション、スコア推移｜弱点 の2段の後に、書きかけと
+   * 志望校を横いっぱいで置く（志望校のカードは横長なので狭い列に入らない）。
+   * スマホは1列で、面談の予定とランクを先に、
+   * 続きを書く下書き → 弱点 → 推移 → 志望校の順にする（order で並べ替える）。
+   */
   return (
-    <div className="mx-auto flex h-full max-w-6xl flex-col gap-3 px-3 py-3 lg:gap-4 lg:px-6 lg:py-4">
+    <div className="mx-auto flex max-w-6xl flex-col gap-3 px-3 py-3 lg:gap-4 lg:px-6 lg:py-4">
       <NotificationPermissionBanner />
 
-      <ChocoSeriesAnnouncement />
-
-      <LogicalTourHero />
-
-      <div data-tour="upcoming-session">
-        <UpcomingSessionCard />
-      </div>
-
-      <EssayDraftsSection />
-
-      {/* Mobile: 志望校を一番上に大きく（フル版） */}
-      <section className="lg:hidden">
-        <div className="mb-1.5 flex items-center gap-1.5">
-          <GraduationCap className="text-muted-foreground size-3.5" />
-          <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase lg:text-sm">
-            志望校
-          </h2>
-        </div>
-        <TargetUniversityCards targetUniversities={targetUniversities} />
-      </section>
-
-      {/* Mobile: GrowthTree (左3/5) + スキル縦積み (右2/5) */}
-      <section className="grid grid-cols-5 gap-2 lg:hidden">
-        <Link href="/student/self-analysis" className="group col-span-3 block">
-          {loadingSelfAnalysis ? (
-            <div className="border-border/40 h-full min-h-[200px] animate-pulse rounded-2xl border bg-gradient-to-b from-sky-50 to-emerald-50/40" />
-          ) : (
-            <GrowthTree
-              compact
-              completedSteps={saCompletedSteps}
-              stepsData={saStepsData}
-              className="h-full transition-shadow group-hover:shadow-md"
-            />
-          )}
-        </Link>
-        <div className="col-span-2 flex flex-col gap-2">
-          <Link href="/student/growth" className="block flex-1">
-            <SkillRankPanel
-              minimal
-              label="小論文レベル"
-              rank={rank?.essay.compositeRank ?? null}
-              score={rank?.essay.compositeScore ?? null}
-              maxScore={50}
-              emptyMessage={rankEmptyMessage}
-              className="h-full cursor-pointer transition-shadow hover:shadow-md"
-              aggregate={rank?.essay}
-            />
-          </Link>
-          <Link href="/student/growth" className="block flex-1">
-            <SkillRankPanel
-              minimal
-              label="面接レベル"
-              rank={rank?.interview.compositeRank ?? null}
-              score={rank?.interview.compositeScore ?? null}
-              maxScore={40}
-              emptyMessage={rankEmptyMessage}
-              className="h-full cursor-pointer transition-shadow hover:shadow-md"
-              aggregate={rank?.interview}
-            />
-          </Link>
-        </div>
-      </section>
-
-      {/* Desktop: 志望校を大きく（フル版、横並び） */}
-      <section className="hidden lg:block" data-tour="target-universities">
-        <div className="mb-2 flex items-center gap-1.5">
-          <GraduationCap className="text-muted-foreground size-3.5" />
-          <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase lg:text-sm">
-            志望校
-          </h2>
-        </div>
-        <TargetUniversityCards targetUniversities={targetUniversities} />
-      </section>
-
-      {/* Desktop: スキル2つ */}
-      <section className="hidden gap-3 lg:grid lg:grid-cols-2">
-        <Link
-          href="/student/growth"
-          className="block"
-          data-tour="skill-rank-essay"
-        >
-          <SkillRankPanel
-            label="小論文スキル"
-            rank={rank?.essay.compositeRank ?? null}
-            score={rank?.essay.compositeScore ?? null}
-            maxScore={50}
-            emptyMessage={rankEmptyMessage}
-            className="h-full cursor-pointer transition-shadow hover:shadow-md"
-            aggregate={rank?.essay}
-          />
-        </Link>
-        <Link href="/student/growth" className="block">
-          <SkillRankPanel
-            label="面接スキル"
-            rank={rank?.interview.compositeRank ?? null}
-            score={rank?.interview.compositeScore ?? null}
-            maxScore={40}
-            emptyMessage={rankEmptyMessage}
-            className="h-full cursor-pointer transition-shadow hover:shadow-md"
-            aggregate={rank?.interview}
-          />
-        </Link>
-      </section>
-
-      {/* Row 2: 成長ツリー+弱点 | スコア推移 */}
-      <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-12">
-        <div className="flex min-h-0 flex-col gap-2 lg:col-span-5">
-          <Link
-            href="/student/self-analysis"
-            className="group hidden lg:block"
-            data-tour="growth-tree"
-          >
-            {loadingSelfAnalysis ? (
-              <div className="border-border/40 h-[280px] animate-pulse rounded-2xl border bg-gradient-to-b from-sky-50 to-emerald-50/40" />
-            ) : (
-              <GrowthTree
-                compact
-                completedSteps={saCompletedSteps}
-                stepsData={saStepsData}
-                className="transition-shadow group-hover:shadow-md"
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
+        {/* ランク */}
+        <section className="order-2 min-w-0 lg:order-none lg:col-span-8">
+          <div className="grid grid-cols-2 gap-2 lg:hidden">
+            <Link href="/student/growth" className="block">
+              <SkillRankPanel
+                minimal
+                label="小論文レベル"
+                rank={rank?.essay.compositeRank ?? null}
+                score={rank?.essay.compositeScore ?? null}
+                maxScore={50}
+                emptyMessage={rankEmptyMessage}
+                className="h-full cursor-pointer transition-shadow hover:shadow-md"
+                aggregate={rank?.essay}
               />
-            )}
-          </Link>
-          <WeaknessSummaryCompact />
-          <WeaknessReminderBanner maxItems={2} compact />
-        </div>
+            </Link>
+            <Link href="/student/growth" className="block">
+              <SkillRankPanel
+                minimal
+                label="面接レベル"
+                rank={rank?.interview.compositeRank ?? null}
+                score={rank?.interview.compositeScore ?? null}
+                maxScore={40}
+                emptyMessage={rankEmptyMessage}
+                className="h-full cursor-pointer transition-shadow hover:shadow-md"
+                aggregate={rank?.interview}
+              />
+            </Link>
+          </div>
+          <div className="hidden gap-3 lg:grid lg:grid-cols-2">
+            <Link
+              href="/student/growth"
+              className="block"
+              data-tour="skill-rank-essay"
+            >
+              <SkillRankPanel
+                label="小論文スキル"
+                rank={rank?.essay.compositeRank ?? null}
+                score={rank?.essay.compositeScore ?? null}
+                maxScore={50}
+                emptyMessage={rankEmptyMessage}
+                className="h-full cursor-pointer transition-shadow hover:shadow-md"
+                aggregate={rank?.essay}
+              />
+            </Link>
+            <Link href="/student/growth" className="block">
+              <SkillRankPanel
+                label="面接スキル"
+                rank={rank?.interview.compositeRank ?? null}
+                score={rank?.interview.compositeScore ?? null}
+                maxScore={40}
+                emptyMessage={rankEmptyMessage}
+                className="h-full cursor-pointer transition-shadow hover:shadow-md"
+                aggregate={rank?.interview}
+              />
+            </Link>
+          </div>
+        </section>
 
-        <div className="lg:col-span-7" data-tour="score-trend">
+        {/* 次回セッション */}
+        <section
+          className="order-1 min-w-0 lg:order-none lg:col-span-4"
+          data-tour="upcoming-session"
+        >
+          <UpcomingSessionCard />
+        </section>
+
+        {/* スコア推移 */}
+        <section
+          className="order-5 min-w-0 lg:order-none lg:col-span-8"
+          data-tour="score-trend"
+        >
           <Card
             className="border-border/60 h-full rounded-lg"
             style={{
@@ -322,18 +234,43 @@ export default function StudentDashboard() {
             </CardHeader>
             <CardContent className="pt-1 pb-3">
               {loadingTrend ? (
-                <Skeleton className="h-[200px] w-full rounded" />
+                <Skeleton className="h-[220px] w-full rounded" />
               ) : (
                 <ScoresTrendChart
                   essayData={essayTrend}
                   interviewData={interviewTrend}
-                  height={200}
+                  height={220}
                 />
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
+        </section>
+
+        {/* 弱点 */}
+        <section className="order-4 flex min-w-0 flex-col gap-2 lg:order-none lg:col-span-4">
+          <WeaknessSummaryCompact />
+          <WeaknessReminderBanner maxItems={2} compact />
+        </section>
+
+        {/* 書きかけの下書き */}
+        <section className="order-3 min-w-0 lg:order-none lg:col-span-12">
+          <EssayDraftsSection />
+        </section>
+
+        {/* 志望校 */}
+        <section
+          className="order-6 min-w-0 lg:order-none lg:col-span-12"
+          data-tour="target-universities"
+        >
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <GraduationCap className="text-muted-foreground size-3.5" />
+            <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase lg:text-sm">
+              志望校
+            </h2>
+          </div>
+          <TargetUniversityCards targetUniversities={targetUniversities} />
+        </section>
+      </div>
     </div>
   );
 }

@@ -28,7 +28,6 @@ import {
   Crown,
   Compass,
   Sparkles,
-  Scale,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -81,9 +80,7 @@ const studentNavGroups: NavGroup[] = [
           // { label: "小論文講座", href: "/student/essay/lectures", icon: GraduationCap },
           { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
           { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
-          { label: "要約ドリル", href: "/student/essay/summary-drill", icon: ClipboardList },
-          { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
-          { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
+          // 要約ドリル・論理ドリル・ちょこ添削・ちょこ面接は非公開（2026-10-11。ページとデータは残す）
         ],
       },
       {
@@ -91,9 +88,6 @@ const studentNavGroups: NavGroup[] = [
         href: "/student/interview/new",
         icon: Mic,
         match: ["/student/interview"],
-        children: [
-          { label: "ちょこ面接", href: "/student/interview/drill", icon: ClipboardList },
-        ],
       },
       {
         label: "宿題",

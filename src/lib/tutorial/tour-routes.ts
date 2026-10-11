@@ -51,12 +51,6 @@ export const TOUR_PAGES: Record<string, TourPage> = {
           "登録した志望校のアドミッションポリシーや日程が常に手元に表示されます。",
       },
       {
-        selector: "[data-tour='growth-tree']",
-        title: "自己分析の木",
-        description:
-          "7 ステップの自己分析がどこまで進んだかを木の成長で可視化。果実をクリックすると編集できます。",
-      },
-      {
         selector: "[data-tour='skill-rank-essay']",
         title: "小論文レベル",
         description: "提出の平均で決まるランク。直近の提出で動きます。",

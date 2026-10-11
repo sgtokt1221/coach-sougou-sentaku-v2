@@ -28,7 +28,6 @@ import {
   BarChart3,
   BookMarked,
   BookOpen,
-  Scale,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -103,17 +102,7 @@ const studentPrimary: PrimaryAction[] = [
         href: "/student/essay/themes",
         icon: BookOpen,
       },
-      {
-        label: "要約ドリル",
-        href: "/student/essay/summary-drill",
-        icon: ClipboardList,
-      },
-      { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
-      {
-        label: "ちょこ添削",
-        href: "/student/essay/choco",
-        icon: ClipboardList,
-      },
+      // 要約ドリル・論理ドリル・ちょこ添削・ちょこ面接は非公開（2026-10-11。ページとデータは残す）
     ],
   },
   {
@@ -122,13 +111,6 @@ const studentPrimary: PrimaryAction[] = [
     icon: Mic,
     iconBg: "bg-violet-100 dark:bg-violet-950/40",
     iconColor: "text-violet-700 dark:text-violet-300",
-    children: [
-      {
-        label: "ちょこ面接",
-        href: "/student/interview/drill",
-        icon: ClipboardList,
-      },
-    ],
   },
   {
     label: "自己分析",
@@ -142,18 +124,7 @@ const studentPrimary: PrimaryAction[] = [
 const studentSecondary: ListItem[] = [
   { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
   { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
-  {
-    label: "要約ドリル",
-    href: "/student/essay/summary-drill",
-    icon: ClipboardList,
-  },
-  { label: "論理ドリル", href: "/student/essay/logic-drill", icon: Scale },
-  { label: "ちょこ添削", href: "/student/essay/choco", icon: ClipboardList },
-  {
-    label: "ちょこ面接",
-    href: "/student/interview/drill",
-    icon: ClipboardList,
-  },
+  // 要約ドリル・論理ドリル・ちょこ添削・ちょこ面接は非公開（2026-10-11。ページとデータは残す）
   {
     label: "志望校マッチング",
     href: "/student/universities",
