@@ -79,7 +79,7 @@ function DraftBody({ draft }: { draft: EssayDraft }) {
 
 /**
  * 生徒詳細ページ「下書き」タブ。生徒が提出前に書きかけている小論文を読む。
- * 提出すると下書きは消え、答案は「成績・弱点」タブの添削履歴に移る。
+ * 提出すると下書きは消え、答案は「添削・面接」タブの添削履歴に移る。
  */
 export function StudentEssayDraftsSection({
   studentId,
@@ -115,7 +115,7 @@ export function StudentEssayDraftsSection({
   return (
     <div className="space-y-3">
       <p className="text-muted-foreground text-xs">
-        提出前の書きかけの小論文（新しい順に5件まで）です。10秒ごとに最新の状態へ更新します。提出すると下書きは消え、答案は「成績・弱点」タブの添削履歴に移ります。
+        提出前の書きかけの小論文（新しい順に5件まで）です。10秒ごとに最新の状態へ更新します。提出すると下書きは消え、答案は「添削・面接」タブの添削履歴に移ります。
       </p>
       {drafts.length === 0 ? (
         <Card>

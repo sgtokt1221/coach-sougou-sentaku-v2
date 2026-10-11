@@ -163,9 +163,6 @@ import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { LectureProgressSection } from "@/components/admin/LectureProgressSection";
 import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
-import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
-import { ChocoReviewsSection } from "@/components/admin/ChocoReviewsSection";
-import { LogicDrillsSection } from "@/components/admin/LogicDrillsSection";
 import { InterviewDrillsSection } from "@/components/admin/InterviewDrillsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { DiscoverSection } from "@/components/admin/DiscoverSection";
@@ -491,11 +488,11 @@ const VALID_TABS: TabKey[] = [
 /** タブ value → 日本語ラベル。Base UI の SelectValue は value を生表示するため、モバイルの選択表示に使う。 */
 const TAB_LABELS: Record<TabKey, string> = {
   overview: "概要",
-  performance: "成績・弱点",
+  performance: "添削・面接",
   activity: "活動・書類",
   selfAnalysis: "自己分析",
   drafts: "下書き",
-  reports: "レポート",
+  reports: "レポート・対話履歴",
   homework: "宿題",
   messages: "メッセージ",
 };
@@ -1301,9 +1298,6 @@ function AdminStudentDetailPageInner() {
         studentId={id}
         autoOpenInterviewId={searchParams?.get("interview") ?? undefined}
       />
-      <SummaryDrillsSection studentId={id} />
-      <ChocoReviewsSection studentId={id} />
-      <LogicDrillsSection studentId={id} />
       <InterviewDrillsSection studentId={id} />
     </div>
   );
@@ -1392,11 +1386,11 @@ function AdminStudentDetailPageInner() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="overview">概要</SelectItem>
-                <SelectItem value="performance">成績・弱点</SelectItem>
+                <SelectItem value="performance">添削・面接</SelectItem>
                 <SelectItem value="activity">活動・書類</SelectItem>
                 <SelectItem value="selfAnalysis">自己分析</SelectItem>
                 <SelectItem value="drafts">下書き</SelectItem>
-                <SelectItem value="reports">レポート</SelectItem>
+                <SelectItem value="reports">レポート・対話履歴</SelectItem>
                 <SelectItem value="homework">宿題</SelectItem>
                 {!isTeacherViewer && (
                   <SelectItem value="messages">メッセージ</SelectItem>
@@ -1407,14 +1401,9 @@ function AdminStudentDetailPageInner() {
           <TabsList className="mt-3 hidden w-full justify-start overflow-x-auto sm:flex">
             <TabsTrigger value="overview">概要</TabsTrigger>
             <TabsTrigger value="performance">
-              成績・弱点
+              添削・面接
               <TabUnviewedBadge
-                count={tabUnviewed([
-                  "essay",
-                  "chocoReview",
-                  "summaryDrill",
-                  "logicDrill",
-                ])}
+                count={tabUnviewed(["essay"])}
               />
             </TabsTrigger>
             <TabsTrigger value="activity">
@@ -1423,7 +1412,7 @@ function AdminStudentDetailPageInner() {
             </TabsTrigger>
             <TabsTrigger value="selfAnalysis">自己分析</TabsTrigger>
             <TabsTrigger value="drafts">下書き</TabsTrigger>
-            <TabsTrigger value="reports">レポート</TabsTrigger>
+            <TabsTrigger value="reports">レポート・対話履歴</TabsTrigger>
             <TabsTrigger value="homework">宿題</TabsTrigger>
             {!isTeacherViewer && (
               <TabsTrigger value="messages">メッセージ</TabsTrigger>

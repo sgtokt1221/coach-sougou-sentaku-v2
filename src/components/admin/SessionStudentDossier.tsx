@@ -22,7 +22,6 @@ import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
 import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
-import { SummaryDrillsSection } from "@/components/admin/SummaryDrillsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { SessionsHistorySection } from "@/components/admin/SessionsHistorySection";
@@ -103,7 +102,7 @@ export function SessionStudentDossier({
             onChange={(v) => setActiveTab(v as DossierTab)}
             options={[
               { id: "overview", label: "概要" },
-              { id: "performance", label: "成績・弱点", accent: "violet" },
+              { id: "performance", label: "添削・面接", accent: "violet" },
               { id: "activity", label: "活動・書類", accent: "amber" },
               { id: "homework", label: "宿題", accent: "rose" },
               { id: "memos", label: "メモ", accent: "emerald" },
@@ -201,7 +200,7 @@ export function SessionStudentDossier({
             </div>
           )}
 
-          {/* 成績・弱点 */}
+          {/* 添削・面接 */}
           {activeTab === "performance" && (
             <div className="space-y-6">
               <div>
@@ -291,10 +290,6 @@ export function SessionStudentDossier({
               <Separator />
 
               <InterviewsSection studentId={studentId} />
-
-              <Separator />
-
-              <SummaryDrillsSection studentId={studentId} />
             </div>
           )}
 
