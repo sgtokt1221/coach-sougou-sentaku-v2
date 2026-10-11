@@ -14,6 +14,7 @@ import { judgeKnowledgeAccuracy } from "@/lib/essay/knowledge-judge";
 import { judgeOralExamSubQuestions } from "@/lib/essay/oral-exam-subquestion-judge";
 import {
   judgeSentences,
+  splitSentences,
   type SentenceCheckResult,
 } from "@/lib/essay/sentence-check-judge";
 import {
@@ -389,10 +390,21 @@ ${input.ocrText}
     selfContradicted ? 5 : 10,
     sourceCaps.logic
   );
+  /**
+   * 表現は減点方式の欠点のうち、数えられるものをサーバーで確定する（v31）。
+   * 崩れた文の数は1文ずつの点検、文の長さは本文から数える。プロンプトの依頼だけだと
+   * 80字超の文が並ぶ答案に7点が付いていた。
+   */
+  const sentenceLengths = splitSentences(input.ocrText).map((x) => x.text.length);
+  const over100 = sentenceLengths.some((n) => n > 100);
+  const over80 = sentenceLengths.filter((n) => n > 80).length;
+  const typoCount = (sentenceCheck?.brokenSentences ?? []).length - grammarErrorCount;
   // 表現は「何を書いたか」に依らず読める。ずれていても6点までは認める
   const expressionCap = Math.min(
     offTopic ? 6 : 10,
-    grammarErrorCount >= 2 ? 4 : 10
+    grammarErrorCount >= 4 ? 3 : grammarErrorCount >= 2 ? 4 : grammarErrorCount === 1 ? 6 : 10,
+    over100 ? 4 : over80 >= 2 ? 5 : 10,
+    typoCount >= 3 ? 5 : 10
   );
 
   /**
