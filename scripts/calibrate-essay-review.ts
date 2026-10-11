@@ -13,6 +13,7 @@
  *   GOOGLE_CLOUD_PROJECT=coach-sougou-sentaku \
  *   npx tsx scripts/calibrate-essay-review.ts [件数]
  */
+import { resolveQuestionSource } from "../src/lib/essay/lecture-info";
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
@@ -110,7 +111,9 @@ async function main() {
         questionType: ctx.questionType ?? undefined,
         sourceText: ctx.sourceText ?? undefined,
         chartDataSummary: ctx.chartDataSummary ?? undefined,
-        lectureInfo: ctx.lectureInfo ?? undefined,
+        // TED の書き起こしは保存していないので出題元から引き直す
+        lectureInfo:
+          resolveQuestionSource(ctx).lectureInfo ?? ctx.lectureInfo ?? undefined,
         wordLimit: ctx.wordLimit ?? undefined,
         admissionPolicy,
         weaknessList: "（過去の弱点なし）",

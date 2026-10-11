@@ -47,6 +47,8 @@ export interface CoachContext {
   sourceText?: string;
   /** グラフ・データ資料 */
   chartData?: unknown;
+  /** 講義型（TED）の講演情報と書き起こし。サーバーが出題元から引く */
+  lectureInfo?: string;
   /** 小論文講座の課題を書いている場合の文脈 */
   lecture?: LectureCoachContext;
   review?: CoachReviewContext;
@@ -110,7 +112,7 @@ function buildQuestionTypeGuide(questionType?: string): string {
     case "mixed":
       return "英文とデータの複合型です。双方の読み取りを確認してから、両者を自論へ接続する道筋を一緒に探してください。";
     case "lecture":
-      return "講義型です。講義固有の主張や具体例を踏まえているか確かめ、一般論に流れないよう促してください。";
+      return "講義型です。reference_data の lectureInfo に講演の書き起こしがあれば、講演の中身はそれだけを根拠にして、講義固有の主張や具体例を踏まえているか確かめ、一般論に流れないよう促してください。書き起こしが無いときは、講演の中身を推測で語らず、生徒に講演のどこを使ったかを聞いてください。";
     case "report":
       return "レポート課題型です。課題文の理解・要約・参照の妥当性を確認し、自分の考察との接続を助けてください。";
     case "oral_exam":
@@ -146,6 +148,7 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
     questionType: ctx.questionType ?? null,
     sourceText: ctx.sourceText?.trim().slice(0, MAX_SOURCE_TEXT_CHARS) || null,
     chartData: chartDataJson,
+    lectureInfo: ctx.lectureInfo ?? null,
     universityName: ctx.universityName ?? null,
     facultyName: ctx.facultyName ?? null,
     admissionPolicy: ctx.admissionPolicy?.trim().slice(0, 6000) || null,

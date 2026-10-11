@@ -19,6 +19,7 @@
  * --names は生徒の表示名の部分一致。指定するとその生徒の答案だけを対象にする。
  * --limit は新しい順に N 件。--names と併せると「その生徒の直近N件」になる。
  */
+import { resolveQuestionSource } from "../src/lib/essay/lecture-info";
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
@@ -122,7 +123,9 @@ async function main() {
         questionType: ctx.questionType ?? undefined,
         sourceText: ctx.sourceText ?? undefined,
         chartDataSummary: ctx.chartDataSummary ?? undefined,
-        lectureInfo: ctx.lectureInfo ?? undefined,
+        // TED の書き起こしは保存していないので出題元から引き直す
+        lectureInfo:
+          resolveQuestionSource(ctx).lectureInfo ?? ctx.lectureInfo ?? undefined,
         wordLimit: ctx.wordLimit ?? undefined,
         admissionPolicy,
         weaknessList: "（過去の弱点なし）",

@@ -34,9 +34,7 @@ import {
 import type { SentenceCheckResult } from "@/lib/essay/sentence-check-judge";
 import { requireRole } from "@/lib/api/auth";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import { getThemeById } from "@/data/essay-themes";
-import { getPastQuestionById } from "@/data/essay-past-questions";
-import { buildTedLectureInfo } from "@/lib/essay/lecture-info";
+import { resolveQuestionSource } from "@/lib/essay/lecture-info";
 
 // レポート課題は約1万字の課題文を載せるため、AI呼び出しだけで実測76秒かかる。
 // Firestore の読み書きを足すと 120 秒では足りない。
@@ -77,14 +75,8 @@ export async function POST(request: NextRequest) {
      * ブラウザのバンドルに載り、答案ごとに Firestore へも書かれる。出題元のID
      * （themeId / pastQuestionId）は画面から来るので、中身はここで引く。
      */
-    const tedTalk =
-      (body.themeId ? getThemeById(body.themeId)?.tedTalk : undefined) ??
-      (body.pastQuestionId
-        ? getPastQuestionById(body.pastQuestionId)?.tedTalk
-        : undefined);
-    const lectureInfo = tedTalk
-      ? buildTedLectureInfo(tedTalk)
-      : body.lectureInfo;
+    let lectureInfo =
+      resolveQuestionSource(body).lectureInfo ?? body.lectureInfo;
 
     /**
      * 出題の文脈。管理者・講師が答案詳細を開いたときに「生徒が何を読んで何に答えたか」
@@ -153,6 +145,20 @@ export async function POST(request: NextRequest) {
                   : 1;
               attemptNumber = parentAttempt + 1;
               partial = isPartialEssay(pdata);
+              /**
+               * 書き直しは画面から出題元の ID が来ない（元の答案の出題資料を引き継ぐ経路）。
+               * 元の答案に保存した ID を引き継ぎ、TED の書き起こしを引き直す
+               * （書き起こしは答案に保存していないため、引き継がないと講演の中身なしで採点する）
+               */
+              if (!body.themeId && !body.pastQuestionId) {
+                const ids = {
+                  themeId: pdata.questionContext?.themeId ?? null,
+                  pastQuestionId: pdata.questionContext?.pastQuestionId ?? null,
+                };
+                questionContext.themeId = ids.themeId;
+                questionContext.pastQuestionId = ids.pastQuestionId;
+                lectureInfo = resolveQuestionSource(ids).lectureInfo ?? lectureInfo;
+              }
               if (pdata.scores && pdata.feedback) {
                 parentSnapshot = {
                   id: body.parentEssayId,

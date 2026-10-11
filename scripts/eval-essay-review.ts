@@ -23,6 +23,7 @@
  *   traces/        (case, rep) ごとの入力と出力
  *   summary.md     集計
  */
+import { resolveQuestionSource } from "../src/lib/essay/lecture-info";
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
@@ -146,7 +147,9 @@ async function productionCases(): Promise<EvalCase[]> {
         questionType: ctx.questionType ?? undefined,
         sourceText: ctx.sourceText ?? undefined,
         chartDataSummary: ctx.chartDataSummary ?? undefined,
-        lectureInfo: ctx.lectureInfo ?? undefined,
+        // TED の書き起こしは保存していないので出題元から引き直す
+        lectureInfo:
+          resolveQuestionSource(ctx).lectureInfo ?? ctx.lectureInfo ?? undefined,
         wordLimit: ctx.wordLimit ?? undefined,
         admissionPolicy: await resolveAdmissionPolicy(
           adminDb,

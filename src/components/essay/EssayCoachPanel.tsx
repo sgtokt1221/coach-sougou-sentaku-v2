@@ -26,7 +26,7 @@ import {
 import { useAuthSWR } from "@/lib/api/swr";
 import type { University } from "@/lib/types/university";
 import type { CoachRequestBody } from "@/lib/types/essay-coach";
-import { EssayCoachChat } from "./EssayCoachChat";
+import { EssayCoachChat, type EssayCoachChatProps } from "./EssayCoachChat";
 import { SelfAnalysisReference } from "./SelfAnalysisReference";
 import { APReference } from "@/components/coach/APReference";
 import { ReportSourcePane } from "@/components/essay/ReportSourcePane";
@@ -115,6 +115,8 @@ interface EssayCoachPanelProps {
    * 課題文を画面の別の場所に出している画面 (レポート課題の ReportSourcePane) で使う。
    */
   coachMaterial?: ReferenceMaterial;
+  /** 出題元（テーマ・過去問・書き直しの元答案）。コーチが TED の書き起こしを引くのに使う */
+  questionSource?: EssayCoachChatProps["questionSource"];
   /**
    * レポート課題の課題文と設問。渡すと「課題文」タブが先頭に付く。
    * 入力欄の上に置いていたときは、書きながら設問を見返すのに
@@ -215,6 +217,7 @@ export function EssayCoachPanelBody({
   facultyId,
   referenceMaterial,
   coachMaterial,
+  questionSource,
   reportMaterial,
   conversationKey,
   onThreadChange,
@@ -296,6 +299,7 @@ export function EssayCoachPanelBody({
             questionType={materialForCoach?.questionType}
             sourceText={materialForCoach?.sourceText}
             chartData={materialForCoach?.chartData}
+            questionSource={questionSource}
             /*
               会話をやり直す単位。conversationKey があるときはそれだけで決める。
               志望校やお題は読み込みの途中で埋まるため、それらを混ぜると

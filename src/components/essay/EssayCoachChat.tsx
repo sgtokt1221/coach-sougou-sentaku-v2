@@ -40,7 +40,7 @@ function stableDraftPart(value: string): string {
   return (hash >>> 0).toString(36);
 }
 
-interface EssayCoachChatProps {
+export interface EssayCoachChatProps {
   topic: string;
   draft: string;
   universityId?: string;
@@ -49,6 +49,11 @@ interface EssayCoachChatProps {
   questionType?: CoachRequestBody["questionType"];
   sourceText?: string;
   chartData?: unknown;
+  /** 出題元。TED の書き起こしはサーバーがここから引いてコーチに渡す */
+  questionSource?: Pick<
+    CoachRequestBody,
+    "themeId" | "pastQuestionId" | "parentEssayId"
+  >;
   /** 小論文講座の課題を書いている場合の文脈 */
   lectureContext?: CoachRequestBody["lectureContext"];
   /** 添削結果を見ながら相談する場合の文脈（講評そのもの） */
@@ -79,6 +84,7 @@ export function EssayCoachChat({
   questionType,
   sourceText,
   chartData,
+  questionSource,
   lectureContext,
   reviewContext,
   oralExam,
@@ -205,6 +211,7 @@ export function EssayCoachChat({
       questionType,
       sourceText,
       chartData,
+      ...questionSource,
       lectureContext,
       reviewContext,
       oralExam,

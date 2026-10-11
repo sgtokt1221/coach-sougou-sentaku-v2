@@ -2683,6 +2683,11 @@ export default function EssayNewPage() {
                   facultyId={facultyId || undefined}
                   referenceMaterial={effectiveMaterial}
                   coachMaterial={reportCoachMaterial}
+                  questionSource={{
+                    themeId: selectedTheme?.id,
+                    pastQuestionId: pastQuestion?.id,
+                    parentEssayId: retryParent?.id,
+                  }}
                   conversationKey={coachContext}
                   reportMaterial={
                     reportMode && reportMaterial

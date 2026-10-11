@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  resolveQuestionSource,
+  type QuestionSourceIds,
+} from "@/lib/essay/lecture-info";
 import { requireRole } from "@/lib/api/auth";
 import { recordAiTrace } from "@/lib/ai/trace";
 import { stripMarkdown } from "@/lib/ai/plain-text";
@@ -219,7 +223,27 @@ export async function POST(request: NextRequest) {
   // 口頭試問の文脈があるときは出題形式を確定させる（画面側の渡し忘れで小論文扱いにしない）
   const questionType = oralExam ? "oral_exam" : body.questionType;
   const sourceText = body.sourceText?.trim();
-  const chartData = body.chartData;
+  /**
+   * 出題元から TED の書き起こしとグラフを引く。書き直しで出題元が画面に無いときは、
+   * 元の答案に保存した出題元を使う（本人の答案だけ）
+   */
+  let sourceIds: QuestionSourceIds = {
+    themeId: body.themeId,
+    pastQuestionId: body.pastQuestionId,
+  };
+  if (!sourceIds.themeId && !sourceIds.pastQuestionId && body.parentEssayId) {
+    const parent = await adminDb.doc(`essays/${body.parentEssayId}`).get();
+    const p = parent.data();
+    if (p && p.userId === uid) {
+      sourceIds = {
+        themeId: p.questionContext?.themeId ?? null,
+        pastQuestionId: p.questionContext?.pastQuestionId ?? null,
+      };
+    }
+  }
+  const questionSource = resolveQuestionSource(sourceIds);
+  const chartData = body.chartData ?? questionSource.chartData;
+  const lectureInfo = questionSource.lectureInfo;
   // 講座の課題を書いている場合の文脈（何のブロックを何字で書かせているか）
   const lecture = body.lectureContext;
   // 添削結果を見ながら相談している場合の文脈（生徒が読んでいる講評そのもの）
@@ -355,6 +379,7 @@ export async function POST(request: NextRequest) {
     questionType,
     sourceText,
     chartData,
+    lectureInfo,
     review,
     oralExam,
   });

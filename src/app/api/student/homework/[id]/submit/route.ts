@@ -34,7 +34,11 @@ import type {
 } from "@/lib/types/interview";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import { getThemeById } from "@/data/essay-themes";
-import { getPastQuestionById } from "@/data/essay-past-questions";
+import {
+  getPastQuestionById,
+  summarizeChartData,
+} from "@/data/essay-past-questions";
+import { resolveQuestionSource } from "@/lib/essay/lecture-info";
 
 /**
  * POST /api/student/homework/[id]/submit
@@ -242,9 +246,15 @@ async function submitEssay(args: {
   const questionType = themeSource?.questionType ?? pastSource?.questionType;
   const wordLimit = themeSource?.wordLimit ?? pastSource?.wordLimit;
   const sourceText = themeSource?.sourceText ?? pastSource?.sourceText;
-  const chartDataSummary = themeSource?.chartData
-    ? JSON.stringify(themeSource.chartData)
+  const chartData = themeSource?.chartData ?? pastSource?.chartData;
+  const chartDataSummary = chartData
+    ? summarizeChartData(chartData)
     : undefined;
+  // TED の書き起こし。答案には保存せず、添削のときだけ出題元から引く
+  const lectureInfo = resolveQuestionSource({
+    themeId: homework.snapshot.essayThemeId,
+    pastQuestionId: homework.snapshot.pastQuestionId,
+  }).lectureInfo;
 
   await essayRef.set({
     userId: uid,
@@ -286,6 +296,7 @@ async function submitEssay(args: {
       wordLimit,
       sourceText,
       chartDataSummary,
+      lectureInfo,
       admissionPolicy,
       weaknessList,
     });

@@ -142,6 +142,13 @@ export interface CoachRequestBody {
   sourceText?: string;
   /** グラフ・データ資料 */
   chartData?: unknown;
+  /**
+   * 出題元。TED の書き起こしとグラフはサーバーがここから引く（書き起こしは画面に載せない）。
+   * 書き直しで出題元が画面に無いときは、元の答案（parentEssayId）に保存した出題元を使う
+   */
+  themeId?: string;
+  pastQuestionId?: string;
+  parentEssayId?: string;
   /** 小論文講座の課題を書いている場合の文脈 */
   lectureContext?: LectureCoachContext;
   /** 添削結果を見ながら相談している場合の文脈 */
