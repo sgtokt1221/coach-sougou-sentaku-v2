@@ -253,13 +253,16 @@ export function SelectedSpanFeedback({
   feedback,
   selected,
   onClose,
+  sheetOnly = false,
 }: {
   model: AnchoredFeedbackModel;
   feedback: Partial<EssayFeedback>;
   selected: string[] | null;
   onClose: () => void;
+  /** 横に置く列が無いとき。PC でも下からのシートで出す */
+  sheetOnly?: boolean;
 }) {
-  const isDesktop = useIsDesktop();
+  const isDesktop = useIsDesktop() && !sheetOnly;
   const panel = selected ? (
     <GroupedItems
       keys={selected}
@@ -270,7 +273,7 @@ export function SelectedSpanFeedback({
   ) : null;
   return (
     <>
-      {panel && (
+      {panel && !sheetOnly && (
         <Card className="hidden border-slate-300 lg:block">
           <CardContent className="space-y-3 p-4">
             <div className="flex items-center justify-between">
@@ -294,7 +297,10 @@ export function SelectedSpanFeedback({
           if (!o) onClose();
         }}
       >
-        <SheetContent side="bottom" className="max-h-[80vh] lg:hidden">
+        <SheetContent
+          side="bottom"
+          className={`max-h-[80vh] ${sheetOnly ? "" : "lg:hidden"}`}
+        >
           <SheetHeader className="pb-0">
             <SheetTitle>この箇所への指摘</SheetTitle>
           </SheetHeader>
@@ -373,6 +379,10 @@ export function GlobalFeedbackList({
  * 理由ごと（言葉／論理・構成／設問への答え／知識／良い点）に並ぶ。
  * 右には全体講評と、本文に結び付かない指摘（構成や、書かれていないことへの指摘）を置く。
  * スマホは「本文」「全体」のタブで切り替え、印を押すと下からシートで出す。
+ *
+ * hideGlobal のときは右の全体講評・全体への指摘を出さない（結果画面では
+ * 「良かったところ／直すところ」と1か所にまとめて上に出すため）。右に置くものが
+ * rightExtra だけになり、それも無ければ本文を全幅にして、選んだ箇所はシートで出す。
  */
 export function AnchoredFeedbackView({
   text,
@@ -381,6 +391,7 @@ export function AnchoredFeedbackView({
   anchorsPending,
   oralExam,
   rightExtra,
+  hideGlobal = false,
 }: {
   text: string;
   feedback: Partial<EssayFeedback>;
@@ -390,14 +401,19 @@ export function AnchoredFeedbackView({
   oralExam?: OralExamQuestionSet | null;
   /** 右の欄の下に足す、指摘以外の情報（課題文の扱い・専門知識の点など） */
   rightExtra?: ReactNode;
+  /** 全体講評・全体への指摘を出さない（呼び出し側がまとめて出すとき） */
+  hideGlobal?: boolean;
 }) {
   const [selected, setSelected] = useState<string[] | null>(null);
   const [mobileTab, setMobileTab] = useState<"text" | "global">("text");
   const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
+  const hasSide = !hideGlobal || !!rightExtra;
+  // 全体の欄を出さないときはタブで切り替えるものが無い
+  const tab = hideGlobal ? "text" : mobileTab;
 
   return (
     <div className="space-y-3">
-      <div className="lg:hidden">
+      <div className={hideGlobal ? "hidden" : "lg:hidden"}>
         <SegmentControl
           fullWidth
           size="sm"
@@ -409,8 +425,14 @@ export function AnchoredFeedbackView({
           ]}
         />
       </div>
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-6">
-        <div className={mobileTab === "text" ? "" : "hidden lg:block"}>
+      <div
+        className={
+          hasSide
+            ? "space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:items-start lg:gap-6 lg:space-y-0"
+            : ""
+        }
+      >
+        <div className={tab === "text" ? "" : "hidden lg:block"}>
           <Card>
             <CardContent className="space-y-4 p-4 lg:p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -438,23 +460,37 @@ export function AnchoredFeedbackView({
             </CardContent>
           </Card>
         </div>
-        <div
-          className={`space-y-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto ${
-            mobileTab === "global" ? "" : "hidden lg:block"
-          }`}
-        >
+        {hasSide ? (
+          <div
+            className={`space-y-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto ${
+              hideGlobal || tab === "global" ? "" : "hidden lg:block"
+            }`}
+          >
+            <SelectedSpanFeedback
+              model={model}
+              feedback={feedback}
+              selected={selected}
+              onClose={() => setSelected(null)}
+            />
+            {hideGlobal ? (
+              rightExtra
+            ) : (
+              <GlobalFeedbackList
+                model={model}
+                feedback={feedback}
+                extra={rightExtra}
+              />
+            )}
+          </div>
+        ) : (
           <SelectedSpanFeedback
             model={model}
             feedback={feedback}
             selected={selected}
             onClose={() => setSelected(null)}
+            sheetOnly
           />
-          <GlobalFeedbackList
-            model={model}
-            feedback={feedback}
-            extra={rightExtra}
-          />
-        </div>
+        )}
       </div>
     </div>
   );
@@ -478,8 +514,30 @@ function SegmentText({
   onSelect: (keys: string[]) => void;
 }) {
   if (segment.keys.length === 0) return <span>{text}</span>;
-  const groups = new Set(segment.keys.map((k) => groupOf.get(k)));
-  const top = MARK_PRIORITY.find((g) => groups.has(g)) ?? "logic";
+  const present = new Set(segment.keys.map((k) => groupOf.get(k)));
+  const groups = MARK_PRIORITY.filter((g) => present.has(g));
+  if (groups.length === 0) groups.push("logic");
+  /**
+   * 1つの文に複数の指摘があるときは、まとまりごとの色の線を全部引く。
+   * 以前は優先度の一番高い色しか出ず、言葉の直しがある文の論理の指摘が見えなかった。
+   * 下線は1つの要素に1本しか引けないので、まとまりごとに span を入れ子にし、
+   * 内側ほど線を下にずらす（本文は leading-8 なので3本までは行間に収まる）。
+   */
+  const lined = groups.reduceRight<ReactNode>(
+    (inner, g, i) => (
+      <span
+        className={[
+          "underline decoration-2",
+          g === "good" ? "decoration-solid" : "decoration-wavy",
+          MARK_STYLE[g],
+        ].join(" ")}
+        style={{ textUnderlineOffset: `${3 + i * 5}px` }}
+      >
+        {inner}
+      </span>
+    ),
+    text
+  );
   /**
    * button 要素は全体の書式で inline-block になり、印ごとに1つの塊として折り返されて
    * 文の途中で改行される。文の流れのまま折り返すよう span にし、押せる要素として扱う。
@@ -497,13 +555,11 @@ function SegmentText({
       }}
       data-feedback-mark
       className={[
-        "cursor-pointer rounded-sm underline decoration-2 underline-offset-4 transition-colors",
-        top === "good" ? "decoration-solid" : "decoration-wavy",
-        MARK_STYLE[top],
+        "cursor-pointer rounded-sm transition-colors",
         active ? "bg-amber-100 dark:bg-amber-900/40" : "hover:bg-muted",
       ].join(" ")}
     >
-      {text}
+      {lined}
     </span>
   );
 }

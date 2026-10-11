@@ -462,8 +462,21 @@ function SegmentText({
   onSelect: (keys: string[]) => void;
 }) {
   if (segment.keys.length === 0) return <span>{text}</span>;
-  const groups = new Set(segment.keys.map(groupOf));
-  const top = MARK_PRIORITY.find((g) => groups.has(g)) ?? "content";
+  const present = new Set(segment.keys.map(groupOf));
+  const groups = MARK_PRIORITY.filter((g) => present.has(g));
+  if (groups.length === 0) groups.push("content");
+  // 指摘が重なる箇所は、まとまりごとの色の線を全部引く（入れ子にして内側ほど下にずらす）
+  const lined = groups.reduceRight<React.ReactNode>(
+    (inner, g, i) => (
+      <span
+        className={`underline decoration-wavy decoration-2 ${MARK_STYLE[g]}`}
+        style={{ textUnderlineOffset: `${3 + i * 5}px` }}
+      >
+        {inner}
+      </span>
+    ),
+    text
+  );
   // button 要素だと印ごとに塊で折り返すので、文の流れのまま折り返す span にする
   return (
     <span
@@ -478,12 +491,11 @@ function SegmentText({
         }
       }}
       className={[
-        "cursor-pointer rounded-sm underline decoration-wavy decoration-2 underline-offset-4 transition-colors",
-        MARK_STYLE[top],
+        "cursor-pointer rounded-sm transition-colors",
         active ? "bg-amber-100 dark:bg-amber-900/40" : "hover:bg-muted",
       ].join(" ")}
     >
-      {text}
+      {lined}
     </span>
   );
 }
