@@ -5,33 +5,16 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  RotateCcw,
-  ChevronDown,
-  ChevronUp,
-  PenTool,
-  Copy,
-  Check,
-  FileText,
-  Zap,
-  MessageSquare,
-} from "lucide-react";
+import { ArrowLeft, RotateCcw, MessageSquare } from "lucide-react";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type {
   EssayInlineComment,
-  EssayDeepDive,
   OralExamInsights,
-  OralExamKnowledgeDigest,
   OralExamQuestionSet,
   FeedbackAnchors,
+  PreviousFocusCheck,
   EssayFeedback as SharedEssayFeedback,
 } from "@/lib/types/essay";
-import { EssayDeepDiveView } from "@/components/essay/EssayDeepDiveView";
-import { OralExamQuestionsCard } from "@/components/essay/OralExamQuestionsCard";
-import { OralExamKnowledgeDigestView } from "@/components/essay/OralExamKnowledgeDigestView";
-import { splitOralExamAnswers } from "@/lib/essay/oral-exam-question";
 import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
 import { RetryComparisonCard } from "@/components/essay/RetryComparison";
 import type {
@@ -44,22 +27,17 @@ import type {
 } from "@/lib/types/essay";
 import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
-import { EssayFeedbackOverview } from "@/components/essay/EssayFeedbackOverview";
 import {
   FocusCard,
   GoodPointCard,
-  MoreRows,
+  OtherFixesCard,
+  PreviousFocusCard,
   ResultHero,
-  type MoreRow,
 } from "@/components/essay/result/ResultParts";
 import { Reveal } from "@/components/motion/Reveal";
 import { ResultLoading } from "@/components/motion/ResultLoading";
 import { motion } from "framer-motion";
-import {
-  essayResultKind,
-  focusVisibleKeys,
-  pickFocus,
-} from "@/lib/essay/result-focus";
+import { essayResultKind, pickFocus } from "@/lib/essay/result-focus";
 import { AnchoredFeedbackView } from "@/components/essay/AnchoredFeedbackView";
 import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
@@ -92,18 +70,6 @@ interface RepeatedIssue {
   derived?: boolean;
 }
 
-interface ImprovementSinceLast {
-  before: string;
-  after: string;
-}
-
-interface TopicInsights {
-  background: string;
-  relatedThemes: string[];
-  deepDivePoints: string[];
-  recommendedAngle: string;
-}
-
 interface LanguageCorrection {
   location: string;
   original: string;
@@ -113,22 +79,19 @@ interface LanguageCorrection {
 }
 
 interface EssayFeedback {
-  overall: string;
   goodPoints: string[];
   improvements: string[];
   /** 最優先の改善点が改善点と赤ペンのどちらを指しているか */
   priorityTarget?: "improvement" | "language";
   repeatedIssues: RepeatedIssue[];
-  improvementsSinceLast: ImprovementSinceLast[];
-  topicInsights?: TopicInsights;
+  /** 書き直しのとき、前回の課題が直ったか（v28〜） */
+  previousFocusCheck?: PreviousFocusCheck | null;
   /** 設問への適合判定。旧データには無い */
   taskFulfillment?: TaskFulfillment;
   /** 事実主張の確認状態。旧データには無い */
   claimChecks?: ClaimCheck[];
-  brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
   priorityImprovement?: string;
-  nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
   reportInsights?: ReportInsights;
   /** 口頭試問型の知識判定（判定が取れたときだけ） */
@@ -176,70 +139,6 @@ interface EssayResult {
   feedbackAnchors?: FeedbackAnchors | null;
 }
 
-/**
- * 課題文型（課題文を読んで書く）専用の講評ブロック。
- * レポート課題モードと、課題文つき過去問の双方で使う。
- * sourceType="report" で reportInsights が生成されているときのみ表示する。
- * 課題文の理解度など5観点の講評と、誤読の指摘を一覧する。
- * @param insights 課題文型専用の講評データ
- */
-function ReportInsightsCard({ insights }: { insights: ReportInsights }) {
-  const items: { label: string; body: string }[] = [
-    { label: "課題文の理解度", body: insights.sourceComprehension },
-    { label: "要約の正確さ", body: insights.summaryAccuracy },
-    { label: "引用の妥当性", body: insights.citationAppropriateness },
-    { label: "考察の深さ", body: insights.analysisDepth },
-    { label: "課題文との接続", body: insights.sourceConnection },
-  ];
-  return (
-    <Card className="border-0 bg-gradient-to-br from-indigo-50 via-sky-50 to-white shadow-md">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg tracking-tight text-indigo-700">
-          <FileText className="size-5" />
-          課題文の読み取り
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {items.map((item) => (
-          <div
-            key={item.label}
-            className="rounded-xl border border-indigo-200 bg-white/60 p-4"
-          >
-            <h3 className="mb-1 text-sm font-semibold tracking-tight text-indigo-800">
-              {item.label}
-            </h3>
-            <p className="text-sm leading-relaxed text-slate-800">
-              {item.body}
-            </p>
-          </div>
-        ))}
-        <div className="rounded-xl border border-indigo-200 bg-white/60 p-4">
-          <h3 className="mb-2 flex items-center gap-1 text-sm font-semibold tracking-tight text-indigo-800">
-            <AlertTriangle className="size-4" />
-            誤読の指摘
-          </h3>
-          {insights.misreadings.length > 0 ? (
-            <ul className="space-y-2">
-              {insights.misreadings.map((m, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <div className="mt-0.5 rounded-full bg-amber-200 p-1">
-                    <AlertTriangle className="size-3 text-amber-700" />
-                  </div>
-                  <span className="text-sm leading-relaxed text-slate-800">
-                    {m}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground text-sm">特になし</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function EssayResultPage() {
   const router = useRouter();
   const params = useParams();
@@ -248,96 +147,6 @@ export default function EssayResultPage() {
   const [result, setResult] = useState<EssayResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showBrushedUp, setShowBrushedUp] = useState(false);
-  const [copiedSection, setCopiedSection] = useState<string | null>(null);
-  const [generatingBrushup, setGeneratingBrushup] = useState(false);
-  const [deepDive, setDeepDive] = useState<EssayDeepDive | undefined>();
-  /** 口頭試問型は深掘りの代わりに「知識の整理」を出す（同じ API が返す） */
-  const [knowledgeDigest, setKnowledgeDigest] = useState<
-    OralExamKnowledgeDigest | undefined
-  >();
-  const [generatingDeepDive, setGeneratingDeepDive] = useState(false);
-
-  /**
-   * テーマの深掘りは開いたときだけ作る。採点のたびに作ると、読まない人のぶんも払う。
-   * 一度作れば答案に保存されるので、二度目からは生成しない。
-   */
-  const generateDeepDive = async () => {
-    if (generatingDeepDive) return;
-    setGeneratingDeepDive(true);
-    try {
-      const { authFetch } = await import("@/lib/api/client");
-      const res = await authFetch(`/api/essay/${id}/deep-dive`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(payload.error ?? "生成に失敗しました");
-      }
-      const json = await res.json();
-      if (json.knowledgeDigest) {
-        setKnowledgeDigest(json.knowledgeDigest as OralExamKnowledgeDigest);
-      } else {
-        setDeepDive(json as EssayDeepDive);
-      }
-    } catch (err) {
-      const { toast } = await import("sonner");
-      toast.error(
-        err instanceof Error ? err.message : "深掘りの生成に失敗しました"
-      );
-    } finally {
-      setGeneratingDeepDive(false);
-    }
-  };
-
-  const generateBrushup = async () => {
-    if (generatingBrushup) return;
-    setGeneratingBrushup(true);
-    try {
-      const { authFetch } = await import("@/lib/api/client");
-      const res = await authFetch(`/api/essay/${id}/brushup`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          detail?: string;
-        };
-        throw new Error(
-          payload.detail ?? payload.error ?? "生成に失敗しました"
-        );
-      }
-      const json = (await res.json()) as { brushedUpText: string };
-      setResult((prev) =>
-        prev
-          ? {
-              ...prev,
-              feedback: { ...prev.feedback, brushedUpText: json.brushedUpText },
-            }
-          : prev
-      );
-      setShowBrushedUp(true);
-    } catch (err) {
-      const { toast } = await import("sonner");
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "ブラッシュアップ版の生成に失敗しました"
-      );
-    } finally {
-      setGeneratingBrushup(false);
-    }
-  };
-
-  function copyToClipboard(text: string, section: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedSection(section);
-      setTimeout(() => setCopiedSection(null), 2000);
-    });
-  }
-
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -382,10 +191,6 @@ export default function EssayResultPage() {
         if (!res.ok) throw new Error("データの取得に失敗しました");
         const data = await res.json();
         setResult(data);
-        // 生成済みなら再生成させない
-        if (data.deepDive) setDeepDive(data.deepDive as EssayDeepDive);
-        if (data.knowledgeDigest)
-          setKnowledgeDigest(data.knowledgeDigest as OralExamKnowledgeDigest);
       } catch {
         setError("添削結果の取得に失敗しました");
       } finally {
@@ -441,10 +246,6 @@ export default function EssayResultPage() {
    */
   const totalScore = result.scores.total;
   const scoreMaximum = result.feedback.scoreMaximum ?? 50;
-  /** 答案の右に置く、指摘以外の情報があるか（無ければ本文を全幅で出す） */
-  const hasRightExtra =
-    !!result.feedback.reportInsights ||
-    typeof result.scores.knowledgeAccuracy === "number";
   /** 次のランクまでの差と、その差を埋めるのに一番効く軸 */
   const nextStep = buildNextStepHint(result.scores, scoreMaximum);
   const apAlignmentAssessable = result.feedback.apAlignmentAssessable !== false;
@@ -452,16 +253,8 @@ export default function EssayResultPage() {
   const percentage = getScorePercentage(totalScore, scoreMaximum);
   const rank = getRankFromPercentage(percentage);
 
-  /**
-   * 口頭試問型（小問集合）。設問と答えを問ごとに並べ、書き換え例は問ごとの
-   * 模範解答、テーマ深掘りは知識の整理に差し替える（作文向けの見せ方のままだと
-   * 問の区切りが消え、意見の対立を読む読み物になってしまう）。
-   */
+  /** 口頭試問型（小問集合）。答案は問ごとに並べ、ランクの下に問ごとの判定を出す */
   const oralSet = result.oralExam ?? null;
-  const brushedUpByQuestion =
-    oralSet && result.feedback.brushedUpText
-      ? splitOralExamAnswers(oralSet, result.feedback.brushedUpText)
-      : null;
 
   // 合計に入る5軸。旧データに無い軸は描かない（0 として凹ませない）
   // weight は合計50点の中での配点。軸の点は0-10で保存し、表示だけ配点へ換算する
@@ -484,6 +277,16 @@ export default function EssayResultPage() {
       : [];
 
   const resultFeedback = result.feedback as Partial<SharedEssayFeedback>;
+  /**
+   * 答案の印に使う講評。v27 までの答案は良かったところ・改善点が多いので v28 と
+   * 同じ量（1件・3件）に切る。弱点は記録用なので印にしない（改善点と同じ箇所に重なる）
+   */
+  const feedbackForView: Partial<SharedEssayFeedback> = {
+    ...resultFeedback,
+    goodPoints: (resultFeedback.goodPoints ?? []).slice(0, 1),
+    improvements: (resultFeedback.improvements ?? []).slice(0, 3),
+    repeatedIssues: [],
+  };
   const kind = essayResultKind(result.questionType, result.sourceText);
   const focus = pickFocus(resultFeedback, kind);
   const engagement = result.feedback.reportInsights?.engagementLevel;
@@ -510,327 +313,21 @@ export default function EssayResultPage() {
   }
   const canRetry = result.status === undefined || result.status === "reviewed";
 
-  const moreRows: MoreRow[] = [
-    {
-      id: "others",
-      label: "ほかの指摘",
-      content: (
-        <div className="space-y-4">
-          <EssayFeedbackOverview
-            text={result.ocrText ?? ""}
-            feedback={resultFeedback}
-            anchors={feedbackAnchors}
-            oralExam={
-              result.questionType === "oral_exam" ? result.oralExam : null
-            }
-          />
-          {hasRightExtra && (
-            <>
-              {/* 課題文の扱い。合計50点には入れず、指標として見せる。
-              点は既存5軸の上限で下がる（source-engagement.ts） */}
-              {result.feedback.reportInsights?.engagementLevel && (
-                <div
-                  className={`mt-6 rounded-lg border p-4 ${
-                    result.feedback.reportInsights.engagementLevel ===
-                    "grounded"
-                      ? "border-emerald-200 bg-emerald-50"
-                      : result.feedback.reportInsights.engagementLevel ===
-                          "shallow"
-                        ? "border-amber-200 bg-amber-50"
-                        : "border-rose-200 bg-rose-50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold">課題文の扱い</p>
-                    <span className="text-sm font-bold">
-                      {sourceEngagementLabel(
-                        result.feedback.reportInsights.engagementLevel
-                      )}
-                    </span>
-                  </div>
-                  {result.feedback.reportInsights.engagementBasis && (
-                    <p className="text-muted-foreground mt-1.5 text-xs">
-                      {result.feedback.reportInsights.engagementBasis}
-                    </p>
-                  )}
-                  <p className="text-muted-foreground mt-2 text-[10px]">
-                    この評価は50点の合計には含まれません。課題文に触れていない場合は、
-                    構成・論理性・回答力・成熟度の上限が下がります。
-                  </p>
-                </div>
-              )}
-
-              {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
-              {typeof result.scores.knowledgeAccuracy === "number" && (
-                <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold">専門知識の正確性</p>
-                    <span className="text-lg font-bold tabular-nums">
-                      {result.scores.knowledgeAccuracy}
-                      <span className="text-sm font-normal text-slate-300">
-                        /10
-                      </span>
-                    </span>
-                  </div>
-                  {result.feedback.knowledgeInsights?.basis && (
-                    <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
-                      {result.feedback.knowledgeInsights.basis}
-                    </p>
-                  )}
-                  <p className="mt-2 text-[10px] text-slate-400">
-                    口頭試問型は知識を問う出題なので、この点は合計（
-                    {scoreMaximum}点満点）に入ります。
-                  </p>
-                </div>
-              )}
-
-              {/* 課題文の読み取り (sourceType="report" のときのみ) */}
-              {result.feedback.reportInsights && (
-                <div className="mt-6">
-                  <ReportInsightsCard
-                    insights={result.feedback.reportInsights}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      ),
-    },
-  ];
+  /** 答案と切り替えて読む出題資料 */
+  const sources: { id: string; label: string; text: string }[] = [];
   if (kind === "passage" && result.sourceText?.trim()) {
-    moreRows.push({
-      id: "source",
-      label: "課題文",
-      content: (
-        <p className="text-sm leading-7 whitespace-pre-wrap">
-          {result.sourceText}
-        </p>
-      ),
-    });
+    sources.push({ id: "source", label: "課題文", text: result.sourceText });
   }
   if (kind === "data" && result.chartDataSummary?.trim()) {
-    moreRows.push({
-      id: "chart",
-      label: "資料",
-      content: (
-        <p className="text-sm leading-7 whitespace-pre-wrap">
-          {result.chartDataSummary}
-        </p>
-      ),
-    });
+    sources.push({ id: "chart", label: "資料", text: result.chartDataSummary });
   }
   if (kind === "lecture" && result.lectureInfo?.trim()) {
-    moreRows.push({
+    sources.push({
       id: "lecture",
       label: "講演の書き起こし",
-      content: (
-        <p className="max-h-[60vh] overflow-y-auto text-sm leading-7 whitespace-pre-wrap">
-          {result.lectureInfo}
-        </p>
-      ),
+      text: result.lectureInfo,
     });
   }
-  if (oralSet) {
-    moreRows.push({
-      id: "questions",
-      label: "問ごとの答えと判定",
-      content: (
-        <OralExamQuestionsCard
-          set={oralSet}
-          essayText={result.ocrText ?? ""}
-          insights={result.feedback.oralExamInsights}
-        />
-      ),
-    });
-  }
-  moreRows.push(
-    {
-      id: "brushup",
-      label: oralSet ? "模範解答" : "書き換え例",
-      content: (
-        <div>
-          {/* 未生成: オンデマンド生成ボタン */}
-          {!result.feedback.brushedUpText && (
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                  <PenTool className="size-6" />
-                  {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="py-8 text-center">
-                  <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                    <Zap className="size-8 text-emerald-600" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                    {oralSet
-                      ? "模範解答を作りますか？"
-                      : "ブラッシュアップ版を生成しますか？"}
-                  </h3>
-                  <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                    {oralSet ? (
-                      <>
-                        AIがあなたの答えをもとに、問ごとの判定と知識の誤りを
-                        直した模範解答を、問ごとの字数の目安で作ります。
-                        一度作ると保存されるので次回からはすぐ表示されます。
-                      </>
-                    ) : (
-                      <>
-                        AIがあなたの本文を、
-                        添削の改善ポイントに沿って磨いた全文を作成します。
-                        一度作ると保存されるので次回からはすぐ表示されます。
-                      </>
-                    )}
-                  </p>
-                  <Button
-                    onClick={generateBrushup}
-                    disabled={generatingBrushup}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    {generatingBrushup ? (
-                      <>
-                        <Zap className="mr-1 size-4 animate-pulse" />
-                        生成中…
-                      </>
-                    ) : (
-                      <>
-                        <PenTool className="mr-1 size-4" />
-                        {oralSet
-                          ? "模範解答を作る"
-                          : "ブラッシュアップ版を生成する"}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          {result.feedback.brushedUpText && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                  <PenTool className="size-6" />
-                  {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
-                </CardTitle>
-                {showBrushedUp && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs shadow-sm transition-all hover:shadow-md"
-                    onClick={() =>
-                      copyToClipboard(result.feedback.brushedUpText!, "brushup")
-                    }
-                  >
-                    {copiedSection === "brushup" ? (
-                      <>
-                        <Check className="mr-1 size-3" />
-                        コピー済み
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-1 size-3" />
-                        全コピー
-                      </>
-                    )}
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent>
-                {!showBrushedUp ? (
-                  <div className="py-8 text-center">
-                    <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                      <Zap className="size-8 text-emerald-600" />
-                    </div>
-                    <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                      自分で考えてから確認
-                    </h3>
-                    <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                      {oralSet
-                        ? "まず自分で問ごとの直し方を考えてから、模範解答を確認しましょう。学習効果がより高まります。"
-                        : "まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。"}
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowBrushedUp(true)}
-                      className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
-                    >
-                      <ChevronDown className="mr-1 size-4" />
-                      {oralSet ? "模範解答を見る" : "ブラッシュアップ版を見る"}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowBrushedUp(false)}
-                        className="text-emerald-600 hover:bg-emerald-100/60"
-                      >
-                        <ChevronUp className="mr-1 size-4" />
-                        閉じる
-                      </Button>
-                    </div>
-                    {oralSet && brushedUpByQuestion ? (
-                      <div className="space-y-3">
-                        {oralSet.subQuestions.map((q, i) => (
-                          <div
-                            key={q.no}
-                            className="space-y-2 rounded-xl bg-emerald-50/60 p-4"
-                          >
-                            <div className="flex gap-3">
-                              <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-emerald-600 px-2.5 text-xs font-bold text-white">
-                                問{q.no}
-                              </span>
-                              <p className="text-sm font-medium text-slate-900">
-                                {q.prompt}
-                              </p>
-                            </div>
-                            <p className="rounded-lg bg-white p-3 text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
-                              {brushedUpByQuestion[i]}
-                            </p>
-                            <p className="text-muted-foreground text-right text-xs tabular-nums">
-                              {brushedUpByQuestion[i]?.length ?? 0} /{" "}
-                              {q.wordLimit}字
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
-                        <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
-                          {result.feedback.brushedUpText}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: "insights",
-      label: oralSet ? "知識の整理" : "テーマ深掘り",
-      content: oralSet ? (
-        <OralExamKnowledgeDigestView
-          digest={knowledgeDigest}
-          generating={generatingDeepDive}
-          onGenerate={generateDeepDive}
-        />
-      ) : (
-        <EssayDeepDiveView
-          deepDive={deepDive}
-          generating={generatingDeepDive}
-          onGenerate={generateDeepDive}
-        />
-      ),
-    }
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 pb-20 lg:pb-8">
@@ -884,7 +381,7 @@ export default function EssayResultPage() {
 
         {/*
           左（スマホでは上）に、ランク・レーダー・今回の課題・次も使える書き方。
-          右に答案と書き直しへの導線、残りは畳んだ行。PC では左を止めておき、
+          右に答案・ほかに直すこと・書き直しへの導線。PC では左を止めておき、
           課題を見ながら答案の印を追えるようにする。
         */}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
@@ -939,12 +436,17 @@ export default function EssayResultPage() {
                 <RetryComparisonCard comparison={result.retryComparison} />
               </Reveal>
             )}
+            {result.feedback.previousFocusCheck && (
+              <Reveal delay={0.4}>
+                <PreviousFocusCard check={result.feedback.previousFocusCheck} />
+              </Reveal>
+            )}
             {focus && (
               <Reveal delay={0.45}>
                 <FocusCard
                   focus={focus}
                   text={result.ocrText ?? ""}
-                  feedback={resultFeedback}
+                  feedback={feedbackForView}
                   anchors={feedbackAnchors}
                   oralExam={
                     result.questionType === "oral_exam" ? result.oralExam : null
@@ -983,17 +485,28 @@ export default function EssayResultPage() {
               <section id="feedback-section" className="scroll-mt-24">
                 <AnchoredFeedbackView
                   text={result.ocrText ?? ""}
-                  // この画面の講評の型は弱点の文面を省略可にしているだけで、中身は共通の型と同じ
-                  feedback={resultFeedback}
+                  feedback={feedbackForView}
                   anchors={feedbackAnchors}
                   anchorsPending={anchorsPending}
                   oralExam={
                     result.questionType === "oral_exam" ? result.oralExam : null
                   }
                   hideGlobal
-                  focusKeys={focusVisibleKeys(resultFeedback, focus)}
+                  sources={sources}
                 />
               </section>
+            </Reveal>
+
+            <Reveal delay={0.65}>
+              <OtherFixesCard
+                focus={focus}
+                text={result.ocrText ?? ""}
+                feedback={feedbackForView}
+                anchors={feedbackAnchors}
+                oralExam={
+                  result.questionType === "oral_exam" ? result.oralExam : null
+                }
+              />
             </Reveal>
 
             {canRetry && (
@@ -1008,7 +521,7 @@ export default function EssayResultPage() {
                   className="bg-primary text-primary-foreground flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm"
                 >
                   <RotateCcw className="size-4" />
-                  {focus ? "この1点を直して書き直す" : "同じテーマで書き直す"}
+                  書き直す
                 </motion.button>
               </Reveal>
             )}
@@ -1028,10 +541,6 @@ export default function EssayResultPage() {
                 scoreMaximum={scoreMaximum}
                 feedback={result.feedback}
               />
-            </Reveal>
-
-            <Reveal delay={0.85}>
-              <MoreRows rows={moreRows} />
             </Reveal>
           </div>
         </div>

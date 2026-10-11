@@ -1,9 +1,5 @@
 import assert from "node:assert";
-import {
-  essayResultKind,
-  focusVisibleKeys,
-  pickFocus,
-} from "../src/lib/essay/result-focus";
+import { essayResultKind, pickFocus } from "../src/lib/essay/result-focus";
 
 // タイプの判定
 assert.equal(essayResultKind("oral_exam"), "oral");
@@ -61,11 +57,6 @@ assert.equal(pickFocus({}, "theme"), null);
   const fb = {
     ...base,
     reportInsights: {
-      sourceComprehension: "",
-      summaryAccuracy: "",
-      citationAppropriateness: "",
-      analysisDepth: "",
-      sourceConnection: "",
       misreadings: ["筆者はそう言っていない"],
     },
     taskFulfillment: { answersQuestion: false, note: "n", requirements: [] },
@@ -111,41 +102,33 @@ assert.equal(pickFocus({}, "theme"), null);
   assert.deepEqual(pickFocus(noUnanswered, "oral")?.keys, ["knowledge:0"]);
 }
 
-// 既定の印：課題のキー＋文の誤り・誤字の赤ペン（言い回しの直しは出さない）
+// 制限字数の半分に届かない答案は、字数を課題にする（設問への答えより先、読み違いより後）
 {
-  const keys = focusVisibleKeys(
-    {
-      languageCorrections: [
-        {
-          location: "",
-          original: "a",
-          suggestion: "b",
-          type: "grammar",
-          reason: "",
-        },
-        {
-          location: "",
-          original: "a",
-          suggestion: "b",
-          type: "expression",
-          reason: "",
-        },
-        {
-          location: "",
-          original: "a",
-          suggestion: "b",
-          type: "typo",
-          reason: "",
-        },
-      ],
+  const qa = (wordCount: number, fillRate: number) => ({
+    quantitativeAnalysis: {
+      wordCount,
+      wordLimit: 800,
+      fillRate,
+      sentenceCount: 1,
+      paragraphCount: 1,
+      paragraphRatio: { intro: 0, body: 100, conclusion: 0 },
+      evidenceCount: 0,
+      connectorVariety: 0,
+      appTargetScore: 28,
+      gapToTarget: 0,
     },
-    { text: "t", keys: ["priority:0"] }
-  );
-  assert.deepEqual([...keys].sort(), [
-    "language:0",
-    "language:2",
-    "priority:0",
-  ]);
+  });
+  const short = {
+    ...base,
+    ...qa(300, 38),
+    taskFulfillment: { answersQuestion: false, note: "n", requirements: [] },
+  };
+  assert.equal(pickFocus(short, "theme")?.tag, "字数");
+  assert.match(pickFocus(short, "theme")!.text, /800字に対して300字（38%）/);
+  // 半分以上なら字数は課題にしない
+  assert.equal(pickFocus({ ...base, ...qa(500, 63) }, "theme")?.tag, undefined);
+  // 口頭試問は問ごとに字数があるので使わない
+  assert.notEqual(pickFocus({ ...base, ...qa(100, 10) }, "oral")?.tag, "字数");
 }
 
 console.log("verify-result-focus: ok");

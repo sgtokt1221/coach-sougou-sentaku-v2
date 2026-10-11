@@ -170,8 +170,9 @@ export function listFeedbackItems(
   );
 
   (feedback.claimChecks ?? []).forEach((c, i) => {
-    // 確認できた主張は指摘ではないので出さない
-    if (c.status === "verified") return;
+    // 指摘にするのは資料と食い違う主張だけ。「確認できない」「本人の経験」まで
+    // 印にすると、意見や推論にまで疑わしい印が付く（v28 からは書かせてもいない）
+    if (c.status !== "contradicted") return;
     push({
       kind: "claim",
       index: i,
@@ -182,11 +183,14 @@ export function listFeedbackItems(
   });
 
   (feedback.taskFulfillment?.requirements ?? []).forEach((r, i) => {
+    // 満たしている要求は指摘ではない。根拠の文に線を引くと、要約や結論の文が
+    // 軒並み「良い点」の線で埋まり、直す箇所の印が読めなくなる
+    if (r.status === "met") return;
     push({
       kind: "requirement",
       index: i,
       text: r.requirement,
-      group: r.status === "met" ? "good" : "task",
+      group: "task",
       // 欠けている要求は本文に根拠が無いので、全体への指摘になる
       quotes: r.status === "missing" ? [] : [r.evidence],
     });

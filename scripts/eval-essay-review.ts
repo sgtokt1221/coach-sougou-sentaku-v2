@@ -326,6 +326,8 @@ interface ResultRow {
     answersQuestion: boolean | null;
     misreadings: number;
     claimChecks: { claim: string; status: string }[];
+    /** 改善点（今回の課題を含む）。v28 から確認できない主張はここで指摘する */
+    improvements: string[];
     corrections: string[];
     droppedCorrections: number;
     knowledge: {
@@ -397,6 +399,10 @@ function toRow(
         claim: x.claim,
         status: x.status,
       })),
+      improvements: [
+        feedback.priorityImprovement ?? "",
+        ...(feedback.improvements ?? []),
+      ].filter(Boolean),
       corrections: (feedback.languageCorrections ?? []).map((x) => x.original),
       droppedCorrections: telemetry.droppedLanguageCorrections,
       knowledge:
@@ -565,8 +571,12 @@ function checkRep(e: Expectation, r: ResultRow): boolean | null {
       return hit >= e.min;
     }
     case "claimFlagged":
-      return m.claimChecks.some(
-        (x) => x.claim.includes(e.contains) && x.status !== "verified"
+      // v28 から事実の確認は資料と食い違う主張だけになり、資料で確認できない
+      // 主張は改善点で「出典や確認できる形で書く」と指摘する。どちらかで拾えていればよい
+      return (
+        m.claimChecks.some(
+          (x) => x.claim.includes(e.contains) && x.status !== "verified"
+        ) || (m.improvements ?? []).some((t) => t.includes(e.contains))
       );
     case "misreadingOrLogicMax":
       return m.misreadings > 0 || (m.scores.logic ?? 0) <= e.value;

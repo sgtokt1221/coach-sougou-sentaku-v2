@@ -132,22 +132,19 @@ export async function GET(
       inlineComments: data.inlineComments ?? [],
       scores,
       feedback: {
-        overall: feedback.overall ?? "",
         goodPoints: feedback.goodPoints ?? [],
         improvements: feedback.improvements ?? [],
         repeatedIssues: feedback.repeatedIssues ?? [],
-        improvementsSinceLast: feedback.improvementsSinceLast ?? [],
-        topicInsights: feedback.topicInsights ?? null,
+        // 書き直しのとき、前回の課題が直ったか（v28〜）
+        previousFocusCheck: feedback.previousFocusCheck ?? null,
         reportInsights: feedback.reportInsights ?? null,
         // 口頭試問型の知識判定。ここに足さないと、保存はされているのに
         // 画面から消える（許可リスト漏れは沈黙失敗になる）
         knowledgeInsights: feedback.knowledgeInsights ?? null,
         // 口頭試問型の小問ごとの判定（同じく許可リストに足さないと画面から消える）
         oralExamInsights: feedback.oralExamInsights ?? null,
-        brushedUpText: feedback.brushedUpText ?? null,
         languageCorrections: feedback.languageCorrections ?? null,
         priorityImprovement: feedback.priorityImprovement ?? null,
-        nextChallenge: feedback.nextChallenge ?? null,
         quantitativeAnalysis: feedback.quantitativeAnalysis ?? null,
         // 設問への適合判定（v8〜）。旧データには無い
         taskFulfillment: feedback.taskFulfillment ?? null,
@@ -164,12 +161,8 @@ export async function GET(
       parentEssayId,
       inputMode: data.inputMode ?? null,
       retryContext: data.retryContext ?? null,
-      // 生成済みのテーマ深掘り（無ければ画面で「詳しく読む」ボタンを出す）
-      deepDive: data.deepDive ?? null,
       // 指摘を本文に結び付けた結果（/anchors が初回に作って保存する）。無ければ画面が作りに行く
       feedbackAnchors: data.feedbackAnchors ?? null,
-      // 口頭試問型の「知識の整理」（深掘りの代わり。生成済みなら再生成させない）
-      knowledgeDigest: data.knowledgeDigest ?? null,
       ...(retryComparison ? { retryComparison } : {}),
     });
   } catch (error) {

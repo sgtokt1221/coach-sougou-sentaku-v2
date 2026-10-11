@@ -1,3 +1,4 @@
+import { essayResultKind, pickFocus } from "@/lib/essay/result-focus";
 import { NextRequest, NextResponse } from "next/server";
 import {
   isMachineOnlyWeakness,
@@ -128,6 +129,8 @@ export async function POST(request: NextRequest) {
       ocrText: string;
       scores: EssayScores;
       feedback: EssayFeedback;
+      /** 前回の「今回の課題」。結果画面と同じ選び方で決める */
+      focus: string | null;
     } | null = null;
 
     const { adminDb } = await import("@/lib/firebase/admin");
@@ -164,6 +167,14 @@ export async function POST(request: NextRequest) {
                     pdata.sentenceCheck,
                     { partial }
                   ),
+                  focus:
+                    pickFocus(
+                      pdata.feedback ?? {},
+                      essayResultKind(
+                        pdata.questionContext?.questionType,
+                        pdata.questionContext?.sourceText
+                      )
+                    )?.text ?? null,
                 };
               }
             }
@@ -315,14 +326,11 @@ export async function POST(request: NextRequest) {
         admissionPolicy,
         weaknessList,
         partial,
-        ...(parentSnapshot
+        ...(parentSnapshot?.focus
           ? {
               previousAttempt: {
                 essayText: parentSnapshot.ocrText,
-                feedbackSummary: [
-                  parentSnapshot.feedback.overall,
-                  ...parentSnapshot.feedback.improvements,
-                ].filter(Boolean),
+                focus: parentSnapshot.focus,
               },
             }
           : {}),

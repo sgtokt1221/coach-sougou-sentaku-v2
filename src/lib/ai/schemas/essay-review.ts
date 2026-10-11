@@ -13,7 +13,6 @@ export const EssayReviewOutputSchema = z.object({
     reasoningMaturity: z.number().int().min(0).max(10),
   }),
   feedback: z.object({
-    overall: boundedText,
     // 件数の上限はスキーマでは緩めに取り、表示件数はサーバー側で絞る。
     // 上限を厳しくすると「助言を出しすぎた」だけで構造化出力の検証に失敗し、
     // 添削全体が 500 になる（課題文型(report)で実際に improvements が5件を
@@ -21,7 +20,6 @@ export const EssayReviewOutputSchema = z.object({
     goodPoints: z.array(shortText).max(10),
     priorityImprovement: boundedText,
     improvements: z.array(boundedText).max(10),
-    nextChallenge: boundedText,
     repeatedIssues: z
       .array(
         z.object({
@@ -45,22 +43,18 @@ export const EssayReviewOutputSchema = z.object({
         })
       )
       .max(8),
-    improvementsSinceLast: z
-      .array(
-        z.object({
-          area: shortText,
-          before: boundedText,
-          after: boundedText,
-          message: boundedText,
-        })
-      )
-      .max(5),
-    topicInsights: z.object({
-      background: boundedText,
-      relatedThemes: z.array(shortText).max(5),
-      deepDivePoints: z.array(boundedText).max(5),
-      recommendedAngle: boundedText,
-    }),
+    /**
+     * 書き直しのとき、前回の「今回の課題」が直ったか（v28〜）。初回は null。
+     * 前回からの変化を項目ごとに並べるより、直すと決めた1点が直ったかを返す
+     */
+    previousFocusCheck: z
+      .object({
+        status: z.enum(["resolved", "partial", "unresolved"]),
+        /** 判定の根拠になる今回の答案の一文。直していなければ空 */
+        evidence: boundedText,
+        comment: boundedText,
+      })
+      .nullable(),
     languageCorrections: z
       .array(
         z.object({
@@ -145,13 +139,9 @@ export const EssayReviewOutputSchema = z.object({
       )
       // requirements と同じ理由で広めに取る（事実の多い答案で超えると添削全体が落ちる）
       .max(12),
+    /** 課題文型の読み違い（v28 で所見5項目を外し、読み違いだけ残した） */
     reportInsights: z
       .object({
-        sourceComprehension: boundedText,
-        summaryAccuracy: boundedText,
-        citationAppropriateness: boundedText,
-        analysisDepth: boundedText,
-        sourceConnection: boundedText,
         misreadings: z.array(boundedText).max(8),
       })
       .nullable(),

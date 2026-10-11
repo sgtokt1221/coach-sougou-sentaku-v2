@@ -11,7 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { FileText, ArrowRightLeft } from "lucide-react";
+import { FileText } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import {
@@ -67,7 +67,6 @@ interface EssayDetail {
     overall: string;
     goodPoints: string[];
     improvements: string[];
-    brushedUpText?: string;
     /** 日本語の直し（赤ペン）。生徒側と同じものを出す */
     languageCorrections?: {
       location: string;
@@ -340,29 +339,6 @@ export default function EssayDetailDialog({
                 {/* 総合評価と、本文に結び付かない指摘。本文に結び付く指摘は元テキストの印から見る */}
                 <GlobalFeedbackList model={model} feedback={feedbackForView} />
 
-                {data.feedback.brushedUpText && (
-                  <>
-                    <Separator />
-                    <div className="space-y-2">
-                      <h3 className="flex items-center gap-1.5 text-sm font-semibold">
-                        <ArrowRightLeft className="size-3.5" />
-                        添削後テキスト
-                      </h3>
-                      <div className="max-h-60 overflow-y-auto rounded-lg border border-emerald-200 bg-emerald-50 p-4 font-mono text-sm leading-7 text-gray-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-gray-200">
-                        {data.feedback.brushedUpText
-                          .split("\n")
-                          .map((line, i) => (
-                            <p
-                              key={i}
-                              className={line.trim() === "" ? "h-4" : ""}
-                            >
-                              {line || " "}
-                            </p>
-                          ))}
-                      </div>
-                    </div>
-                  </>
-                )}
               </>
             )}
           </div>

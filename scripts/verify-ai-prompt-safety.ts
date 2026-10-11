@@ -98,7 +98,7 @@ const essayPrompt = buildEssayReviewPrompt({
   hasPreviousAttempt: false,
   hasWordLimit: false,
 });
-assert.ok(essayPrompt.includes("improvementsSinceLastは必ず空配列"));
+assert.ok(essayPrompt.includes("previousFocusCheck は null"));
 assert.ok(essayPrompt.includes("短いことだけを理由に減点しません"));
 assert.ok(!essayPrompt.includes("合格目安"));
 assert.ok(!essayPrompt.includes("gapToPass"));
@@ -241,19 +241,11 @@ const validEssayReview = {
     reasoningMaturity: 5,
   },
   feedback: {
-    overall: "講評",
     goodPoints: ["良い点"],
     priorityImprovement: "根拠を増やす",
     improvements: ["改善点"],
-    nextChallenge: "具体例を二つ使う",
     repeatedIssues: [],
-    improvementsSinceLast: [],
-    topicInsights: {
-      background: "答案から確認できる背景",
-      relatedThemes: [],
-      deepDivePoints: [],
-      recommendedAngle: "別の観点",
-    },
+    previousFocusCheck: null,
     languageCorrections: [],
     taskFulfillment: {
       answersQuestion: true,

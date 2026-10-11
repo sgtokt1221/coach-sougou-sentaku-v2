@@ -176,8 +176,6 @@ export async function GET(
           })
         : undefined,
       inlineComments: data.inlineComments || [],
-      // 生徒が生成したテーマ深掘り。面談で「何を読んだか」を確認できるようにする
-      deepDive: data.deepDive || undefined,
     };
 
     return NextResponse.json({

@@ -49,8 +49,6 @@ export interface Essay {
   coachThreadId?: string;
   /** この答案を書いていたときの AIコーチ会話（管理者の答案詳細で表示する） */
   coachThreads?: LinkedCoachThread[];
-  /** テーマの深掘り。開いたときに生成して保存する（毎回の提出では作らない） */
-  deepDive?: EssayDeepDive;
 }
 
 /**
@@ -234,68 +232,6 @@ export interface ClaimCheck {
 }
 
 /**
- * テーマの深掘り。採点とは別に、開いたときだけ生成する読み物。
- *
- * 採点の中で作っていた topicInsights は「入力から確認できる背景だけを述べる」
- * 制約の下にあり（採点で事実を捏造させないためのルール）、背景知識を補うという
- * 本来の目的を果たせなかった。知識を教えるのが目的の生成は、採点と分ける。
- */
-export interface EssayDeepDive {
-  /** この設問が扱っている論点を一文で */
-  issue: string;
-  /** 何と何が対立しているのか。ここが読み物の本体 */
-  conflict: string;
-  /** 主な立場。それぞれの言い分と、弱いところ */
-  positions: {
-    label: string;
-    claim: string;
-    grounds: string;
-    weakness: string;
-  }[];
-  /** 知っていると書ける具体（制度・出来事・数値）。断定できないものは書かせない */
-  facts: { title: string; detail: string }[];
-  /** よくある誤解と、なぜ誤解なのか */
-  misconceptions: { belief: string; correction: string }[];
-  /** この設問で実際に使える切り口 */
-  angles: { angle: string; howToUse: string }[];
-  /** さらに調べるための問い */
-  furtherQuestions: string[];
-  aiMetadata?: AiGenerationMetadata;
-  /** ISO 8601 */
-  generatedAt: string;
-}
-
-/**
- * 口頭試問型の「知識の整理」。テーマ深掘り（EssayDeepDive）の代わりに出す。
- *
- * 深掘りは「何が対立している論点か・主な立場」という、意見を書く小論文向けの
- * 読み物。口頭試問は知識を問う出題なので、役に立つのは用語の定義と事実の整理。
- * essays/{id}.knowledgeDigest に保存する（開いたときだけ作る）。
- */
-export interface OralExamKnowledgeDigest {
-  /** このテーマで押さえるべきことを2〜3文で */
-  summary: string;
-  /** 必ず定義を言えるようにする用語 */
-  terms: { term: string; definition: string }[];
-  /** 知っておくべき事実・仕組み */
-  keyPoints: { point: string; detail: string }[];
-  /** 取り違えやすい点と、正しい理解 */
-  misconceptions: { wrong: string; right: string }[];
-  /** 問ごとに、答えるときに外せないこと */
-  perQuestion: { no: number; mustInclude: string }[];
-  aiMetadata?: AiGenerationMetadata;
-  /** ISO 8601 */
-  generatedAt: string;
-}
-
-export interface TopicInsights {
-  background: string;
-  relatedThemes: string[];
-  deepDivePoints: string[];
-  recommendedAngle: string;
-}
-
-/**
  * 出題形式の正本。採点ルーブリック・コーチの観点・データ側の分類はすべてこれを参照する。
  *
  * - essay: 設問のみ（資料なし）
@@ -396,11 +332,6 @@ export interface ReportInsights {
   engagementLevel?: SourceEngagementLevel;
   /** そう判定した根拠。生徒にそのまま見せる */
   engagementBasis?: string;
-  sourceComprehension: string; // 課題文の理解度・要点把握
-  summaryAccuracy: string; // 要約・言い換えの正確さ
-  citationAppropriateness: string; // 引用/参照の妥当性
-  analysisDepth: string; // 自分の考察の深さ・独自性
-  sourceConnection: string; // 課題文と自論の接続
   misreadings: string[]; // 課題文の誤読・事実誤認の指摘
 }
 
@@ -444,24 +375,23 @@ export interface FeedbackAnchors {
 }
 
 export interface EssayFeedback {
-  overall: string;
+  /** 全体講評。v27 までの答案にだけある（v28 で書かせるのをやめた） */
+  overall?: string;
+  /** v28〜は1件 */
   goodPoints: string[];
+  /** v28〜は最大3件。1件目が最優先の改善点の詳しい版 */
   improvements: string[];
   repeatedIssues: RepeatedIssue[];
-  improvementsSinceLast: Improvement[];
-  topicInsights?: TopicInsights;
+  /** 書き直しのとき、前回の「今回の課題」が直ったか（v28〜） */
+  previousFocusCheck?: PreviousFocusCheck;
   /** 設問への適合判定。旧データには無い */
   taskFulfillment?: TaskFulfillment;
   /** 事実主張の確認状態。旧データには無い */
   claimChecks?: ClaimCheck[];
-  /** ブラッシュアップ版で原文に無い語が増えた場合、その語（確認用） */
-  brushedUpAddedFacts?: string[];
-  brushedUpText?: string;
   languageCorrections?: LanguageCorrection[];
   priorityImprovement?: string;
   /** priorityImprovement が改善点と赤ペンのどちらを指しているか（v17〜） */
   priorityTarget?: "improvement" | "language";
-  nextChallenge?: string;
   quantitativeAnalysis?: QuantitativeAnalysis;
   /** APが取得できず、AP合致度を十分に評価できなかった場合はfalse。 */
   apAlignmentAssessable?: boolean;
@@ -535,11 +465,21 @@ export interface RepeatedIssue {
   derived?: boolean;
 }
 
+/** 前回からの変化。面接の結果で使う（小論文は v28 で PreviousFocusCheck に替えた） */
 export interface Improvement {
   area: string;
   before: string;
   after: string;
   message: string;
+}
+
+export interface PreviousFocusCheck {
+  /** 前回の課題（書き直しの元の答案の「今回の課題」） */
+  focus: string;
+  status: "resolved" | "partial" | "unresolved";
+  /** 根拠になる今回の答案の一文。直していなければ空 */
+  evidence: string;
+  comment: string;
 }
 
 export interface EssayReviewRequest {

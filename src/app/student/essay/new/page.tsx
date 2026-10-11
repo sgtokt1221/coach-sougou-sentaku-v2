@@ -30,7 +30,6 @@ import {
   Download,
   Sparkles,
   RotateCcw,
-  Target,
   Star,
   AlertTriangle,
 } from "lucide-react";
@@ -188,7 +187,6 @@ export default function EssayNewPage() {
       overall?: string;
       improvements?: string[];
       priorityImprovement?: string | null;
-      nextChallenge?: string | null;
       repeatedIssues?: Array<{ area: string; count?: number }>;
       /** 合計の満点。口頭試問型は60。旧データは無し（=50） */
       scoreMaximum?: number;
@@ -1871,19 +1869,6 @@ export default function EssayNewPage() {
             </div>
           )}
 
-        {retryParent.feedback?.nextChallenge && (
-          <div className="flex gap-2.5 rounded-lg border border-sky-200 bg-sky-50 p-3">
-            <Target className="mt-0.5 size-4 shrink-0 text-sky-700" />
-            <div>
-              <p className="mb-1 text-xs font-semibold text-sky-900">
-                今回のチャレンジ
-              </p>
-              <p className="text-sm leading-relaxed text-sky-900">
-                {retryParent.feedback.nextChallenge}
-              </p>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   ) : null;

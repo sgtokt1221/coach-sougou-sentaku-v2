@@ -9,7 +9,8 @@
  *   1. 口頭試問型で、答えていない問がある
  *   2. 口頭試問型で、重大な知識の誤りがある
  *   3. 課題文型で、課題文を読み違えている
- *   4. 設問に正面から答えていない
+ *   4. 制限字数の半分に届いていない（字数はサーバーが数えた値。AI には書かせない）
+ *   5. 設問に正面から答えていない
  * 指摘のキーは feedback-anchors.ts の listFeedbackItems と同じ規則（`${kind}:${位置}`）。
  */
 import type { EssayFeedback } from "@/lib/types/essay";
@@ -43,6 +44,9 @@ export function essayResultKind(
       return sourceText?.trim() ? "passage" : "theme";
   }
 }
+
+/** これより短い答案は、字数そのものを今回の課題にする（%） */
+const SHORT_FILL_RATE = 50;
 
 export interface EssayFocus {
   /** 課題の見出しに添える短い札（「問3」「読み違い」など）。無ければ出さない */
@@ -84,6 +88,22 @@ export function pickFocus(
     }
   }
 
+  const qa = feedback.quantitativeAnalysis;
+  if (
+    kind !== "oral" &&
+    qa &&
+    typeof qa.wordLimit === "number" &&
+    qa.wordLimit > 0 &&
+    typeof qa.fillRate === "number" &&
+    qa.fillRate < SHORT_FILL_RATE
+  ) {
+    return {
+      tag: "字数",
+      text: `制限字数${qa.wordLimit}字に対して${qa.wordCount}字（${qa.fillRate}%）。結論まで書き切り、制限字数の8割以上を埋める。`,
+      keys: [],
+    };
+  }
+
   const tf = feedback.taskFulfillment;
   if (tf && !tf.answersQuestion && tf.note) {
     return {
@@ -104,19 +124,4 @@ export function pickFocus(
 
   const first = feedback.improvements?.[0];
   return first ? { text: first, keys: ["improvement:0"] } : null;
-}
-
-/**
- * 答案で既定に印を出すキー。今回の課題の指摘と、意味に響く赤ペン（文の誤り・誤字）。
- * 話し言葉・言い回しの直しは「すべての指摘」に切り替えたときに出す。
- */
-export function focusVisibleKeys(
-  feedback: Partial<EssayFeedback>,
-  focus: EssayFocus | null
-): Set<string> {
-  const keys = new Set(focus?.keys ?? []);
-  (feedback.languageCorrections ?? []).forEach((c, i) => {
-    if (c.type === "grammar" || c.type === "typo") keys.add(`language:${i}`);
-  });
-  return keys;
 }

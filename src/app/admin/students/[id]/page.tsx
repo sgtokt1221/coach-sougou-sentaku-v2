@@ -43,7 +43,6 @@ import {
   KeyRound,
   X,
   Eye,
-  ArrowRightLeft,
   Star,
   Languages,
   Plus,
@@ -53,7 +52,6 @@ import {
   Clock,
   Activity,
   Calendar,
-  BookOpen,
   Bell,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -102,7 +100,6 @@ import {
 } from "@/lib/types/essay";
 import { axisPoints } from "@/lib/score-rank";
 import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
-import { EssayDeepDiveView } from "@/components/essay/EssayDeepDiveView";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -2017,114 +2014,8 @@ function AdminStudentDetailPageInner() {
                           essayDetail.feedback as Partial<EssayFeedback>
                         }
                       />
-
-                      {/* Brushed up text */}
-                      {essayDetail.feedback.brushedUpText && (
-                        <>
-                          <Separator />
-                          <div className="space-y-2">
-                            <h3 className="text-foreground flex items-center gap-1.5 text-sm font-semibold">
-                              <ArrowRightLeft className="size-3.5" />
-                              添削後テキスト（生徒画面の「ブラッシュアップ版」）
-                            </h3>
-                            <div className="max-h-60 overflow-y-auto rounded-lg border border-emerald-200 bg-emerald-50 p-4 font-mono text-sm leading-7 tracking-wide text-gray-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-gray-200">
-                              {essayDetail.feedback.brushedUpText
-                                .split("\n")
-                                .map((line, i) => (
-                                  <p
-                                    key={i}
-                                    className={line.trim() === "" ? "h-4" : ""}
-                                  >
-                                    {line || "\u00A0"}
-                                  </p>
-                                ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
                     </>
                   )}
-                  {/* 生徒が生成した長文の深掘り。何を読んだかが分かると面談で使える。
-                      管理者側では生成させない（読む人が作る、という設計のため） */}
-                  {essayDetail.deepDive && (
-                    <>
-                      <Separator />
-                      <div className="space-y-2">
-                        <p className="text-sm font-semibold">
-                          テーマ深掘り（生徒が読んだもの）
-                        </p>
-                        <EssayDeepDiveView
-                          deepDive={essayDetail.deepDive}
-                          generating={false}
-                          onGenerate={() => {}}
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  {/* テーマ深掘り / ブラッシュアップ版。生徒画面には出ていたが管理者側
-                  には無く、面談で同じ画面を見られなかった。 */}
-                  {essayDetail.feedback?.topicInsights && (
-                    <>
-                      <Separator />
-                      <div className="space-y-2">
-                        <h3 className="flex items-center gap-2 text-sm font-semibold">
-                          <BookOpen className="size-4" />
-                          テーマ深掘り
-                        </h3>
-                        <div className="space-y-2 rounded-lg border p-3 text-sm">
-                          <div>
-                            <p className="text-muted-foreground text-xs font-medium">
-                              背景・文脈
-                            </p>
-                            <p className="whitespace-pre-wrap">
-                              {essayDetail.feedback.topicInsights.background}
-                            </p>
-                          </div>
-                          {essayDetail.feedback.topicInsights.relatedThemes
-                            .length > 0 && (
-                            <div>
-                              <p className="text-muted-foreground text-xs font-medium">
-                                関連テーマ
-                              </p>
-                              <p>
-                                {essayDetail.feedback.topicInsights.relatedThemes.join(
-                                  "、"
-                                )}
-                              </p>
-                            </div>
-                          )}
-                          {essayDetail.feedback.topicInsights.deepDivePoints
-                            .length > 0 && (
-                            <div>
-                              <p className="text-muted-foreground text-xs font-medium">
-                                深掘りの視点
-                              </p>
-                              <ul className="list-inside list-decimal space-y-0.5">
-                                {essayDetail.feedback.topicInsights.deepDivePoints.map(
-                                  (pt, i) => (
-                                    <li key={i}>{pt}</li>
-                                  )
-                                )}
-                              </ul>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-muted-foreground text-xs font-medium">
-                              推奨切り口
-                            </p>
-                            <p className="whitespace-pre-wrap">
-                              {
-                                essayDetail.feedback.topicInsights
-                                  .recommendedAngle
-                              }
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
                   {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
                   生徒がどこで詰まったか分からないため、講評の後に置く。 */}
                   <Separator />

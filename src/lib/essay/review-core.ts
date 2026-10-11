@@ -35,10 +35,10 @@ import type {
   EssayScoreAxis,
   EssayScores,
   EssayFeedback,
-  TopicInsights,
   TaskFulfillment,
   ClaimCheck,
   ReportInsights,
+  PreviousFocusCheck,
   LanguageCorrection,
 } from "@/lib/types/essay";
 
@@ -73,7 +73,8 @@ export interface EssayReviewCoreInput {
   partial?: boolean;
   previousAttempt?: {
     essayText: string;
-    feedbackSummary: string[];
+    /** 前回の「今回の課題」。これが直ったかを previousFocusCheck で判定する */
+    focus: string;
   };
 }
 
@@ -415,8 +416,10 @@ ${input.ocrText}
    * 事実主張の確認状態（監査 P1-11）。資料と食い違う主張があれば、
    * 資料の取り違えと同じ扱いで logic を抑える（プロンプト任せにしない）。
    */
-  const claimChecks: ClaimCheck[] = (parsed.feedback?.claimChecks ?? []).map(
-    (c) => ({
+  // v28 から資料と食い違う主張だけを書かせている。それ以外が混じっても印にしない
+  const claimChecks: ClaimCheck[] = (parsed.feedback?.claimChecks ?? [])
+    .filter((c) => c.status === "contradicted")
+    .map((c) => ({
       claim: c.claim,
       type: c.type,
       status: c.status,
@@ -437,16 +440,6 @@ ${input.ocrText}
       }
     : undefined;
 
-  const topicInsights: TopicInsights | undefined = parsed.feedback
-    ?.topicInsights
-    ? {
-        background: parsed.feedback.topicInsights.background ?? "",
-        relatedThemes: parsed.feedback.topicInsights.relatedThemes ?? [],
-        deepDivePoints: parsed.feedback.topicInsights.deepDivePoints ?? [],
-        recommendedAngle: parsed.feedback.topicInsights.recommendedAngle ?? "",
-      }
-    : undefined;
-
   const reportInsights: ReportInsights | undefined = parsed.feedback
     .reportInsights
     ? {
@@ -457,16 +450,22 @@ ${input.ocrText}
               engagementBasis: engagement.basis,
             }
           : {}),
-        sourceComprehension:
-          parsed.feedback.reportInsights.sourceComprehension ?? "",
-        summaryAccuracy: parsed.feedback.reportInsights.summaryAccuracy ?? "",
-        citationAppropriateness:
-          parsed.feedback.reportInsights.citationAppropriateness ?? "",
-        analysisDepth: parsed.feedback.reportInsights.analysisDepth ?? "",
-        sourceConnection: parsed.feedback.reportInsights.sourceConnection ?? "",
         misreadings: parsed.feedback.reportInsights.misreadings ?? [],
       }
     : undefined;
+
+  const prevCheck = parsed.feedback.previousFocusCheck;
+  const previousFocusCheck: PreviousFocusCheck | undefined =
+    input.previousAttempt && prevCheck
+      ? {
+          focus: input.previousAttempt.focus,
+          status: prevCheck.status,
+          evidence: input.ocrText.includes(prevCheck.evidence)
+            ? prevCheck.evidence
+            : "",
+          comment: prevCheck.comment,
+        }
+      : undefined;
 
   const reviewCorrections = parsed.feedback.languageCorrections.filter(
     (correction) =>
@@ -485,22 +484,19 @@ ${input.ocrText}
 
   // Firestore は undefined を許可しないため、optional フィールドは値があるときだけ含める。
   const feedback: EssayFeedback = {
-    overall: parsed.feedback.overall,
     // スキーマ側の上限は緩く取ってあるので、生徒が読める量にここで絞る。
-    goodPoints: parsed.feedback.goodPoints.slice(0, 5),
+    goodPoints: parsed.feedback.goodPoints.slice(0, 1),
     priorityImprovement: parsed.feedback.priorityImprovement,
+    // 1件目は最優先の改善点の詳しい版なので、点検で見つけた矛盾はその後ろに置く
     improvements: [
+      ...parsed.feedback.improvements.slice(0, 1),
       ...contradictionImprovements(sentenceCheck),
-      ...parsed.feedback.improvements,
-    ].slice(0, 5),
-    nextChallenge: parsed.feedback.nextChallenge,
+      ...parsed.feedback.improvements.slice(1),
+    ].slice(0, 3),
     repeatedIssues: parsed.feedback.repeatedIssues.filter(
       (issue) => hasAdmissionPolicy || issue.category !== "apAlignment"
     ),
-    improvementsSinceLast: input.previousAttempt
-      ? parsed.feedback.improvementsSinceLast
-      : [],
-    ...(topicInsights ? { topicInsights } : {}),
+    ...(previousFocusCheck ? { previousFocusCheck } : {}),
     ...(taskFulfillment ? { taskFulfillment } : {}),
     ...(claimChecks.length > 0 ? { claimChecks } : {}),
     ...(reportInsights ? { reportInsights } : {}),

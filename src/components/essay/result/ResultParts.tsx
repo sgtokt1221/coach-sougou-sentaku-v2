@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { type ReactNode } from "react";
+import { useReducedMotion } from "framer-motion";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -12,12 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { RankBadge } from "@/components/shared/RankBadge";
-import {
-  CountUp,
-  PopIn,
-  Reveal,
-  SMOOTH_EASE,
-} from "@/components/motion/Reveal";
+import { CountUp, PopIn, Reveal } from "@/components/motion/Reveal";
 import { VERDICT_STYLE } from "@/components/essay/OralExamQuestionsCard";
 import { useAnchoredFeedback } from "@/components/essay/AnchoredFeedbackView";
 import type { ScoreRank } from "@/lib/score-rank";
@@ -26,6 +20,7 @@ import type {
   EssayFeedback,
   FeedbackAnchors,
   OralExamQuestionSet,
+  PreviousFocusCheck,
 } from "@/lib/types/essay";
 
 export interface RadarAxis {
@@ -256,64 +251,106 @@ export function GoodPointCard({ text }: { text: string }) {
   );
 }
 
-export interface MoreRow {
-  id: string;
-  label: string;
-  meta?: string;
-  content: ReactNode;
-}
+/** 本文に結び付かなかったときだけ、ここに出す指摘の種類と見出し */
+const UNANCHORED_LABEL: Record<string, string> = {
+  claim: "資料との食い違い",
+  requirement: "設問の要求",
+  knowledge: "知識の誤り",
+};
 
 /**
- * 畳んだ行。開くと高さが動いて中身が出る。結果を読む場面で要らない情報
- * （全指摘・課題文・書き換え例・テーマ深掘り）はここに置き、必要な人が開く。
+ * 今回の課題のほかに直すこと。改善点の残りと、本文に印を付けられなかった指摘。
+ * 文の直し（赤ペン）は答案の印で読むのでここには出さない。
  */
-export function MoreRows({ rows }: { rows: MoreRow[] }) {
-  const [open, setOpen] = useState<string | null>(null);
-  const reduce = useReducedMotion();
+export function OtherFixesCard({
+  focus,
+  text,
+  feedback,
+  anchors,
+  oralExam,
+}: {
+  focus: EssayFocus | null;
+  text: string;
+  feedback: Partial<EssayFeedback>;
+  anchors: FeedbackAnchors | null;
+  oralExam?: OralExamQuestionSet | null;
+}) {
+  const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
+  const skip = new Set(focus?.keys ?? []);
+  const items: { label?: string; text: string }[] = [];
+  (feedback.improvements ?? []).forEach((t, i) => {
+    if (!skip.has(`improvement:${i}`)) items.push({ text: t });
+  });
+  const tf = feedback.taskFulfillment;
+  if (tf && !tf.answersQuestion && tf.note && focus?.tag !== "設問への答え") {
+    items.push({ label: "設問への答え", text: tf.note });
+  }
+  for (const a of model.unanchored) {
+    const item = model.itemByKey.get(a.key);
+    if (!item || !UNANCHORED_LABEL[item.kind] || skip.has(a.key)) continue;
+    if (item.kind === "requirement") {
+      const r = tf?.requirements?.[Number(a.key.split(":")[1])];
+      if (r?.status === "met") continue;
+    }
+    items.push({ label: UNANCHORED_LABEL[item.kind], text: item.text });
+  }
+  if (items.length === 0) return null;
   return (
-    <div className="grid gap-2">
-      {rows.map((r) => {
-        const isOpen = open === r.id;
-        return (
-          <div
-            key={r.id}
-            id={`${r.id}-section`}
-            className="bg-card scroll-mt-20 overflow-hidden rounded-2xl"
-          >
-            <button
-              type="button"
-              onClick={() => setOpen(isOpen ? null : r.id)}
-              aria-expanded={isOpen}
-              className="hover:bg-muted/50 flex min-h-12 w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors"
-            >
-              <span className="text-[15px] font-semibold">{r.label}</span>
-              <span className="text-muted-foreground flex items-center gap-2 text-sm">
-                {r.meta}
-                <motion.span
-                  animate={{ rotate: isOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3, ease: SMOOTH_EASE }}
-                  className="inline-flex"
-                >
-                  <ChevronDown className="size-4" />
-                </motion.span>
-              </span>
-            </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div
-                  key="content"
-                  initial={reduce ? false : { height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={reduce ? undefined : { height: 0, opacity: 0 }}
-                  transition={{ duration: 0.45, ease: SMOOTH_EASE }}
-                >
-                  <div className="px-5 pb-5">{r.content}</div>
-                </motion.div>
+    <div className="bg-card grid gap-3 rounded-2xl p-5">
+      <p className="text-sm font-bold">ほかに直すこと</p>
+      <ul className="grid gap-3">
+        {items.map((item, i) => (
+          <li key={i} className="flex gap-2 text-[15px] leading-relaxed">
+            <span className="text-muted-foreground shrink-0">・</span>
+            <span>
+              {item.label && (
+                <span className="text-muted-foreground mr-1.5 text-xs font-semibold">
+                  {item.label}
+                </span>
               )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
+              {item.text}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const PREVIOUS_STATUS: Record<
+  PreviousFocusCheck["status"],
+  { label: string; className: string }
+> = {
+  resolved: {
+    label: "直った",
+    className: "bg-emerald-100 text-emerald-800",
+  },
+  partial: { label: "一部だけ", className: "bg-amber-100 text-amber-900" },
+  unresolved: { label: "まだ", className: "bg-rose-100 text-rose-800" },
+};
+
+/** 書き直しのとき、前回の課題が直ったか */
+export function PreviousFocusCard({ check }: { check: PreviousFocusCheck }) {
+  const status = PREVIOUS_STATUS[check.status];
+  return (
+    <div className="bg-card grid gap-2 rounded-2xl p-5">
+      <p className="flex items-center gap-2 text-sm font-bold">
+        前回の課題
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs ${status.className}`}
+        >
+          {status.label}
+        </span>
+      </p>
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        {check.focus}
+      </p>
+      <p className="text-[15px] leading-relaxed">{check.comment}</p>
+      {check.evidence && (
+        <p className="bg-muted/50 rounded-xl px-3 py-2 text-sm leading-relaxed">
+          {check.evidence}
+        </p>
+      )}
     </div>
   );
 }
