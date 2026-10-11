@@ -25,7 +25,6 @@ export interface TourPage {
 export const TOUR_ORDER = [
   "/tour/dashboard",
   "/tour/self-analysis",
-  "/tour/universities",
   "/tour/essay/new",
   "/tour/documents",
   "/tour/interview/new",
@@ -65,7 +64,7 @@ export const TOUR_PAGES: Record<string, TourPage> = {
   "/tour/self-analysis": {
     title: "自己分析",
     prev: "/tour/dashboard",
-    next: "/tour/universities",
+    next: "/tour/essay/new",
     tooltips: [
       {
         selector: "[data-tour='sa-tree']",
@@ -81,22 +80,9 @@ export const TOUR_PAGES: Record<string, TourPage> = {
       },
     ],
   },
-  "/tour/universities": {
-    title: "志望校マッチング",
-    prev: "/tour/self-analysis",
-    next: "/tour/essay/new",
-    tooltips: [
-      {
-        selector: "[data-tour='matching-input']",
-        title: "プロフィール入力",
-        description:
-          "GPA・英語資格・興味を入れると、合致度の高い大学を自動で並べます。",
-      },
-    ],
-  },
   "/tour/essay/new": {
     title: "小論文添削",
-    prev: "/tour/universities",
+    prev: "/tour/self-analysis",
     next: "/tour/documents",
     tooltips: [
       {

@@ -125,11 +125,7 @@ const studentSecondary: ListItem[] = [
   { label: "ネタインプット", href: "/student/topic-input", icon: BookMarked },
   { label: "テーマ・過去問", href: "/student/essay/themes", icon: BookOpen },
   // 要約ドリル・論理ドリル・ちょこ添削・ちょこ面接は非公開（2026-10-11。ページとデータは残す）
-  {
-    label: "志望校マッチング",
-    href: "/student/universities",
-    icon: GraduationCap,
-  },
+  // 自己探究・志望校探索は非公開（2026-10-11。ページとデータは残す）
   { label: "出願書類", href: "/student/documents", icon: FolderOpen },
   { label: "活動実績", href: "/student/activities", icon: Award },
   { label: "面談記録", href: "/student/sessions", icon: CalendarCheck },

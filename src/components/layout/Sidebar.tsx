@@ -26,8 +26,6 @@ import {
   MessageSquare,
   FileBarChart,
   Crown,
-  Compass,
-  Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -101,8 +99,7 @@ const studentNavGroups: NavGroup[] = [
     title: "Discover",
     items: [
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb, badge: SelfAnalysisBadge },
-      { label: "自己探究", href: "/student/research", icon: Sparkles, researchOnly: true },
-      { label: "志望校探索", href: "/student/universities/explore", icon: Compass },
+      // 自己探究・志望校探索は非公開（2026-10-11。ページとデータは残す）
       { label: "活動実績", href: "/student/activities", icon: Award },
     ],
   },

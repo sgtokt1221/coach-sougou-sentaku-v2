@@ -66,7 +66,7 @@ export const RANK_META: Record<SkillRank, RankMeta> = {
   },
   C: {
     label: "C",
-    description: "基礎は押さえているが構成・独自性に課題",
+    description: "基礎は押さえているが構成・論の深さに課題",
     textColor: "text-amber-950",
     bgColor: "bg-amber-100",
     borderColor: "border-amber-400",

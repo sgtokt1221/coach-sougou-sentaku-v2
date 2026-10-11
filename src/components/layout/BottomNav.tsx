@@ -22,8 +22,6 @@ import {
   Shield,
   GraduationCap,
   Lightbulb,
-  Compass,
-  Sparkles,
   Settings,
   TrendingUp,
 } from "lucide-react";
@@ -109,9 +107,8 @@ const sheetSections: SheetSection[] = [
     subtitle: "探究",
     items: [
       { label: "自己分析", href: "/student/self-analysis", icon: Lightbulb, iconBg: "bg-teal-100 dark:bg-teal-950/40", iconColor: "text-teal-700 dark:text-teal-300" },
-      { label: "志望校探索", href: "/student/universities/explore", icon: Compass, iconBg: "bg-sky-100 dark:bg-sky-950/40", iconColor: "text-sky-700 dark:text-sky-300" },
+      // 自己探究・志望校探索は非公開（2026-10-11。ページとデータは残す）
       { label: "活動実績", href: "/student/activities", icon: Award, iconBg: "bg-rose-100 dark:bg-rose-950/40", iconColor: "text-rose-700 dark:text-rose-300" },
-      { label: "自己探究", href: "/student/research", icon: Sparkles, iconBg: "bg-indigo-100 dark:bg-indigo-950/40", iconColor: "text-indigo-700 dark:text-indigo-300", researchOnly: true },
     ],
   },
   {

@@ -20,12 +20,10 @@ export interface DemoStepConfig {
 export const DEMO_ROUTE_ORDER = [
   "/student/demo/dashboard",
   "/student/demo/self-analysis",
-  "/student/demo/universities",
   "/student/demo/topic-input",
   "/student/demo/essay-themes",
   "/student/demo/essay",
   "/student/demo/documents",
-  "/student/demo/interview-drill",
   "/student/demo/interview",
   "/student/demo/complete",
 ];
@@ -59,7 +57,7 @@ export const DEMO_STEPS: Record<string, DemoStepConfig> = {
   "self-analysis": {
     title: "自己分析",
     route: "/student/demo/self-analysis",
-    nextRoute: "/student/demo/universities",
+    nextRoute: "/student/demo/topic-input",
     tooltips: [
       {
         selector: "[data-tour='sa-steps']",
@@ -72,25 +70,6 @@ export const DEMO_STEPS: Record<string, DemoStepConfig> = {
         title: "AIがあなたを深掘り",
         description:
           "追加質問を重ねて、志望理由書や面接で使える「自分の言葉」を引き出します。",
-      },
-    ],
-  },
-  universities: {
-    title: "志望校マッチング",
-    route: "/student/demo/universities",
-    nextRoute: "/student/demo/topic-input",
-    tooltips: [
-      {
-        selector: "[data-tour='match-result']",
-        title: "適合度スコア",
-        description:
-          "あなたのプロフィールと大学のアドミッション・ポリシーを照合し、合致度を％で算出。",
-      },
-      {
-        selector: "[data-tour='match-reason']",
-        title: "マッチ理由",
-        description:
-          "なぜ合うのか/合わないのか、AP上の根拠をセットで表示します。",
       },
     ],
   },
@@ -160,7 +139,7 @@ export const DEMO_STEPS: Record<string, DemoStepConfig> = {
   documents: {
     title: "志望理由書",
     route: "/student/demo/documents",
-    nextRoute: "/student/demo/interview-drill",
+    nextRoute: "/student/demo/interview",
     tooltips: [
       {
         selector: "[data-tour='docs-progress']",
@@ -173,25 +152,6 @@ export const DEMO_STEPS: Record<string, DemoStepConfig> = {
         title: "3軸AI添削",
         description:
           "AP合致度・構成・独自性の3軸で添削。小論文より深い構造評価。",
-      },
-    ],
-  },
-  "interview-drill": {
-    title: "面接ドリル",
-    route: "/student/demo/interview-drill",
-    nextRoute: "/student/demo/interview",
-    tooltips: [
-      {
-        selector: "[data-tour='drill-categories']",
-        title: "カテゴリ別ドリル",
-        description:
-          "志望理由・自己PR・学問関心など、カテゴリを選んで5分だけ練習できます。",
-      },
-      {
-        selector: "[data-tour='drill-score']",
-        title: "即時フィードバック",
-        description:
-          "回答に対してAIが5点満点で評価、改善例まで提示します。",
       },
     ],
   },

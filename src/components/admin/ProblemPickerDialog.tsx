@@ -243,8 +243,7 @@ export function ProblemPickerDialog({
   const TABS: { key: Tab; label: string }[] = [
     { key: "theme", label: "テーマ" },
     { key: "past", label: "過去問" },
-    { key: "interview", label: "面接ドリル" },
-    { key: "summary", label: "要約ドリル" },
+    // 面接ドリル・要約ドリルは生徒の画面から外したので出さない（2026-10-11）
     { key: "custom", label: "自作" },
   ];
 
