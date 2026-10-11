@@ -444,6 +444,34 @@
   animation: fadeInUp 0.5s ease-out both;
 }
 
+/*
+ * 結果画面の節を上から順に、下から少し浮き上がらせて出す。子要素に順番の遅れを付ける。
+ * 動きを減らす設定では、末尾の prefers-reduced-motion の指定で止まる。
+ */
+.reveal-stagger > * {
+  animation: fadeInUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.reveal-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+.reveal-stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.reveal-stagger > *:nth-child(4) { animation-delay: 0.24s; }
+.reveal-stagger > *:nth-child(5) { animation-delay: 0.32s; }
+.reveal-stagger > *:nth-child(6) { animation-delay: 0.4s; }
+.reveal-stagger > *:nth-child(n + 7) { animation-delay: 0.48s; }
+
+/* 棒グラフの棒が左から伸びる */
+@keyframes growX {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.animate-grow-x {
+  transform-origin: left center;
+  animation: growX 1s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
 .animate-blur-in {
   animation: blurIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

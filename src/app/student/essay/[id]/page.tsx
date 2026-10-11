@@ -5,8 +5,6 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -20,16 +18,6 @@ import {
   Zap,
   MessageSquare,
 } from "lucide-react";
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from "recharts";
-import { ScoreRing } from "@/components/shared/ScoreRing";
-import { RankBadge } from "@/components/shared/RankBadge";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type {
   EssayInlineComment,
@@ -54,15 +42,25 @@ import type {
   TaskFulfillment,
   ClaimCheck,
 } from "@/lib/types/essay";
-import {
-  axisPoints,
-  getRankFromPercentage,
-  getScorePercentage,
-} from "@/lib/score-rank";
+import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import { EssayFeedbackOverview } from "@/components/essay/EssayFeedbackOverview";
+import {
+  FocusCard,
+  GoodPointCard,
+  MoreRows,
+  ResultHero,
+  type MoreRow,
+} from "@/components/essay/result/ResultParts";
+import { Reveal } from "@/components/motion/Reveal";
+import { ResultLoading } from "@/components/motion/ResultLoading";
+import { motion } from "framer-motion";
+import {
+  essayResultKind,
+  focusVisibleKeys,
+  pickFocus,
+} from "@/lib/essay/result-focus";
 import { AnchoredFeedbackView } from "@/components/essay/AnchoredFeedbackView";
-import { oralAnswerSpans } from "@/lib/essay/feedback-anchors";
 import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
 import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
@@ -158,6 +156,9 @@ interface EssayResult {
   /** 出題資料。AIコーチへ渡す */
   questionType?: string | null;
   sourceText?: string | null;
+  /** 資料型の資料の要約・講義型の書き起こし。畳んだ行で読ませる */
+  chartDataSummary?: string | null;
+  lectureInfo?: string | null;
   scores: EssayScores;
   feedback: EssayFeedback;
   growthEvents?: GrowthEvent[];
@@ -173,26 +174,6 @@ interface EssayResult {
   oralExam?: OralExamQuestionSet | null;
   /** 指摘を本文に結び付けた結果。無ければ /anchors が初回に作る */
   feedbackAnchors?: FeedbackAnchors | null;
-}
-
-/**
- * 詳細の節。並び順は「読む順」に合わせる。
- * 指摘付きの答案は最初の画面に出すので、詳細は書き換え例 → 背景知識だけ。
- */
-const DETAIL_SECTIONS = [
-  { id: "brushup", label: "書き換え例" },
-  { id: "insights", label: "テーマ深掘り" },
-] as const;
-
-function ScoreSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-8 w-32" />
-      <Skeleton className="h-64 w-full" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-3/4" />
-    </div>
-  );
 }
 
 /**
@@ -434,11 +415,7 @@ export default function EssayResultPage() {
   }, [id, hasUnreadComments]);
 
   if (loading) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-5 lg:px-6 lg:py-8">
-        <ScoreSkeleton />
-      </div>
-    );
+    return <ResultLoading />;
   }
 
   if (error || !result) {
@@ -481,15 +458,6 @@ export default function EssayResultPage() {
    * 問の区切りが消え、意見の対立を読む読み物になってしまう）。
    */
   const oralSet = result.oralExam ?? null;
-  const sectionLabel = (sid: string, label: string) =>
-    oralSet && sid === "brushup"
-      ? "模範解答"
-      : oralSet && sid === "insights"
-        ? "知識の整理"
-        : label;
-  /** 答案の画面と同じ基準で、問ごとに分けて出せるか */
-  const oralSplit =
-    !!oralSet && oralAnswerSpans(result.ocrText ?? "", oralSet).size > 0;
   const brushedUpByQuestion =
     oralSet && result.feedback.brushedUpText
       ? splitOralExamAnswers(oralSet, result.feedback.brushedUpText)
@@ -500,6 +468,7 @@ export default function EssayResultPage() {
   // 軸の並びと旧データ（独自性）の扱いは essayScoreAxisRows に集約している
   const radarData = essayScoreAxisRows(result.scores).map((row) => ({
     subject: row.label,
+    short: row.short,
     value: row.value,
     weight: row.weight,
   }));
@@ -513,6 +482,355 @@ export default function EssayResultPage() {
     apAlignmentAssessable && typeof result.scores.apAlignment === "number"
       ? [{ subject: "AP合致度", value: result.scores.apAlignment }]
       : [];
+
+  const resultFeedback = result.feedback as Partial<SharedEssayFeedback>;
+  const kind = essayResultKind(result.questionType, result.sourceText);
+  const focus = pickFocus(resultFeedback, kind);
+  const engagement = result.feedback.reportInsights?.engagementLevel;
+  const criticalKnowledge = (
+    result.feedback.knowledgeInsights?.errors ?? []
+  ).filter((e) => e.severity === "critical").length;
+  const heroChips: { label: string; tone: "good" | "warn" | "bad" }[] = [];
+  if (engagement) {
+    heroChips.push({
+      label: sourceEngagementLabel(engagement),
+      tone:
+        engagement === "grounded"
+          ? "good"
+          : engagement === "shallow"
+            ? "warn"
+            : "bad",
+    });
+  }
+  if (criticalKnowledge > 0) {
+    heroChips.push({
+      label: `重大な知識の誤り ${criticalKnowledge}件`,
+      tone: "bad",
+    });
+  }
+  const canRetry = result.status === undefined || result.status === "reviewed";
+
+  const moreRows: MoreRow[] = [
+    {
+      id: "others",
+      label: "ほかの指摘",
+      content: (
+        <div className="space-y-4">
+          <EssayFeedbackOverview
+            text={result.ocrText ?? ""}
+            feedback={resultFeedback}
+            anchors={feedbackAnchors}
+            oralExam={
+              result.questionType === "oral_exam" ? result.oralExam : null
+            }
+          />
+          {hasRightExtra && (
+            <>
+              {/* 課題文の扱い。合計50点には入れず、指標として見せる。
+              点は既存5軸の上限で下がる（source-engagement.ts） */}
+              {result.feedback.reportInsights?.engagementLevel && (
+                <div
+                  className={`mt-6 rounded-lg border p-4 ${
+                    result.feedback.reportInsights.engagementLevel ===
+                    "grounded"
+                      ? "border-emerald-200 bg-emerald-50"
+                      : result.feedback.reportInsights.engagementLevel ===
+                          "shallow"
+                        ? "border-amber-200 bg-amber-50"
+                        : "border-rose-200 bg-rose-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">課題文の扱い</p>
+                    <span className="text-sm font-bold">
+                      {sourceEngagementLabel(
+                        result.feedback.reportInsights.engagementLevel
+                      )}
+                    </span>
+                  </div>
+                  {result.feedback.reportInsights.engagementBasis && (
+                    <p className="text-muted-foreground mt-1.5 text-xs">
+                      {result.feedback.reportInsights.engagementBasis}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground mt-2 text-[10px]">
+                    この評価は50点の合計には含まれません。課題文に触れていない場合は、
+                    構成・論理性・回答力・成熟度の上限が下がります。
+                  </p>
+                </div>
+              )}
+
+              {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
+              {typeof result.scores.knowledgeAccuracy === "number" && (
+                <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold">専門知識の正確性</p>
+                    <span className="text-lg font-bold tabular-nums">
+                      {result.scores.knowledgeAccuracy}
+                      <span className="text-sm font-normal text-slate-300">
+                        /10
+                      </span>
+                    </span>
+                  </div>
+                  {result.feedback.knowledgeInsights?.basis && (
+                    <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
+                      {result.feedback.knowledgeInsights.basis}
+                    </p>
+                  )}
+                  <p className="mt-2 text-[10px] text-slate-400">
+                    口頭試問型は知識を問う出題なので、この点は合計（
+                    {scoreMaximum}点満点）に入ります。
+                  </p>
+                </div>
+              )}
+
+              {/* 課題文の読み取り (sourceType="report" のときのみ) */}
+              {result.feedback.reportInsights && (
+                <div className="mt-6">
+                  <ReportInsightsCard
+                    insights={result.feedback.reportInsights}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
+  if (kind === "passage" && result.sourceText?.trim()) {
+    moreRows.push({
+      id: "source",
+      label: "課題文",
+      content: (
+        <p className="text-sm leading-7 whitespace-pre-wrap">
+          {result.sourceText}
+        </p>
+      ),
+    });
+  }
+  if (kind === "data" && result.chartDataSummary?.trim()) {
+    moreRows.push({
+      id: "chart",
+      label: "資料",
+      content: (
+        <p className="text-sm leading-7 whitespace-pre-wrap">
+          {result.chartDataSummary}
+        </p>
+      ),
+    });
+  }
+  if (kind === "lecture" && result.lectureInfo?.trim()) {
+    moreRows.push({
+      id: "lecture",
+      label: "講演の書き起こし",
+      content: (
+        <p className="max-h-[60vh] overflow-y-auto text-sm leading-7 whitespace-pre-wrap">
+          {result.lectureInfo}
+        </p>
+      ),
+    });
+  }
+  if (oralSet) {
+    moreRows.push({
+      id: "questions",
+      label: "問ごとの答えと判定",
+      content: (
+        <OralExamQuestionsCard
+          set={oralSet}
+          essayText={result.ocrText ?? ""}
+          insights={result.feedback.oralExamInsights}
+        />
+      ),
+    });
+  }
+  moreRows.push(
+    {
+      id: "brushup",
+      label: oralSet ? "模範解答" : "書き換え例",
+      content: (
+        <div>
+          {/* 未生成: オンデマンド生成ボタン */}
+          {!result.feedback.brushedUpText && (
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
+                  <PenTool className="size-6" />
+                  {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="py-8 text-center">
+                  <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
+                    <Zap className="size-8 text-emerald-600" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                    {oralSet
+                      ? "模範解答を作りますか？"
+                      : "ブラッシュアップ版を生成しますか？"}
+                  </h3>
+                  <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
+                    {oralSet ? (
+                      <>
+                        AIがあなたの答えをもとに、問ごとの判定と知識の誤りを
+                        直した模範解答を、問ごとの字数の目安で作ります。
+                        一度作ると保存されるので次回からはすぐ表示されます。
+                      </>
+                    ) : (
+                      <>
+                        AIがあなたの本文を、
+                        添削の改善ポイントに沿って磨いた全文を作成します。
+                        一度作ると保存されるので次回からはすぐ表示されます。
+                      </>
+                    )}
+                  </p>
+                  <Button
+                    onClick={generateBrushup}
+                    disabled={generatingBrushup}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    {generatingBrushup ? (
+                      <>
+                        <Zap className="mr-1 size-4 animate-pulse" />
+                        生成中…
+                      </>
+                    ) : (
+                      <>
+                        <PenTool className="mr-1 size-4" />
+                        {oralSet
+                          ? "模範解答を作る"
+                          : "ブラッシュアップ版を生成する"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {result.feedback.brushedUpText && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
+                  <PenTool className="size-6" />
+                  {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
+                </CardTitle>
+                {showBrushedUp && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs shadow-sm transition-all hover:shadow-md"
+                    onClick={() =>
+                      copyToClipboard(result.feedback.brushedUpText!, "brushup")
+                    }
+                  >
+                    {copiedSection === "brushup" ? (
+                      <>
+                        <Check className="mr-1 size-3" />
+                        コピー済み
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="mr-1 size-3" />
+                        全コピー
+                      </>
+                    )}
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                {!showBrushedUp ? (
+                  <div className="py-8 text-center">
+                    <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
+                      <Zap className="size-8 text-emerald-600" />
+                    </div>
+                    <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
+                      自分で考えてから確認
+                    </h3>
+                    <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
+                      {oralSet
+                        ? "まず自分で問ごとの直し方を考えてから、模範解答を確認しましょう。学習効果がより高まります。"
+                        : "まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。"}
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowBrushedUp(true)}
+                      className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
+                    >
+                      <ChevronDown className="mr-1 size-4" />
+                      {oralSet ? "模範解答を見る" : "ブラッシュアップ版を見る"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowBrushedUp(false)}
+                        className="text-emerald-600 hover:bg-emerald-100/60"
+                      >
+                        <ChevronUp className="mr-1 size-4" />
+                        閉じる
+                      </Button>
+                    </div>
+                    {oralSet && brushedUpByQuestion ? (
+                      <div className="space-y-3">
+                        {oralSet.subQuestions.map((q, i) => (
+                          <div
+                            key={q.no}
+                            className="space-y-2 rounded-xl bg-emerald-50/60 p-4"
+                          >
+                            <div className="flex gap-3">
+                              <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-emerald-600 px-2.5 text-xs font-bold text-white">
+                                問{q.no}
+                              </span>
+                              <p className="text-sm font-medium text-slate-900">
+                                {q.prompt}
+                              </p>
+                            </div>
+                            <p className="rounded-lg bg-white p-3 text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
+                              {brushedUpByQuestion[i]}
+                            </p>
+                            <p className="text-muted-foreground text-right text-xs tabular-nums">
+                              {brushedUpByQuestion[i]?.length ?? 0} /{" "}
+                              {q.wordLimit}字
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
+                        <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
+                          {result.feedback.brushedUpText}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "insights",
+      label: oralSet ? "知識の整理" : "テーマ深掘り",
+      content: oralSet ? (
+        <OralExamKnowledgeDigestView
+          digest={knowledgeDigest}
+          generating={generatingDeepDive}
+          onGenerate={generateDeepDive}
+        />
+      ) : (
+        <EssayDeepDiveView
+          deepDive={deepDive}
+          generating={generatingDeepDive}
+          onGenerate={generateDeepDive}
+        />
+      ),
+    }
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 pb-20 lg:pb-8">
@@ -561,605 +879,162 @@ export default function EssayResultPage() {
                 )}
               </p>
             </div>
-            {(result.status === undefined || result.status === "reviewed") && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 bg-white/70 shadow-sm transition-all hover:bg-white"
-                onClick={() =>
-                  router.push(`/student/essay/new?retryFrom=${id}`)
+          </div>
+        </div>
+
+        {/*
+          左（スマホでは上）に、ランク・レーダー・今回の課題・次も使える書き方。
+          右に答案と書き直しへの導線、残りは畳んだ行。PC では左を止めておき、
+          課題を見ながら答案の印を追えるようにする。
+        */}
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <div className="grid gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
+            <Reveal>
+              <ResultHero
+                rank={rank}
+                total={totalScore}
+                max={scoreMaximum}
+                axes={radarData.map((r) => ({
+                  short: r.short,
+                  value: r.value,
+                }))}
+                next={
+                  nextStep
+                    ? {
+                        rank: nextStep.gap.nextRank,
+                        needed: nextStep.gap.needed,
+                        headroom: headroomAxisLabel(nextStep.headroom.axis),
+                      }
+                    : null
                 }
-              >
-                <RotateCcw className="mr-1 size-4" />
-                同じテーマで再トライ
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Hero Section - スコアヒーロー */}
-        <div className="mb-8">
-          <Card className="relative overflow-hidden border-0 bg-white/60 shadow-lg shadow-sky-100/50 backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-50/50 via-transparent to-purple-50/30" />
-            <CardContent className="relative pt-8 pb-6">
-              {/* Mobile-first スコア表示 */}
-              <div className="mb-6 text-center">
-                <div className="flex flex-col items-center gap-6 lg:flex-row lg:gap-8">
-                  {/* スコア情報 */}
-                  <div className="inline-flex items-center gap-4 lg:gap-6">
-                    <ScoreRing
-                      score={totalScore}
-                      maxScore={scoreMaximum}
-                      size={80}
-                      strokeWidth={6}
-                    />
-                    <div className="text-left">
-                      <div className="text-4xl font-bold text-slate-900 tabular-nums lg:text-5xl">
-                        {totalScore}
-                        <span className="text-muted-foreground/60 text-xl font-normal">
-                          /{scoreMaximum}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        総合スコア
-                      </p>
-                      {result.feedback.quantitativeAnalysis && (
-                        <div className="mt-2">
-                          {(result.feedback.quantitativeAnalysis.gapToTarget ??
-                            result.feedback.quantitativeAnalysis.gapToPass ??
-                            0) > 0 ? (
-                            <Badge
-                              variant="outline"
-                              className="border-amber-300 bg-amber-50 text-amber-700"
-                            >
-                              アプリ内目標まで
-                              {result.feedback.quantitativeAnalysis
-                                .gapToTarget ??
-                                result.feedback.quantitativeAnalysis.gapToPass}
-                              点
-                            </Badge>
-                          ) : (
-                            <Badge className="border-0 bg-emerald-500 text-white">
-                              アプリ内目標を達成
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      {!apAlignmentAssessable && (
-                        <p className="mt-2 text-xs text-amber-700">
-                          AP未取得のため4軸で評価しています。
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* ランクバッジ */}
-                  <div className="mt-4 lg:mt-0">
-                    <RankBadge rank={rank} size="lg" />
-                  </div>
-                </div>
-              </div>
-
-              {/* レーダーと軸ごとの内訳 */}
-              {
-                <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-8">
-                  <div className="mb-4 h-[220px] lg:mb-0 lg:h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={radarData} outerRadius="80%">
-                        <PolarGrid gridType="polygon" stroke="#e2e8f0" />
-                        <PolarAngleAxis
-                          dataKey="subject"
-                          tick={{ fill: "#475569", fontSize: 12 }}
-                        />
-                        <PolarRadiusAxis
-                          domain={[0, 10]}
-                          tickCount={6}
-                          tick={{ fill: "#94a3b8", fontSize: 10 }}
-                          axisLine={false}
-                        />
-                        <Radar
-                          name="スコア"
-                          dataKey="value"
-                          stroke="#2563eb"
-                          fill="#0ea5e9"
-                          fillOpacity={0.25}
-                          strokeWidth={2}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* 項目別スコア詳細 */}
-                  <div className="space-y-3">
-                    {radarData.map((item) => (
-                      <div
-                        key={item.subject}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="text-sm font-medium text-slate-700">
-                          {item.subject}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600 transition-all"
-                              style={{ width: `${(item.value / 10) * 100}%` }}
-                            />
-                          </div>
-                          <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-900 tabular-nums">
-                            {axisPoints(item.value, item.weight).toFixed(1)}
-                            <span className="text-xs font-normal text-slate-400">
-                              /{item.weight}
-                            </span>
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* 合計外の参考値。レーダーには含めない */}
-                    {referenceScores.map((item) => (
-                      <div
-                        key={item.subject}
-                        className="flex items-center justify-between border-t border-slate-100 pt-3"
-                      >
-                        <span className="text-sm font-medium text-slate-500">
-                          {item.subject}
-                          <span className="ml-1.5 text-xs font-normal text-slate-400">
-                            合計外・参考
-                          </span>
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-slate-300 transition-all"
-                              style={{ width: `${(item.value / 10) * 100}%` }}
-                            />
-                          </div>
-                          <span className="min-w-[3.5rem] text-right text-sm font-bold text-slate-500 tabular-nums">
-                            {item.value}
-                            <span className="text-xs font-normal text-slate-400">
-                              /10
-                            </span>
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              }
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 講評。全体講評・良かったところ・直すところを1か所にまとめる */}
-        <Card className="mb-6">
-          <CardContent className="space-y-4 p-5">
-            {/* 点とランクを見た視線を、そのまま次の一手へつなぐ */}
-            {nextStep && (
-              <div className="bg-muted/50 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg px-4 py-3">
-                <span className="text-sm">
-                  あと
-                  <span className="text-primary mx-1 text-lg font-bold tabular-nums">
-                    {nextStep.gap.needed}
-                  </span>
-                  点で
-                  <span className="text-primary mx-1 text-lg font-bold">
-                    {nextStep.gap.nextRank}
-                  </span>
-                  ランク
-                </span>
-                <span className="text-muted-foreground text-sm">
-                  いちばん伸びしろがあるのは
-                  <span className="text-foreground mx-1 font-semibold">
-                    {headroomAxisLabel(nextStep.headroom.axis)}
-                  </span>
-                  （満点なら +{nextStep.headroom.gain}点）
-                </span>
-              </div>
-            )}
-            <EssayFeedbackOverview
-              text={result.ocrText ?? ""}
-              feedback={result.feedback as Partial<SharedEssayFeedback>}
-              anchors={feedbackAnchors}
-              oralExam={
-                result.questionType === "oral_exam" ? result.oralExam : null
-              }
-            />
-
-            {result.feedback.priorityImprovement && (
-              <div className="bg-primary/5 border-primary/40 space-y-1.5 rounded-xl border p-4">
-                <p className="text-primary text-xs font-semibold">
-                  次にやること
-                </p>
-                <p className="text-[0.95rem] leading-relaxed">
-                  {result.feedback.priorityImprovement}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 問ごとに分けられた答案は下の答案の画面が問ごとに出す。分けられないときだけ設問を並べる */}
-        {oralSet && !oralSplit && (
-          <OralExamQuestionsCard
-            set={oralSet}
-            essayText={result.ocrText ?? ""}
-            insights={result.feedback.oralExamInsights}
-          />
-        )}
-
-        {/*
-          指摘付きの答案。本文のすべての指摘を箇所に結び付けた印で出す。全体講評と
-          本文に結び付かない指摘は、上の講評にまとめたのでここでは出さない（hideGlobal）。
-        */}
-        <section id="feedback-section" className="mb-6 scroll-mt-24">
-          <AnchoredFeedbackView
-            text={result.ocrText ?? ""}
-            // この画面の講評の型は弱点の文面を省略可にしているだけで、中身は共通の型と同じ
-            feedback={result.feedback as Partial<SharedEssayFeedback>}
-            anchors={feedbackAnchors}
-            anchorsPending={anchorsPending}
-            oralExam={
-              result.questionType === "oral_exam" ? result.oralExam : null
-            }
-            hideGlobal
-            rightExtra={
-              hasRightExtra ? (
-                <>
-                  {/* 課題文の扱い。合計50点には入れず、指標として見せる。
-              点は既存5軸の上限で下がる（source-engagement.ts） */}
-                  {result.feedback.reportInsights?.engagementLevel && (
-                    <div
-                      className={`mt-6 rounded-lg border p-4 ${
-                        result.feedback.reportInsights.engagementLevel ===
-                        "grounded"
-                          ? "border-emerald-200 bg-emerald-50"
-                          : result.feedback.reportInsights.engagementLevel ===
-                              "shallow"
-                            ? "border-amber-200 bg-amber-50"
-                            : "border-rose-200 bg-rose-50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold">課題文の扱い</p>
-                        <span className="text-sm font-bold">
-                          {sourceEngagementLabel(
-                            result.feedback.reportInsights.engagementLevel
-                          )}
-                        </span>
-                      </div>
-                      {result.feedback.reportInsights.engagementBasis && (
-                        <p className="text-muted-foreground mt-1.5 text-xs">
-                          {result.feedback.reportInsights.engagementBasis}
-                        </p>
-                      )}
-                      <p className="text-muted-foreground mt-2 text-[10px]">
-                        この評価は50点の合計には含まれません。課題文に触れていない場合は、
-                        構成・論理性・回答力・成熟度の上限が下がります。
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 専門知識の正確性（口頭試問型のときだけ。合計に入る） */}
-                  {typeof result.scores.knowledgeAccuracy === "number" && (
-                    <div className="mt-6 rounded-lg bg-slate-800 p-4 text-white">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-semibold">
-                          専門知識の正確性
-                        </p>
-                        <span className="text-lg font-bold tabular-nums">
-                          {result.scores.knowledgeAccuracy}
-                          <span className="text-sm font-normal text-slate-300">
-                            /10
-                          </span>
-                        </span>
-                      </div>
-                      {result.feedback.knowledgeInsights?.basis && (
-                        <p className="mt-1.5 text-xs leading-relaxed text-slate-200">
-                          {result.feedback.knowledgeInsights.basis}
-                        </p>
-                      )}
-                      <p className="mt-2 text-[10px] text-slate-400">
-                        口頭試問型は知識を問う出題なので、この点は合計（
-                        {scoreMaximum}点満点）に入ります。
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 課題文の読み取り (sourceType="report" のときのみ) */}
-                  {result.feedback.reportInsights && (
-                    <div className="mt-6">
-                      <ReportInsightsCard
-                        insights={result.feedback.reportInsights}
-                      />
-                    </div>
-                  )}
-                </>
-              ) : undefined
-            }
-          />
-        </section>
-
-        {/*
-          講評を読んだ直後が一番聞きたいタイミングなので、詳細の中ではなく
-          最初の画面に置く。既定は閉じた1行で、開いたときだけ会話が出る。
-        */}
-        <EssayReviewCoach
-          essayId={result.id}
-          topic={result.topic}
-          essayText={result.ocrText ?? ""}
-          questionType={result.questionType ?? undefined}
-          sourceText={result.sourceText ?? undefined}
-          scoreTotal={totalScore}
-          scoreMaximum={scoreMaximum}
-          feedback={result.feedback}
-        />
-
-        {/* 前回比サマリー (再トライ時のみ) */}
-        {result.retryComparison && (
-          <div className="mb-8">
-            <RetryComparisonCard comparison={result.retryComparison} />
-          </div>
-        )}
-
-        {/* Sticky サマリーバー (モバイルのみ) */}
-        <div className="sticky top-0 z-30 mb-6 border-b border-slate-200 bg-white/80 px-4 py-3 shadow-sm backdrop-blur-md lg:hidden">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <ScoreRing
-                score={totalScore}
-                maxScore={scoreMaximum}
-                size={40}
-                strokeWidth={4}
+                chips={heroChips}
+                oral={
+                  oralSet
+                    ? oralSet.subQuestions.flatMap((q) => {
+                        const v =
+                          result.feedback.oralExamInsights?.subQuestions.find(
+                            (x) => x.no === q.no
+                          );
+                        return v
+                          ? [{ no: q.no, prompt: q.prompt, verdict: v.verdict }]
+                          : [];
+                      })
+                    : undefined
+                }
+                footnote={
+                  !apAlignmentAssessable ? (
+                    <span className="text-muted-foreground text-sm">
+                      AP未取得のため4軸で評価
+                    </span>
+                  ) : referenceScores.length > 0 ? (
+                    <span className="text-muted-foreground text-sm">
+                      AP合致度（参考）{referenceScores[0].value}/10
+                    </span>
+                  ) : undefined
+                }
               />
-              <div>
-                <div className="text-lg font-bold text-slate-900 tabular-nums">
-                  {totalScore}
-                  <span className="text-muted-foreground/60 text-sm font-normal">
-                    /{scoreMaximum}
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-xs">総合スコア</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-xs">
-              小論文添削結果
-            </Badge>
-          </div>
-        </div>
-
-        {/* 講師・管理者からのインラインコメント */}
-        {(result.inlineComments?.length ?? 0) > 0 && (
-          <Card className="mb-6 border-teal-200 bg-teal-50/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base text-teal-800">
-                <MessageSquare className="size-5" />
-                講師・管理者からのコメント
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CommentableEssayText
-                text={result.ocrText ?? ""}
-                comments={result.inlineComments ?? []}
-                mode="view"
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {/*
-          詳細。以前はモバイル用のタブ版とPC用の全表示版で同じ内容を二重に
-          持っており、幅によって見えるものが違っていた。1本にまとめ、
-          上部の見出しナビで目的の節へ飛べるようにする。
-        */}
-        {
-          <div className="space-y-8">
-            <div className="bg-background/80 sticky top-0 z-20 -mx-1 flex gap-1.5 overflow-x-auto border-b px-1 py-2 backdrop-blur">
-              {DETAIL_SECTIONS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() =>
-                    document
-                      .getElementById(`${s.id}-section`)
-                      ?.scrollIntoView({ behavior: "smooth" })
+            </Reveal>
+            {result.retryComparison && (
+              <Reveal delay={0.35}>
+                <RetryComparisonCard comparison={result.retryComparison} />
+              </Reveal>
+            )}
+            {focus && (
+              <Reveal delay={0.45}>
+                <FocusCard
+                  focus={focus}
+                  text={result.ocrText ?? ""}
+                  feedback={resultFeedback}
+                  anchors={feedbackAnchors}
+                  oralExam={
+                    result.questionType === "oral_exam" ? result.oralExam : null
                   }
-                  className="text-muted-foreground hover:bg-muted hover:text-foreground shrink-0 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
-                >
-                  {sectionLabel(s.id, s.label)}
-                </button>
-              ))}
-            </div>
-            {/* ブラッシュアップセクション */}
-            <section id="brushup-section" className="scroll-mt-24">
-              {/* 未生成: オンデマンド生成ボタン */}
-              {!result.feedback.brushedUpText && (
-                <Card>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                      <PenTool className="size-6" />
-                      {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="py-8 text-center">
-                      <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                        <Zap className="size-8 text-emerald-600" />
-                      </div>
-                      <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                        {oralSet
-                          ? "模範解答を作りますか？"
-                          : "ブラッシュアップ版を生成しますか？"}
-                      </h3>
-                      <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                        {oralSet ? (
-                          <>
-                            AIがあなたの答えをもとに、問ごとの判定と知識の誤りを
-                            直した模範解答を、問ごとの字数の目安で作ります。
-                            一度作ると保存されるので次回からはすぐ表示されます。
-                          </>
-                        ) : (
-                          <>
-                            AIがあなたの本文を、
-                            添削の改善ポイントに沿って磨いた全文を作成します。
-                            一度作ると保存されるので次回からはすぐ表示されます。
-                          </>
-                        )}
-                      </p>
-                      <Button
-                        onClick={generateBrushup}
-                        disabled={generatingBrushup}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        {generatingBrushup ? (
-                          <>
-                            <Zap className="mr-1 size-4 animate-pulse" />
-                            生成中…
-                          </>
-                        ) : (
-                          <>
-                            <PenTool className="mr-1 size-4" />
-                            {oralSet
-                              ? "模範解答を作る"
-                              : "ブラッシュアップ版を生成する"}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              {result.feedback.brushedUpText && (
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-4">
-                    <CardTitle className="flex items-center gap-2 text-xl tracking-tight text-emerald-700">
-                      <PenTool className="size-6" />
-                      {oralSet ? "小問ごとの模範解答" : "ブラッシュアップ版"}
-                    </CardTitle>
-                    {showBrushedUp && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs shadow-sm transition-all hover:shadow-md"
-                        onClick={() =>
-                          copyToClipboard(
-                            result.feedback.brushedUpText!,
-                            "brushup"
-                          )
-                        }
-                      >
-                        {copiedSection === "brushup" ? (
-                          <>
-                            <Check className="mr-1 size-3" />
-                            コピー済み
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="mr-1 size-3" />
-                            全コピー
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {!showBrushedUp ? (
-                      <div className="py-8 text-center">
-                        <div className="mb-4 inline-flex size-16 items-center justify-center rounded-full bg-emerald-100">
-                          <Zap className="size-8 text-emerald-600" />
-                        </div>
-                        <h3 className="mb-2 text-lg font-semibold tracking-tight text-emerald-800">
-                          自分で考えてから確認
-                        </h3>
-                        <p className="mx-auto mb-4 max-w-md text-sm text-emerald-700">
-                          {oralSet
-                            ? "まず自分で問ごとの直し方を考えてから、模範解答を確認しましょう。学習効果がより高まります。"
-                            : "まず自分で改善点を考えてから、ブラッシュアップ版を確認しましょう。学習効果がより高まります。"}
-                        </p>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowBrushedUp(true)}
-                          className="border-emerald-300 text-emerald-700 transition-all hover:bg-emerald-50 hover:shadow-md"
-                        >
-                          <ChevronDown className="mr-1 size-4" />
-                          {oralSet
-                            ? "模範解答を見る"
-                            : "ブラッシュアップ版を見る"}
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowBrushedUp(false)}
-                            className="text-emerald-600 hover:bg-emerald-100/60"
-                          >
-                            <ChevronUp className="mr-1 size-4" />
-                            閉じる
-                          </Button>
-                        </div>
-                        {oralSet && brushedUpByQuestion ? (
-                          <div className="space-y-3">
-                            {oralSet.subQuestions.map((q, i) => (
-                              <div
-                                key={q.no}
-                                className="space-y-2 rounded-xl bg-emerald-50/60 p-4"
-                              >
-                                <div className="flex gap-3">
-                                  <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-emerald-600 px-2.5 text-xs font-bold text-white">
-                                    問{q.no}
-                                  </span>
-                                  <p className="text-sm font-medium text-slate-900">
-                                    {q.prompt}
-                                  </p>
-                                </div>
-                                <p className="rounded-lg bg-white p-3 text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
-                                  {brushedUpByQuestion[i]}
-                                </p>
-                                <p className="text-muted-foreground text-right text-xs tabular-nums">
-                                  {brushedUpByQuestion[i]?.length ?? 0} /{" "}
-                                  {q.wordLimit}字
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="rounded-xl border border-emerald-200 bg-white/70 p-6 shadow-inner">
-                            <p className="text-sm leading-relaxed font-[450] whitespace-pre-wrap text-slate-800">
-                              {result.feedback.brushedUpText}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-            </section>
-
-            <Separator className="my-8 opacity-30" />
-
-            {/* テーマ深掘りセクション */}
-            <section id="insights-section" className="scroll-mt-24 space-y-4">
-              {/* 長文の深掘り（採点とは別に、開いたときだけ生成する） */}
-              {oralSet ? (
-                <OralExamKnowledgeDigestView
-                  digest={knowledgeDigest}
-                  generating={generatingDeepDive}
-                  onGenerate={generateDeepDive}
                 />
-              ) : (
-                <EssayDeepDiveView
-                  deepDive={deepDive}
-                  generating={generatingDeepDive}
-                  onGenerate={generateDeepDive}
-                />
-              )}
-            </section>
+              </Reveal>
+            )}
+            {(result.feedback.goodPoints ?? [])[0] && (
+              <Reveal delay={0.55}>
+                <GoodPointCard text={result.feedback.goodPoints[0]} />
+              </Reveal>
+            )}
           </div>
-        }
+
+          <div className="grid min-w-0 gap-4">
+            {/* 講師・管理者からのインラインコメント */}
+            {(result.inlineComments?.length ?? 0) > 0 && (
+              <Card className="border-teal-200 bg-teal-50/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base text-teal-800">
+                    <MessageSquare className="size-5" />
+                    講師・管理者からのコメント
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CommentableEssayText
+                    text={result.ocrText ?? ""}
+                    comments={result.inlineComments ?? []}
+                    mode="view"
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            <Reveal delay={0.6}>
+              <section id="feedback-section" className="scroll-mt-24">
+                <AnchoredFeedbackView
+                  text={result.ocrText ?? ""}
+                  // この画面の講評の型は弱点の文面を省略可にしているだけで、中身は共通の型と同じ
+                  feedback={resultFeedback}
+                  anchors={feedbackAnchors}
+                  anchorsPending={anchorsPending}
+                  oralExam={
+                    result.questionType === "oral_exam" ? result.oralExam : null
+                  }
+                  hideGlobal
+                  focusKeys={focusVisibleKeys(resultFeedback, focus)}
+                />
+              </section>
+            </Reveal>
+
+            {canRetry && (
+              <Reveal delay={0.7}>
+                <motion.button
+                  type="button"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() =>
+                    router.push(`/student/essay/new?retryFrom=${id}`)
+                  }
+                  className="bg-primary text-primary-foreground flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm"
+                >
+                  <RotateCcw className="size-4" />
+                  {focus ? "この1点を直して書き直す" : "同じテーマで書き直す"}
+                </motion.button>
+              </Reveal>
+            )}
+
+            {/*
+              講評を読んだ直後が一番聞きたいタイミングなので、課題と答案のすぐ下に置く。
+              既定は閉じた1行で、開いたときだけ会話が出る。
+            */}
+            <Reveal delay={0.75}>
+              <EssayReviewCoach
+                essayId={result.id}
+                topic={result.topic}
+                essayText={result.ocrText ?? ""}
+                questionType={result.questionType ?? undefined}
+                sourceText={result.sourceText ?? undefined}
+                scoreTotal={totalScore}
+                scoreMaximum={scoreMaximum}
+                feedback={result.feedback}
+              />
+            </Reveal>
+
+            <Reveal delay={0.85}>
+              <MoreRows rows={moreRows} />
+            </Reveal>
+          </div>
+        </div>
       </div>
     </div>
   );

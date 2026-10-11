@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { SMOOTH_EASE } from "@/components/motion/Reveal";
 import {
   PenTool,
   BookOpen,
@@ -58,16 +60,12 @@ export function ReviewProgress({
 }) {
   const [tipIndex, setTipIndex] = useState(0);
   const [stageIndex, setStageIndex] = useState(0);
-  const [fadeIn, setFadeIn] = useState(true);
   const [elapsed, setElapsed] = useState(0);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setFadeIn(false);
-      setTimeout(() => {
-        setTipIndex((prev) => (prev + 1) % TIPS.length);
-        setFadeIn(true);
-      }, 300);
+      setTipIndex((prev) => (prev + 1) % TIPS.length);
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -92,45 +90,92 @@ export function ReviewProgress({
     10 + stageIndex * 18 + Math.floor(elapsed * 0.8),
     95
   );
+  /** 入れ替わる文言の動き。下から入って上へ抜ける */
+  const swap = reduce
+    ? {}
+    : {
+        initial: { opacity: 0, y: 10, filter: "blur(4px)" },
+        animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+        exit: { opacity: 0, y: -10, filter: "blur(4px)" },
+        transition: { duration: 0.5, ease: SMOOTH_EASE },
+      };
 
   return (
-    <div className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
+    <motion.div
+      className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center bg-gradient-to-br from-slate-50 via-white to-teal-50/30"
+      initial={reduce ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, ease: SMOOTH_EASE }}
+    >
       <div className="mx-6 w-full max-w-md space-y-8 py-8">
-        {/* Main animation area */}
+        {/* 中央の丸。呼吸するように大きさが変わり、外の輪がゆっくり回る */}
         <div className="flex flex-col items-center gap-6">
-          {/* Animated rings + icon */}
-          <div className="relative size-28">
-            {/* Outer rotating ring */}
-            <svg
-              className="absolute inset-0 animate-spin"
-              style={{ animationDuration: "8s" }}
-              viewBox="0 0 112 112"
+          <div className="relative size-32">
+            <motion.div
+              className="absolute -inset-4 rounded-full bg-teal-300/25 blur-2xl"
+              animate={
+                reduce
+                  ? undefined
+                  : { scale: [0.9, 1.15, 0.9], opacity: [0.5, 0.9, 0.5] }
+              }
+              transition={{
+                duration: 3.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+            <motion.svg
+              className="absolute inset-0"
+              viewBox="0 0 128 128"
+              animate={reduce ? undefined : { rotate: 360 }}
+              transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
             >
               <circle
-                cx="56"
-                cy="56"
-                r="52"
+                cx="64"
+                cy="64"
+                r="60"
                 fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="1"
-                strokeDasharray="8 12"
-                opacity="0.3"
+                stroke="oklch(0.52 0.14 175)"
+                strokeWidth="1.5"
+                strokeDasharray="10 14"
+                strokeLinecap="round"
+                opacity="0.35"
               />
-            </svg>
-            {/* Middle pulsing ring */}
-            <div className="border-primary/20 absolute inset-3 animate-pulse rounded-full border-2" />
-            {/* Inner icon */}
-            <div className="from-primary/10 to-primary/5 absolute inset-6 flex items-center justify-center rounded-full bg-gradient-to-br shadow-inner">
-              <Sparkles className="text-primary size-10 animate-pulse" />
-            </div>
+            </motion.svg>
+            <motion.div
+              className="border-primary/25 absolute inset-4 rounded-full border-2"
+              animate={reduce ? undefined : { scale: [1, 1.06, 1] }}
+              transition={{
+                duration: 2.4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+            <motion.div
+              className="from-primary/15 to-primary/5 absolute inset-8 flex items-center justify-center rounded-full bg-gradient-to-br shadow-inner"
+              animate={reduce ? undefined : { y: [0, -3, 0] }}
+              transition={{
+                duration: 2.8,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              <Sparkles className="text-primary size-10" />
+            </motion.div>
           </div>
 
-          {/* Stage info */}
-          <div className="space-y-1.5 text-center">
-            <div className="flex items-center justify-center gap-2">
-              <StageIcon className="text-primary size-4" />
-              <p className="text-sm font-medium">{stage.label}</p>
-            </div>
+          {/* 段階の文言 */}
+          <div className="min-h-[3.25rem] space-y-1.5 text-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={stageIndex}
+                className="flex items-center justify-center gap-2"
+                {...swap}
+              >
+                <StageIcon className="text-primary size-4" />
+                <p className="text-sm font-medium">{stage.label}</p>
+              </motion.div>
+            </AnimatePresence>
             <p className="text-muted-foreground text-xs">
               {longRunning
                 ? elapsed < 10
@@ -149,19 +194,22 @@ export function ReviewProgress({
           </div>
         </div>
 
-        {/* Progress section */}
         <div className="space-y-4">
-          {/* Progress bar */}
-          <div className="relative">
-            <div className="bg-muted h-1.5 overflow-hidden rounded-full">
-              <div
-                className="via-primary h-full rounded-full bg-gradient-to-r from-teal-400 to-teal-500 transition-all duration-1000 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+          {/* 進み具合。ばねの動きで伸びる */}
+          <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-teal-400 via-teal-500 to-emerald-500"
+              initial={{ width: "0%" }}
+              animate={{ width: `${progress}%` }}
+              transition={
+                reduce
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 40, damping: 18 }
+              }
+            />
           </div>
 
-          {/* Stage indicators */}
+          {/* 段階の丸印。点灯するときに少し弾む */}
           <div className="flex items-center justify-between px-1">
             {STAGES.map((s, i) => {
               const done = i < stageIndex;
@@ -169,23 +217,31 @@ export function ReviewProgress({
               const SIcon = s.icon;
               return (
                 <div key={i} className="flex flex-col items-center gap-1">
-                  <div
-                    className={`flex size-7 items-center justify-center rounded-full transition-all duration-500 ${
+                  <motion.div
+                    className={`flex size-7 items-center justify-center rounded-full transition-colors duration-500 ${
                       done
                         ? "bg-primary text-white"
                         : active
                           ? "bg-primary/15 text-primary ring-primary/30 ring-2"
                           : "bg-muted text-muted-foreground"
                     }`}
+                    animate={
+                      reduce
+                        ? undefined
+                        : active
+                          ? { scale: [1, 1.18, 1] }
+                          : { scale: 1 }
+                    }
+                    transition={{ duration: 0.6, ease: SMOOTH_EASE }}
                   >
                     {done ? (
                       <CheckCircle className="size-3.5" />
                     ) : (
                       <SIcon className="size-3.5" />
                     )}
-                  </div>
+                  </motion.div>
                   <span
-                    className={`max-w-[56px] text-center text-[9px] leading-tight ${
+                    className={`max-w-[56px] text-center text-[9px] leading-tight transition-colors duration-500 ${
                       done || active
                         ? "text-foreground"
                         : "text-muted-foreground"
@@ -199,23 +255,27 @@ export function ReviewProgress({
           </div>
         </div>
 
-        {/* Tip card */}
-        <div
-          className={`rounded-2xl border bg-white/80 p-5 shadow-sm backdrop-blur-sm transition-all duration-500 ${
-            fadeIn ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-          }`}
-        >
-          <p className="text-primary/60 mb-3 text-[10px] font-semibold tracking-widest uppercase">
-            Writing Tip
-          </p>
-          <div className="flex items-start gap-4">
-            <div className="from-primary/15 to-primary/5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br">
-              <TipIcon className="text-primary size-5" />
-            </div>
-            <p className="pt-0.5 text-sm leading-relaxed">{tip.text}</p>
-          </div>
+        {/* ヒント。4秒ごとに滑って入れ替わる */}
+        <div className="relative min-h-[8.5rem]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tipIndex}
+              className="rounded-2xl border bg-white/80 p-5 shadow-sm backdrop-blur-sm"
+              {...swap}
+            >
+              <p className="text-primary/60 mb-3 text-[10px] font-semibold tracking-widest uppercase">
+                Writing Tip
+              </p>
+              <div className="flex items-start gap-4">
+                <div className="from-primary/15 to-primary/5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br">
+                  <TipIcon className="text-primary size-5" />
+                </div>
+                <p className="pt-0.5 text-sm leading-relaxed">{tip.text}</p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

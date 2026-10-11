@@ -5,7 +5,6 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
@@ -44,6 +43,8 @@ import type { RepeatedIssue } from "@/lib/types/essay";
 import type { SessionSummary } from "@/lib/types/session";
 import { ScoreRing } from "@/components/shared/ScoreRing";
 import { RankBadge } from "@/components/shared/RankBadge";
+import { CountUp, PopIn } from "@/components/motion/Reveal";
+import { ResultLoading } from "@/components/motion/ResultLoading";
 import { TranscriptionView } from "@/components/interview/TranscriptionView";
 import { InterviewConversationLog } from "@/components/interview/InterviewConversationLog";
 import { interviewTotalMax } from "@/lib/types/interview";
@@ -161,14 +162,7 @@ export default function InterviewResultPage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-4 px-4 py-5 lg:px-6 lg:py-8">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
+    return <ResultLoading />;
   }
 
   if (!result) {
@@ -202,7 +196,8 @@ export default function InterviewResultPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 pb-20 lg:pb-8">
-      <div className="mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-8">
+      {/* 節を上から順に浮き上がらせて出す（reveal-stagger） */}
+      <div className="reveal-stagger mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
@@ -251,7 +246,7 @@ export default function InterviewResultPage() {
                     />
                     <div className="text-left">
                       <div className="text-4xl font-bold text-slate-900 tabular-nums lg:text-5xl">
-                        {result.scores.total}
+                        <CountUp value={result.scores.total} delay={0.2} />
                         <span className="text-muted-foreground/60 text-xl font-normal">
                           /{totalMax}
                         </span>
@@ -278,9 +273,9 @@ export default function InterviewResultPage() {
                   </div>
 
                   {/* ランクバッジ */}
-                  <div className="mt-4 lg:mt-0">
+                  <PopIn delay={0.1} className="mt-4 lg:mt-0">
                     <RankBadge rank={rank} size="lg" />
-                  </div>
+                  </PopIn>
                 </div>
               </div>
 
@@ -300,7 +295,7 @@ export default function InterviewResultPage() {
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
                             <div
-                              className={`h-full rounded-full transition-all ${SCORE_COLORS[key] ?? "bg-gray-500"}`}
+                              className={`animate-grow-x h-full rounded-full ${SCORE_COLORS[key] ?? "bg-gray-500"}`}
                               style={{
                                 width: `${(result.scores[key] ?? 0) * 10}%`,
                               }}
@@ -327,7 +322,7 @@ export default function InterviewResultPage() {
                         <div className="flex items-center gap-2">
                           <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100">
                             <div
-                              className={`h-full rounded-full transition-all ${SCORE_COLORS[key] ?? "bg-gray-500"}`}
+                              className={`animate-grow-x h-full rounded-full ${SCORE_COLORS[key] ?? "bg-gray-500"}`}
                               style={{
                                 width: `${(result.scores[key] ?? 0) * 10}%`,
                               }}

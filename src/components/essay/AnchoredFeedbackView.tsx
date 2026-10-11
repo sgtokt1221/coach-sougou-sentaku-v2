@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { MessageSquare, X } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
@@ -392,6 +393,7 @@ export function AnchoredFeedbackView({
   oralExam,
   rightExtra,
   hideGlobal = false,
+  focusKeys,
 }: {
   text: string;
   feedback: Partial<EssayFeedback>;
@@ -403,10 +405,41 @@ export function AnchoredFeedbackView({
   rightExtra?: ReactNode;
   /** 全体講評・全体への指摘を出さない（呼び出し側がまとめて出すとき） */
   hideGlobal?: boolean;
+  /**
+   * 既定で印を出す指摘のキー（今回の課題と、意味に響く赤ペン）。渡すと答案の上に
+   * 「今回の課題／すべての指摘」の切り替えが出る。全部の印を一度に出すと、
+   * どれから直すかが見えなくなるため
+   */
+  focusKeys?: Set<string>;
 }) {
   const [selected, setSelected] = useState<string[] | null>(null);
   const [mobileTab, setMobileTab] = useState<"text" | "global">("text");
-  const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
+  const [markMode, setMarkMode] = useState<"focus" | "all">("focus");
+  const reduce = useReducedMotion();
+  const fullModel = useAnchoredFeedback({ text, feedback, anchors, oralExam });
+  const focusMarked = useMemo(
+    () =>
+      focusKeys ? fullModel.marked.filter((m) => focusKeys.has(m.key)) : [],
+    [fullModel, focusKeys]
+  );
+  /**
+   * 課題の印が本文に1つも無いとき（口頭試問の問ごとの判定や、本文に結び付かない
+   * 課題）は、切り替えを出さずに全部の印を出す。0件の「今回の課題」を既定にすると、
+   * 答案に何も印が無いように見える
+   */
+  const useFocus = !!focusKeys && focusMarked.length > 0;
+  const mode = useFocus ? markMode : "all";
+  const model = useMemo(
+    () =>
+      useFocus && mode === "focus"
+        ? {
+            ...fullModel,
+            marked: focusMarked,
+            segments: buildSegments(text.length, focusMarked),
+          }
+        : fullModel,
+    [fullModel, useFocus, focusMarked, mode, text.length]
+  );
   const hasSide = !hideGlobal || !!rightExtra;
   // 全体の欄を出さないときはタブで切り替えるものが無い
   const tab = hideGlobal ? "text" : mobileTab;
@@ -436,27 +469,64 @@ export function AnchoredFeedbackView({
           <Card>
             <CardContent className="space-y-4 p-4 lg:p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold">
-                  あなたの答案
-                  <span className="text-muted-foreground ml-2 text-xs font-normal">
-                    印を押すと、その箇所への指摘が見られます
-                  </span>
-                </p>
-                <FeedbackLegend />
+                {useFocus ? (
+                  <>
+                    <p className="text-sm font-semibold">あなたの答案</p>
+                    <SegmentControl
+                      size="sm"
+                      value={mode}
+                      onChange={(v) => {
+                        setSelected(null);
+                        setMarkMode(v as "focus" | "all");
+                      }}
+                      options={[
+                        {
+                          id: "focus",
+                          label: "今回の課題",
+                          count: focusMarked.length,
+                        },
+                        {
+                          id: "all",
+                          label: "すべての指摘",
+                          count: fullModel.marked.length,
+                        },
+                      ]}
+                    />
+                    {mode === "all" && <FeedbackLegend />}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold">
+                      あなたの答案
+                      <span className="text-muted-foreground ml-2 text-xs font-normal">
+                        印を押すと、その箇所への指摘が見られます
+                      </span>
+                    </p>
+                    <FeedbackLegend />
+                  </>
+                )}
               </div>
               {anchorsPending && (
                 <p className="text-muted-foreground text-xs">
                   指摘を本文に配置しています…
                 </p>
               )}
-              <AnchoredEssayBody
-                model={model}
-                text={text}
-                feedback={feedback}
-                oralExam={oralExam}
-                selected={selected}
-                onSelect={setSelected}
-              />
+              {/* 印の出し方を切り替えたときは、ふわっと入れ替える */}
+              <motion.div
+                key={mode}
+                initial={reduce ? false : { opacity: 0.35 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <AnchoredEssayBody
+                  model={model}
+                  text={text}
+                  feedback={feedback}
+                  oralExam={oralExam}
+                  selected={selected}
+                  onSelect={setSelected}
+                />
+              </motion.div>
             </CardContent>
           </Card>
         </div>
