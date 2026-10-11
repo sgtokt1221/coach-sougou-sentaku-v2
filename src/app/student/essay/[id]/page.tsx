@@ -30,7 +30,6 @@ import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import {
   FocusCard,
   NextTimeCard,
-  OtherFixesCard,
   PreviousFocusCard,
   ResultHero,
 } from "@/components/essay/result/ResultParts";
@@ -40,7 +39,6 @@ import { motion } from "framer-motion";
 import { essayResultKind, pickFocus } from "@/lib/essay/result-focus";
 import { AnchoredFeedbackView } from "@/components/essay/AnchoredFeedbackView";
 import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
-import { EssayReviewCoach } from "@/components/essay/EssayReviewCoach";
 import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
 import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 
@@ -380,7 +378,7 @@ export default function EssayResultPage() {
         </div>
 
         {/*
-          左（スマホでは上）に、ランク・レーダー・今回の課題・次回からの注意点。
+          左（スマホでは上）に、ランク・レーダー・今回の課題（詳細で直すこと）・次回からの注意点。
           右に答案・直すこと・書き直しへの導線。PC では左を止めておき、
           課題を見ながら答案の印を追えるようにする。
         */}
@@ -495,18 +493,6 @@ export default function EssayResultPage() {
               </section>
             </Reveal>
 
-            <Reveal delay={0.65}>
-              <OtherFixesCard
-                focus={focus}
-                text={result.ocrText ?? ""}
-                feedback={feedbackForView}
-                anchors={feedbackAnchors}
-                oralExam={
-                  result.questionType === "oral_exam" ? result.oralExam : null
-                }
-              />
-            </Reveal>
-
             {canRetry && (
               <Reveal delay={0.7}>
                 <motion.button
@@ -523,23 +509,6 @@ export default function EssayResultPage() {
                 </motion.button>
               </Reveal>
             )}
-
-            {/*
-              講評を読んだ直後が一番聞きたいタイミングなので、課題と答案のすぐ下に置く。
-              既定は閉じた1行で、開いたときだけ会話が出る。
-            */}
-            <Reveal delay={0.75}>
-              <EssayReviewCoach
-                essayId={result.id}
-                topic={result.topic}
-                essayText={result.ocrText ?? ""}
-                questionType={result.questionType ?? undefined}
-                sourceText={result.sourceText ?? undefined}
-                scoreTotal={totalScore}
-                scoreMaximum={scoreMaximum}
-                feedback={result.feedback}
-              />
-            </Reveal>
           </div>
         </div>
       </div>

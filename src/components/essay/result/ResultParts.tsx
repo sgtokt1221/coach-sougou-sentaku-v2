@@ -11,6 +11,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { RankBadge } from "@/components/shared/RankBadge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { CountUp, PopIn, Reveal } from "@/components/motion/Reveal";
 import { VERDICT_STYLE } from "@/components/essay/OralExamQuestionsCard";
 import { useAnchoredFeedback } from "@/components/essay/AnchoredFeedbackView";
@@ -209,6 +216,7 @@ export function FocusCard({
   oralExam?: OralExamQuestionSet | null;
 }) {
   const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
+  const fixes = useFixItems({ focus, text, feedback, anchors, oralExam });
   const quotes: string[] = [];
   for (const m of model.marked) {
     if (!focus.keys.includes(m.key)) continue;
@@ -219,9 +227,36 @@ export function FocusCard({
   }
   return (
     <div className="grid gap-2 rounded-2xl bg-amber-50 p-5 dark:bg-amber-950/30">
-      <p className="flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-300">
-        今回の課題
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+          今回の課題
+        </p>
+        {fixes.length > 0 && (
+          <Dialog>
+            <DialogTrigger
+              render={
+                <button
+                  type="button"
+                  className="flex min-h-9 items-center gap-1 rounded-full bg-rose-600 px-3 text-xs font-bold text-white hover:bg-rose-700"
+                >
+                  詳細
+                  <span className="rounded-full bg-white/25 px-1.5 tabular-nums">
+                    {fixes.length}
+                  </span>
+                </button>
+              }
+            />
+            <DialogContent className="gap-3 bg-rose-50 sm:max-w-lg dark:bg-rose-950">
+              <DialogHeader>
+                <DialogTitle className="text-rose-800 dark:text-rose-200">
+                  直すこと
+                </DialogTitle>
+              </DialogHeader>
+              <FixList items={fixes} />
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
       <p className="text-base leading-relaxed">{focus.text}</p>
       {quotes.map((q) => (
         <p
@@ -292,11 +327,13 @@ const UNANCHORED_LABEL: Record<string, string> = {
   knowledge: "知識の誤り",
 };
 
+type FixItem = { label?: string; text: string };
+
 /**
- * 今回の課題の内訳。改善点と、本文に印を付けられなかった指摘。
+ * 今回の課題の内訳（直すこと）。改善点と、本文に印を付けられなかった指摘。
  * 文の直し（赤ペン）は答案の印で読むのでここには出さない。
  */
-export function OtherFixesCard({
+function useFixItems({
   focus,
   text,
   feedback,
@@ -308,10 +345,10 @@ export function OtherFixesCard({
   feedback: Partial<EssayFeedback>;
   anchors: FeedbackAnchors | null;
   oralExam?: OralExamQuestionSet | null;
-}) {
+}): FixItem[] {
   const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
   const skip = new Set(focus?.keys ?? []);
-  const items: { label?: string; text: string }[] = [];
+  const items: FixItem[] = [];
   (feedback.improvements ?? []).forEach((t, i) => {
     if (!skip.has(`improvement:${i}`)) items.push({ text: t });
   });
@@ -328,26 +365,31 @@ export function OtherFixesCard({
     }
     items.push({ label: UNANCHORED_LABEL[item.kind], text: item.text });
   }
-  if (items.length === 0) return null;
+  return items;
+}
+
+function FixList({ items }: { items: FixItem[] }) {
   return (
-    <div className="bg-card grid gap-3 rounded-2xl p-5">
-      <p className="text-sm font-bold">直すこと</p>
-      <ul className="grid gap-3">
-        {items.map((item, i) => (
-          <li key={i} className="flex gap-2 text-[15px] leading-relaxed">
-            <span className="text-muted-foreground shrink-0">・</span>
-            <span>
-              {item.label && (
-                <span className="text-muted-foreground mr-1.5 text-xs font-semibold">
-                  {item.label}
-                </span>
-              )}
-              {item.text}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ol className="grid gap-2">
+      {items.map((item, i) => (
+        <li
+          key={i}
+          className="bg-card flex gap-3 rounded-xl px-3 py-2.5 text-[15px] leading-relaxed"
+        >
+          <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white tabular-nums">
+            {i + 1}
+          </span>
+          <span className="min-w-0">
+            {item.label && (
+              <span className="mr-1.5 rounded bg-rose-100 px-1.5 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-900/50 dark:text-rose-200">
+                {item.label}
+              </span>
+            )}
+            {item.text}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
