@@ -38,6 +38,8 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { DocumentReviewProgress } from "@/components/documents/DocumentReviewProgress";
 import { DocumentImprovements } from "@/components/documents/DocumentImprovements";
+import { DocumentReviewView } from "@/components/documents/DocumentReviewView";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 import {
   DocumentTotalScoreCard,
   DocumentTotalScoreInline,
@@ -64,6 +66,7 @@ import type {
   DocumentReviewHistoryEntry,
   DocumentAiLikeness,
   DocumentImprovement,
+  DocumentFeedback,
 } from "@/lib/types/document";
 import {
   AI_LIKENESS_LEVEL_LABELS,
@@ -158,6 +161,12 @@ interface DocumentDetail {
     reason: string;
   }[];
   aiLikeness?: DocumentAiLikeness;
+  /**
+   * 生の添削結果と、添削した本文。生徒と同じ「添削を見る」を出すのに使う。
+   * どの本文への添削か分からない旧データは null
+   */
+  feedback?: DocumentFeedback | null;
+  feedbackContent?: string | null;
   /** 版の履歴（新しい順）。生徒側の「バージョン履歴」と同じもの */
   versions?: {
     id: string;
@@ -253,6 +262,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   /** 志望校APの開閉。既定は畳む（本文とAIスコアを先に見せる） */
   const [showAp, setShowAp] = useState(false);
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
+  /** 左の列に出すもの。「添削を見る」は生徒と同じ、指摘の印付きの本文 */
+  const [leftView, setLeftView] = useState<"text" | "review">("text");
 
   /**
    * 管理者から生徒書類のAI添削を実行する。結果は生徒と共有の feedback に
@@ -271,9 +282,11 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
         toast.error(err?.error || "AI添削に失敗しました");
         return;
       }
-      const { feedback } = await res.json();
+      const { feedback, feedbackContent } = await res.json();
       setDetailDoc({
         ...detailDoc,
+        feedback,
+        feedbackContent,
         aiScore: {
           apAlignment:
             typeof feedback?.apAlignmentScore === "number"
@@ -430,6 +443,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
     setDetailOpen(true);
     setDetailLoading(true);
     setDetailDoc(null);
+    setLeftView("text");
     try {
       const res = await authFetch(
         `/api/admin/students/${studentId}/documents/${docId}`
@@ -644,22 +658,67 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                       : ""}
                   </span>
                 </div>
-                {/* ドラッグで範囲を選ぶとその箇所にコメントを付けられる（小論文と同じ） */}
-                <InlineCommentableText
-                  onQuote={(q) => {
-                    setReviewMsg((prev) => appendQuote(prev, q));
-                    setReviewOpen(true);
-                  }}
-                  quoteOnly
-                  target="document"
-                  id={detailDoc.id}
-                  text={detailDoc.content}
-                  initialComments={detailDoc.inlineComments}
-                  mode="edit"
-                  fullHeight
-                  viewerUid={user?.uid}
-                  viewerRole={userProfile?.role}
-                />
+                {detailDoc.feedback && detailDoc.feedbackContent && (
+                  <SegmentControl
+                    size="sm"
+                    value={leftView}
+                    onChange={setLeftView}
+                    options={[
+                      { id: "text", label: "本文" },
+                      { id: "review", label: "添削を見る" },
+                    ]}
+                  />
+                )}
+                {leftView === "review" &&
+                detailDoc.feedback &&
+                detailDoc.feedbackContent ? (
+                  // 生徒と同じ画面を読むだけで出す（本文を書き換える操作は渡さない）
+                  <DocumentReviewView
+                    reviewedText={detailDoc.feedbackContent}
+                    feedback={detailDoc.feedback}
+                    onGenerateQuestions={async () => {
+                      const res = await authFetch(
+                        `/api/admin/students/${studentId}/documents/${detailDoc.id}/interview-questions`,
+                        { method: "POST" }
+                      );
+                      if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        toast.error(err?.error || "質問を作れませんでした");
+                        return null;
+                      }
+                      const { questions } = await res.json();
+                      setDetailDoc((prev) =>
+                        prev?.feedback
+                          ? {
+                              ...prev,
+                              feedback: {
+                                ...prev.feedback,
+                                interviewQuestions: questions,
+                              },
+                            }
+                          : prev
+                      );
+                      return questions;
+                    }}
+                  />
+                ) : (
+                  /* ドラッグで範囲を選ぶとその箇所にコメントを付けられる（小論文と同じ） */
+                  <InlineCommentableText
+                    onQuote={(q) => {
+                      setReviewMsg((prev) => appendQuote(prev, q));
+                      setReviewOpen(true);
+                    }}
+                    quoteOnly
+                    target="document"
+                    id={detailDoc.id}
+                    text={detailDoc.content}
+                    initialComments={detailDoc.inlineComments}
+                    mode="edit"
+                    fullHeight
+                    viewerUid={user?.uid}
+                    viewerRole={userProfile?.role}
+                  />
+                )}
 
                 {/* レビューは別モーダル。長いコメントを書くとき、書類本文と
                     同じスクロール領域にあると書きにくかった */}
@@ -800,6 +859,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   </div>
                 )}
 
+                {/* 改善点・APの注意・赤ペンは「添削を見る」で本文の上に出る。
+                    どの本文への添削か分からない旧データだけ、ここに並べる */}
+                {!(detailDoc.feedback && detailDoc.feedbackContent) && (
+                  <>
                 {((detailDoc.improvementDetails?.length ?? 0) > 0 ||
                   (detailDoc.improvements?.length ?? 0) > 0) && (
                   <div className="space-y-2">
@@ -834,6 +897,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                       />
                     </div>
                   )}
+                  </>
+                )}
 
                 {/* 志望校のAP。AP合致度の点だけ見せられても、何と照らして
                     その点なのかが分からない。畳んでおき、必要なときに開く */}

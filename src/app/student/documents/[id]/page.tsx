@@ -670,6 +670,23 @@ export default function DocumentEditorPage() {
             setContent(next);
             toast.success("本文に入れました");
           }}
+          onGenerateQuestions={async () => {
+            const res = await authFetch(
+              `/api/documents/${id}/interview-questions`,
+              { method: "POST" }
+            );
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              toast.error(err?.error || "質問を作れませんでした");
+              return null;
+            }
+            const { questions } = await res.json();
+            setFeedback((prev) =>
+              prev ? { ...prev, interviewQuestions: questions } : prev
+            );
+            return questions;
+          }}
+          practiceHref="/student/interview/new"
         />
       ) : null,
   };

@@ -3,6 +3,10 @@ import {
   applyCorrection,
   buildDocumentFeedbackModel,
 } from "../src/lib/documents/feedback-anchors";
+import {
+  buildProgress,
+  collectPreviousIssues,
+} from "../src/lib/documents/progress";
 
 const text =
   "私は高校で地域の防災活動に取り組んできた。\n　その中で、高齢者への情報の届け方に課題があると感じた。貴学で社会学を学びたい。";
@@ -93,5 +97,105 @@ for (let i = 1; i < model.segments.length; i++)
 assert.equal(applyCorrection("AとAとA", "A", "B"), "BとAとA");
 assert.equal(applyCorrection("abc", "x", "y"), null);
 assert.equal(applyCorrection("abc", "", "y"), null);
+
+// 面接の質問は引用の箇所に結び付き、全体には入らない
+{
+  const m = buildDocumentFeedbackModel(text, {
+    interviewQuestions: [
+      {
+        quote: "情報の届け方に課題がある",
+        question: "q",
+        intent: "i",
+        prep: "p",
+      },
+      { quote: "本文に無い", question: "q", intent: "i", prep: "p" },
+    ],
+  });
+  assert.equal(m.itemByKey.get("interview:0")!.spans.length, 1);
+  assert.equal(m.itemByKey.get("interview:1")!.spans.length, 0);
+  assert.equal(m.unanchored.length, 0);
+}
+
+// 前回比：赤ペンは原文が残っているかで決まる。改善点と欠けていたAPの要素は判定に回す
+{
+  const previous = {
+    apAlignmentScore: 5,
+    structureScore: 6,
+    languageCorrections: [
+      {
+        location: "",
+        original: "取り組んできた",
+        suggestion: "取り組んだ",
+        type: "expression" as const,
+        reason: "",
+      },
+      {
+        location: "",
+        original: "消えた文",
+        suggestion: "x",
+        type: "typo" as const,
+        reason: "",
+      },
+    ],
+    improvementDetails: [
+      { location: "全体", problem: "具体性が足りない", action: "a" },
+    ],
+    apMap: [
+      {
+        element: "関心",
+        apQuote: "q",
+        status: "met" as const,
+        evidence: null,
+        advice: null,
+      },
+      {
+        element: "語学力",
+        apQuote: "q",
+        status: "missing" as const,
+        evidence: null,
+        advice: "a",
+      },
+    ],
+  };
+  const { language, toJudge } = collectPreviousIssues(previous, text);
+  assert.deepEqual(
+    language.map((l) => l.status),
+    ["unchanged", "resolved"]
+  );
+  assert.deepEqual(
+    toJudge.map((t) => t.key),
+    ["improvement:0", "ap:1"]
+  );
+
+  const judged = new Map([
+    ["improvement:0", { status: "improved" as const, note: "n" }],
+  ]);
+  const progress = buildProgress({
+    previous,
+    previousAt: "2026-10-01T00:00:00Z",
+    language,
+    toJudge,
+    judged,
+  });
+  // 判定の無い指摘（ap:1）は出さない。赤ペンは計算分がそのまま入る
+  assert.deepEqual(
+    progress.items.map((i) => i.status),
+    ["improved", "unchanged", "resolved"]
+  );
+  assert.equal(progress.previousScores.apAlignment, 5);
+  assert.equal(progress.previousScores.originality, null);
+
+  // 判定に失敗したときは赤ペンだけ
+  assert.equal(
+    buildProgress({
+      previous,
+      previousAt: null,
+      language,
+      toJudge,
+      judged: null,
+    }).items.length,
+    2
+  );
+}
 
 console.log("verify-document-anchors: ok");

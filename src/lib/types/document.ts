@@ -232,7 +232,19 @@ export interface DocumentFeedback {
    */
   apMap?: DocumentApMapItem[] | null;
   /** apMap を作った呼び出しの版とモデル */
-  apMapMetadata?: AiGenerationMetadata;
+  apMapMetadata?: AiGenerationMetadata | null;
+  /**
+   * 前回の添削の指摘が直ったか（2026-10-11 追加）。前回の添削が無い・本文が
+   * 変わっていない・判定に失敗したときは無い（src/lib/documents/progress.ts）
+   */
+  progress?: DocumentReviewProgress | null;
+  progressMetadata?: AiGenerationMetadata | null;
+  /**
+   * 面接で突っ込まれそうな箇所。押したときだけ作る（添削のたびには作らない）。
+   * 再添削で feedback ごと上書きされるので、そのときは作り直しになる
+   */
+  interviewQuestions?: DocumentInterviewQuestion[];
+  interviewQuestionsMetadata?: AiGenerationMetadata | null;
   aiMetadata?: AiGenerationMetadata;
 }
 
@@ -247,6 +259,34 @@ export interface DocumentApMapItem {
   evidence: string | null;
   /** 一部だけ・欠けているとき、何を書けば応えられるか */
   advice: string | null;
+}
+
+/** 前回の添削からの変化 */
+export interface DocumentReviewProgress {
+  /** 前回の添削の時刻 (ISO) */
+  previousAt: string | null;
+  /** 前回の5軸の点。合計の推移を出すのに使う */
+  previousScores: Partial<Record<DocumentScoreAxis, number | null>>;
+  items: DocumentProgressItem[];
+}
+
+export interface DocumentProgressItem {
+  kind: "language" | "improvement" | "ap";
+  /** 前回の指摘の文面（前回の結果は上書きで消えるので写して残す） */
+  label: string;
+  status: "resolved" | "improved" | "unchanged";
+  note: string | null;
+}
+
+/** 面接で突っ込まれそうな箇所1件 */
+export interface DocumentInterviewQuestion {
+  /** 本文からの引用（完全一致するものだけ残す） */
+  quote: string;
+  question: string;
+  /** 面接官がこの質問で確かめたいこと */
+  intent: string;
+  /** 答える準備 */
+  prep: string;
 }
 
 export interface DocumentCreateRequest {

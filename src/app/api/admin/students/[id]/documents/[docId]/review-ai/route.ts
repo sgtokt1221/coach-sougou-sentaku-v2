@@ -74,12 +74,17 @@ export async function POST(
     }
 
     // 添削対象は保存済みの本文。管理者は編集しないので content は受け取らない
-    const { feedback, feedbackAt } = await reviewDocumentCore({
+    const { feedback, feedbackAt, feedbackContent } = await reviewDocumentCore({
       documentId: docId,
       ownerUid: studentId,
     });
 
-    return NextResponse.json({ feedback, documentId: docId, feedbackAt });
+    return NextResponse.json({
+      feedback,
+      documentId: docId,
+      feedbackAt,
+      feedbackContent,
+    });
   } catch (error) {
     if (error instanceof DocumentReviewError) {
       return NextResponse.json(

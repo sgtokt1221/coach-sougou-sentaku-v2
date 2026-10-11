@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -17,25 +18,66 @@ import {
   type DocumentFeedbackItem,
 } from "@/lib/documents/feedback-anchors";
 import type { Segment } from "@/lib/essay/feedback-anchors";
-import type { DocumentApMapItem, DocumentFeedback } from "@/lib/types/document";
+import {
+  calculateDocumentTotal,
+  type DocumentApMapItem,
+  type DocumentFeedback,
+  type DocumentInterviewQuestion,
+  type DocumentProgressItem,
+} from "@/lib/types/document";
 
 const GROUPS: { id: DocumentFeedbackGroup; label: string }[] = [
   { id: "language", label: "言葉" },
   { id: "content", label: "内容・構成" },
   { id: "ap", label: "AP" },
+  { id: "interview", label: "面接" },
 ];
 /** 区間に複数のまとまりがあるときは、この順で先のものの色で出す */
-const MARK_PRIORITY: DocumentFeedbackGroup[] = ["language", "content", "ap"];
+const MARK_PRIORITY: DocumentFeedbackGroup[] = [
+  "language",
+  "content",
+  "ap",
+  "interview",
+];
 const MARK_STYLE: Record<DocumentFeedbackGroup, string> = {
   language: "decoration-rose-500",
   content: "decoration-amber-500",
   ap: "decoration-violet-500",
+  interview: "decoration-sky-500",
 };
 const DOT_STYLE: Record<DocumentFeedbackGroup, string> = {
   language: "bg-rose-500",
   content: "bg-amber-500",
   ap: "bg-violet-500",
+  interview: "bg-sky-500",
 };
+
+const PROGRESS_STATUS: Record<
+  DocumentProgressItem["status"],
+  { label: string; className: string }
+> = {
+  resolved: {
+    label: "直った",
+    className:
+      "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200",
+  },
+  improved: {
+    label: "良くなった",
+    className: "bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200",
+  },
+  unchanged: {
+    label: "まだ",
+    className:
+      "bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200",
+  },
+};
+
+/** 前回の結果を並べる順。残っているものを先に読ませる */
+const PROGRESS_ORDER: DocumentProgressItem["status"][] = [
+  "unchanged",
+  "improved",
+  "resolved",
+];
 
 const AP_STATUS: Record<
   DocumentApMapItem["status"],
@@ -58,45 +100,93 @@ const AP_STATUS: Record<
   },
 };
 
-/** 2列で並べられる幅か。狭いときは選んだ箇所の指摘を下からのシートで出す */
-function useIsWide(): boolean {
+/** 本文と指摘を横に並べる幅（コンテナクエリの @3xl = 48rem と揃える） */
+const WIDE_PX = 768;
+
+/**
+ * この画面自身の幅で、横に並べるかを決める。生徒の編集画面（全幅）と
+ * 管理者の書類詳細（左の列だけ）で置かれる幅が違うので、画面幅では決められない。
+ * 狭いときは、選んだ箇所の指摘を下からのシートで出す。
+ */
+function useIsWide(ref: React.RefObject<HTMLDivElement | null>): boolean {
   const [wide, setWide] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1280px)");
-    const update = () => setWide(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) =>
+      setWide(entry.contentRect.width >= WIDE_PX)
+    );
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
   return wide;
 }
 
 /**
  * 書類の添削結果を、添削した本文の上で読む画面。
  *
- * 本文の指摘箇所に印を付け、押すとその箇所への赤ペン・改善点・APの要素が並ぶ。
- * 横には総合評価・APとの対応表・本文に結び付かない指摘を置く。
- * 赤ペンは「本文に入れる」で、編集中の本文へそのまま反映できる。
+ * 本文の指摘箇所に印を付け、押すとその箇所への赤ペン・改善点・APの要素・
+ * 面接の質問が並ぶ。横には前回からの変化・総合評価・APとの対応表・
+ * 面接で聞かれそうなこと・本文に結び付かない指摘を置く。
+ * 生徒の画面では赤ペンを「本文に入れる」で編集中の本文へ反映できる。
+ * 管理者の画面は読むだけ（onApply を渡さない）。
  */
 export function DocumentReviewView({
   reviewedText,
   feedback,
   currentContent,
   onApply,
+  onGenerateQuestions,
+  practiceHref,
 }: {
   /** 添削した時点の本文。印はこちらに付ける */
   reviewedText: string;
   feedback: DocumentFeedback;
   /** 編集中の本文。赤ペンを入れられるかの判定と置き換えに使う */
-  currentContent: string;
-  onApply: (nextContent: string) => void;
+  currentContent?: string;
+  /** 無ければ「本文に入れる」を出さない（管理者） */
+  onApply?: (nextContent: string) => void;
+  /** 面接の質問を作る。無ければ「作る」を出さない */
+  onGenerateQuestions?: () => Promise<DocumentInterviewQuestion[] | null>;
+  /** 面接練習へのリンク（生徒だけ） */
+  practiceHref?: string;
 }) {
+  const [questions, setQuestions] = useState<DocumentInterviewQuestion[]>(
+    feedback.interviewQuestions ?? []
+  );
+  const [generating, setGenerating] = useState(false);
+  // 添削し直したら、作った質問は前の本文のものなので捨てる
+  useEffect(() => {
+    setQuestions(feedback.interviewQuestions ?? []);
+  }, [feedback]);
   const model = useMemo(
-    () => buildDocumentFeedbackModel(reviewedText, feedback),
-    [reviewedText, feedback]
+    () =>
+      buildDocumentFeedbackModel(reviewedText, {
+        ...feedback,
+        interviewQuestions: questions,
+      }),
+    [reviewedText, feedback, questions]
   );
   const [selected, setSelected] = useState<string[] | null>(null);
-  const isWide = useIsWide();
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const sideRef = useRef<HTMLDivElement | null>(null);
+  const isWide = useIsWide(rootRef);
+  // 横並びのときは選んだ箇所の指摘を右の列の先頭に出すので、そこまで戻す
+  useEffect(() => {
+    if (selected && isWide)
+      sideRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [selected, isWide]);
+
+  const generate = async () => {
+    if (!onGenerateQuestions || generating) return;
+    setGenerating(true);
+    try {
+      const made = await onGenerateQuestions();
+      if (made) setQuestions(made);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   /** 対応表の行から、本文の印へ送る */
   const focusItem = (item: DocumentFeedbackItem) => {
@@ -111,129 +201,245 @@ export function DocumentReviewView({
       keys={keys}
       model={model}
       feedback={feedback}
-      currentContent={currentContent}
+      questions={questions}
+      currentContent={currentContent ?? ""}
       onApply={onApply}
     />
   );
 
+  const progress = feedback.progress;
+  const progressItems = progress
+    ? [...progress.items].sort(
+        (a, b) =>
+          PROGRESS_ORDER.indexOf(a.status) - PROGRESS_ORDER.indexOf(b.status)
+      )
+    : [];
+  const previousTotal = progress
+    ? calculateDocumentTotal(progress.previousScores)
+    : null;
+  const currentTotal = calculateDocumentTotal({
+    apAlignment: feedback.apAlignmentScore,
+    structure: feedback.structureScore,
+    originality: feedback.originalityScore,
+    learningPlan: feedback.learningPlanScore,
+    expression: feedback.expressionScore,
+  });
+
   return (
-    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-start xl:gap-5">
-      <p className="text-[15px] leading-8 whitespace-pre-wrap">
-        {model.segments.map((s) => (
-          <SegmentText
-            key={`${s.start}-${s.end}`}
-            segment={s}
-            text={reviewedText.slice(s.start, s.end)}
-            groupOf={(k) => model.itemByKey.get(k)?.group}
-            active={!!selected && sameKeys(selected, s.keys)}
-            onSelect={setSelected}
-          />
-        ))}
-      </p>
+    <div ref={rootRef} className="@container">
+      <div className="@3xl:grid @3xl:grid-cols-[minmax(0,1fr)_19rem] @3xl:items-start @3xl:gap-5">
+        <p className="text-[15px] leading-8 whitespace-pre-wrap">
+          {model.segments.map((s) => (
+            <SegmentText
+              key={`${s.start}-${s.end}`}
+              segment={s}
+              text={reviewedText.slice(s.start, s.end)}
+              groupOf={(k) => model.itemByKey.get(k)?.group}
+              active={!!selected && sameKeys(selected, s.keys)}
+              onSelect={setSelected}
+            />
+          ))}
+        </p>
 
-      <div className="mt-6 space-y-5 xl:sticky xl:top-4 xl:mt-0 xl:max-h-[calc(100dvh-8rem)] xl:overflow-y-auto">
-        {selected && isWide && (
-          <div className="bg-muted/40 space-y-3 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold">選んだ箇所</p>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                aria-label="閉じる"
-                className="text-muted-foreground hover:text-foreground p-1"
-              >
-                <X className="size-4" />
-              </button>
+        <div
+          ref={sideRef}
+          className="mt-6 space-y-5 @3xl:sticky @3xl:top-4 @3xl:mt-0 @3xl:max-h-[calc(100dvh-8rem)] @3xl:overflow-y-auto"
+        >
+          {selected && isWide && (
+            <div className="bg-muted/40 space-y-3 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">選んだ箇所</p>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  aria-label="閉じる"
+                  className="text-muted-foreground hover:text-foreground p-1"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              {itemList(selected)}
             </div>
-            {itemList(selected)}
-          </div>
-        )}
+          )}
 
-        {feedback.overallFeedback && (
-          <section className="space-y-1.5">
-            <p className="text-sm font-semibold">総合評価</p>
-            <p className="text-sm leading-relaxed">
-              {feedback.overallFeedback}
-            </p>
-          </section>
-        )}
+          {progress && previousTotal && (
+            <section className="space-y-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-sm font-semibold">前回から</p>
+                {previousTotal.max === currentTotal.max && (
+                  <p className="text-sm tabular-nums">
+                    {previousTotal.total}
+                    <span className="text-muted-foreground mx-1">→</span>
+                    <span className="font-semibold">{currentTotal.total}</span>
+                    <span className="text-muted-foreground">
+                      /{currentTotal.max}
+                    </span>
+                  </p>
+                )}
+              </div>
+              {progressItems.length > 0 && (
+                <ul className="space-y-2">
+                  {progressItems.map((p, i) => {
+                    const style = PROGRESS_STATUS[p.status];
+                    return (
+                      <li key={i} className="bg-muted/40 rounded-lg p-3">
+                        <p className="flex items-start gap-2">
+                          <span
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${style.className}`}
+                          >
+                            {style.label}
+                          </span>
+                          <span className="text-sm leading-snug">
+                            {p.label}
+                          </span>
+                        </p>
+                        {p.note && (
+                          <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                            {p.note}
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
 
-        {(feedback.apMap?.length ?? 0) > 0 ? (
-          <section className="space-y-2">
-            <p className="flex items-center gap-1.5 text-sm font-semibold">
-              <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
-              APとの対応
-            </p>
-            <ul className="space-y-2">
-              {feedback.apMap!.map((a, i) => {
-                const item = model.itemByKey.get(`ap:${i}`);
-                const linked = !!item && item.spans.length > 0;
-                const style = AP_STATUS[a.status];
-                return (
-                  <li key={i} className="bg-muted/40 rounded-lg p-3">
-                    <button
-                      type="button"
-                      disabled={!linked}
-                      onClick={() => item && focusItem(item)}
-                      className="flex w-full items-start gap-2 text-left enabled:cursor-pointer"
-                    >
-                      <span
-                        className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${style.className}`}
-                      >
-                        {style.label}
-                      </span>
-                      <span className="text-sm leading-snug font-medium">
-                        {a.element}
-                      </span>
-                    </button>
-                    {a.advice && (
-                      <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
-                        {a.advice}
-                      </p>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : (
-          feedback.apSpecificNotes && (
+          {feedback.overallFeedback && (
             <section className="space-y-1.5">
-              <p className="flex items-center gap-1.5 text-sm font-semibold">
-                <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
-                AP
-              </p>
+              <p className="text-sm font-semibold">総合評価</p>
               <p className="text-sm leading-relaxed">
-                {feedback.apSpecificNotes}
+                {feedback.overallFeedback}
               </p>
             </section>
-          )
-        )}
+          )}
 
-        {model.unanchored.length > 0 && (
-          <section className="space-y-2">
-            <p className="text-sm font-semibold">全体への指摘</p>
-            {itemList(model.unanchored.map((i) => i.key))}
-          </section>
-        )}
+          {(feedback.apMap?.length ?? 0) > 0 ? (
+            <section className="space-y-2">
+              <p className="flex items-center gap-1.5 text-sm font-semibold">
+                <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
+                APとの対応
+              </p>
+              <ul className="space-y-2">
+                {feedback.apMap!.map((a, i) => {
+                  const item = model.itemByKey.get(`ap:${i}`);
+                  const linked = !!item && item.spans.length > 0;
+                  const style = AP_STATUS[a.status];
+                  return (
+                    <li key={i} className="bg-muted/40 rounded-lg p-3">
+                      <button
+                        type="button"
+                        disabled={!linked}
+                        onClick={() => item && focusItem(item)}
+                        className="flex w-full items-start gap-2 text-left enabled:cursor-pointer"
+                      >
+                        <span
+                          className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${style.className}`}
+                        >
+                          {style.label}
+                        </span>
+                        <span className="text-sm leading-snug font-medium">
+                          {a.element}
+                        </span>
+                      </button>
+                      {a.advice && (
+                        <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                          {a.advice}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : (
+            feedback.apSpecificNotes && (
+              <section className="space-y-1.5">
+                <p className="flex items-center gap-1.5 text-sm font-semibold">
+                  <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
+                  AP
+                </p>
+                <p className="text-sm leading-relaxed">
+                  {feedback.apSpecificNotes}
+                </p>
+              </section>
+            )
+          )}
+
+          {(questions.length > 0 || onGenerateQuestions) && (
+            <section className="space-y-2">
+              <p className="flex items-center gap-1.5 text-sm font-semibold">
+                <span
+                  className={`size-2 rounded-full ${DOT_STYLE.interview}`}
+                />
+                面接で聞かれそうなこと
+              </p>
+              {questions.length > 0 ? (
+                <ul className="space-y-2">
+                  {questions.map((q, i) => {
+                    const item = model.itemByKey.get(`interview:${i}`);
+                    return (
+                      <li key={i}>
+                        <button
+                          type="button"
+                          disabled={!item || item.spans.length === 0}
+                          onClick={() => item && focusItem(item)}
+                          className="bg-muted/40 w-full rounded-lg p-3 text-left text-sm leading-snug font-medium enabled:cursor-pointer"
+                        >
+                          {q.question}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={generate}
+                  disabled={generating}
+                >
+                  {generating && (
+                    <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                  )}
+                  {generating ? "作っています…" : "作る"}
+                </Button>
+              )}
+              {questions.length > 0 && practiceHref && (
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link href={practiceHref}>模擬面接で練習する</Link>
+                </Button>
+              )}
+            </section>
+          )}
+
+          {model.unanchored.length > 0 && (
+            <section className="space-y-2">
+              <p className="text-sm font-semibold">全体への指摘</p>
+              {itemList(model.unanchored.map((i) => i.key))}
+            </section>
+          )}
+        </div>
+
+        <Sheet
+          open={!!selected && !isWide}
+          onOpenChange={(o) => {
+            if (!o) setSelected(null);
+          }}
+        >
+          {/* スマホの「AIコーチ」のつまみ（z-60）より上に出す */}
+          <SheetContent side="bottom" className="z-[61] max-h-[80vh]">
+            <SheetHeader className="pb-0">
+              <SheetTitle>この箇所への指摘</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto px-4 pb-4">
+              {selected && itemList(selected)}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
-
-      <Sheet
-        open={!!selected && !isWide}
-        onOpenChange={(o) => {
-          if (!o) setSelected(null);
-        }}
-      >
-        {/* スマホの「AIコーチ」のつまみ（z-60）より上に出す */}
-        <SheetContent side="bottom" className="z-[61] max-h-[80vh] xl:hidden">
-          <SheetHeader className="pb-0">
-            <SheetTitle>この箇所への指摘</SheetTitle>
-          </SheetHeader>
-          <div className="overflow-y-auto px-4 pb-4">
-            {selected && itemList(selected)}
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
@@ -286,14 +492,16 @@ function GroupedItems({
   keys,
   model,
   feedback,
+  questions,
   currentContent,
   onApply,
 }: {
   keys: string[];
   model: ReturnType<typeof buildDocumentFeedbackModel>;
   feedback: DocumentFeedback;
+  questions: DocumentInterviewQuestion[];
   currentContent: string;
-  onApply: (nextContent: string) => void;
+  onApply?: (nextContent: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -313,6 +521,7 @@ function GroupedItems({
                 key={it.key}
                 item={it}
                 feedback={feedback}
+                questions={questions}
                 currentContent={currentContent}
                 onApply={onApply}
               />
@@ -327,13 +536,15 @@ function GroupedItems({
 function ItemCard({
   item,
   feedback,
+  questions,
   currentContent,
   onApply,
 }: {
   item: DocumentFeedbackItem;
   feedback: DocumentFeedback;
+  questions: DocumentInterviewQuestion[];
   currentContent: string;
-  onApply: (nextContent: string) => void;
+  onApply?: (nextContent: string) => void;
 }) {
   if (item.kind === "language") {
     const c = feedback.languageCorrections?.[item.index];
@@ -359,15 +570,17 @@ function ItemCard({
         <p className="text-muted-foreground text-xs leading-relaxed">
           {c.reason}
         </p>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 text-xs"
-          disabled={applied === null}
-          onClick={() => applied !== null && onApply(applied)}
-        >
-          {applied === null ? "本文に無し" : "本文に入れる"}
-        </Button>
+        {onApply && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            disabled={applied === null}
+            onClick={() => applied !== null && onApply(applied)}
+          >
+            {applied === null ? "本文に無し" : "本文に入れる"}
+          </Button>
+        )}
       </div>
     );
   }
@@ -394,6 +607,24 @@ function ItemCard({
             </p>
           </div>
         )}
+      </div>
+    );
+  }
+  if (item.kind === "interview") {
+    const q = questions[item.index];
+    if (!q) return null;
+    return (
+      <div className="bg-background space-y-1.5 rounded-lg border p-3 text-sm">
+        <p className="leading-relaxed font-medium">{q.question}</p>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          {q.intent}
+        </p>
+        <div className="rounded-md bg-sky-50 p-2 dark:bg-sky-950/30">
+          <p className="text-xs font-medium text-sky-700 dark:text-sky-300">
+            準備
+          </p>
+          <p className="mt-1 leading-relaxed">{q.prep}</p>
+        </div>
       </div>
     );
   }

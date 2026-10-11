@@ -331,6 +331,17 @@ export const AI_PROMPT_VERSIONS = {
     promptVersion: "document-ap-map-v1",
     schemaVersion: "document-ap-map-output-v1",
   },
+  documentProgress: {
+    // v1（2026-10-11）: 再添削のとき、前回の改善点・APの欠けていた要素が新しい本文で
+    //     直ったかを判定する。赤ペンは計算で判定するのでここには渡さない。
+    promptVersion: "document-progress-v1",
+    schemaVersion: "document-progress-output-v1",
+  },
+  documentInterviewQuestions: {
+    // v1（2026-10-11）: 書類の本文から、面接で突っ込まれそうな箇所と質問を出す。
+    promptVersion: "document-interview-questions-v1",
+    schemaVersion: "document-interview-questions-output-v1",
+  },
   statementDraft: {
     // v3: 活動実績を渡すようにした。以前は自己分析だけで書かせていたため、
     //     生徒が登録した具体的な場面・数値が下書きに一切入らなかった。

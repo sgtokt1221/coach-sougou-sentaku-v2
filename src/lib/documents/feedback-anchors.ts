@@ -18,12 +18,12 @@ import {
 } from "@/lib/essay/feedback-anchors";
 import type { DocumentFeedback } from "@/lib/types/document";
 
-export type DocumentFeedbackGroup = "language" | "content" | "ap";
+export type DocumentFeedbackGroup = "language" | "content" | "ap" | "interview";
 
 export interface DocumentFeedbackItem {
   /** `${kind}:${元の配列での位置}` */
   key: string;
-  kind: "language" | "improvement" | "ap";
+  kind: "language" | "improvement" | "ap" | "interview";
   index: number;
   group: DocumentFeedbackGroup;
   spans: Span[];
@@ -34,7 +34,7 @@ export interface DocumentFeedbackModel {
   itemByKey: Map<string, DocumentFeedbackItem>;
   /** 本文に印を付けるもの */
   marked: DocumentFeedbackItem[];
-  /** 本文に結び付かない「全体への指摘」（APの欠けている要素は対応表に出すので含めない） */
+  /** 本文に結び付かない「全体への指摘」（APの要素と面接の質問は専用の欄に出すので含めない） */
   unanchored: DocumentFeedbackItem[];
   segments: Segment[];
 }
@@ -90,9 +90,20 @@ export function buildDocumentFeedbackModel(
     })
   );
 
+  (feedback.interviewQuestions ?? []).forEach((q, i) =>
+    items.push({
+      key: `interview:${i}`,
+      kind: "interview",
+      index: i,
+      group: "interview",
+      spans: spansOf(text, [q.quote]),
+    })
+  );
+
   const marked = items.filter((it) => it.spans.length > 0);
   const unanchored = items.filter(
-    (it) => it.spans.length === 0 && it.kind !== "ap"
+    // APと面接の質問は専用の欄に出すので全体には入れない
+    (it) => it.spans.length === 0 && it.kind !== "ap" && it.kind !== "interview"
   );
   return {
     items,

@@ -115,6 +115,15 @@ export async function GET(
       apSpecificNotes: feedback?.apSpecificNotes ?? undefined,
       // 日本語の直し（赤ペン）。v4 以降の添削でのみ入る
       languageCorrections: feedback?.languageCorrections ?? [],
+      /**
+       * 添削を本文の上で読む画面（生徒と同じ DocumentReviewView）に渡す生の結果と、
+       * 添削した本文。どの本文への添削か分からない旧データ（版から拾った分）は渡さない
+       */
+      feedback: data.feedback && data.feedbackContent ? data.feedback : null,
+      feedbackContent:
+        data.feedback && typeof data.feedbackContent === "string"
+          ? data.feedbackContent
+          : null,
       aiLikeness: data.aiLikeness ?? undefined,
       /**
        * 版の履歴。生徒側と同じものを管理者にも返す。

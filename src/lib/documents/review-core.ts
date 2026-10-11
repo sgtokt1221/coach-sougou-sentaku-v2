@@ -13,6 +13,11 @@ import {
   selectDocumentModel,
 } from "@/lib/ai/prompt-versions";
 import { judgeApMap } from "@/lib/documents/ap-map-judge";
+import {
+  buildProgress,
+  collectPreviousIssues,
+  judgeProgress,
+} from "@/lib/documents/progress";
 
 /**
  * 出願書類のAI添削のコア。
@@ -55,6 +60,8 @@ export class DocumentReviewError extends Error {
 export interface DocumentReviewResult {
   feedback: DocumentFeedback;
   feedbackAt: string;
+  /** 添削した本文。指摘の印はこの本文に付ける */
+  feedbackContent: string;
 }
 
 /**
@@ -173,6 +180,28 @@ export async function reviewDocumentCore(params: {
     : Promise.resolve(null);
 
   /**
+   * 前回の指摘が直ったか。前回の添削があり、本文が変わっているときだけ判定する。
+   * これも並列に走らせ、失敗しても添削は返す（赤ペンの計算分だけ残る）。
+   */
+  const previousFeedback = documentData.feedback as
+    | Partial<DocumentFeedback>
+    | undefined;
+  const previousIssues =
+    previousFeedback &&
+    typeof documentData.feedbackContent === "string" &&
+    documentData.feedbackContent !== content
+      ? collectPreviousIssues(previousFeedback, content)
+      : null;
+  const progressPromise = previousIssues
+    ? judgeProgress({
+        client,
+        model: reviewModel,
+        issues: previousIssues.toJudge,
+        newContent: content,
+      })
+    : Promise.resolve(null);
+
+  /**
    * messages.parse は max_tokens を thinking と本文で共有する。
    *
    * 志望理由書は claude-sonnet-5 なので拡張思考が効く。effort 既定だと実測で
@@ -256,6 +285,20 @@ ${content}
 
   const parsed = response.parsed_output;
   const apMap = await apMapPromise;
+  const progressJudged = await progressPromise;
+  const progress =
+    previousFeedback && previousIssues
+      ? buildProgress({
+          previous: previousFeedback,
+          previousAt:
+            typeof documentData.feedbackAt === "string"
+              ? documentData.feedbackAt
+              : null,
+          language: previousIssues.language,
+          toJudge: previousIssues.toJudge,
+          judged: progressJudged,
+        })
+      : null;
   if (hasAdmissionPolicy && parsed.apAlignmentScore === null) {
     throw new DocumentReviewError(
       "AP合致度の評価結果を検証できませんでした",
@@ -320,14 +363,20 @@ ${content}
       )
       .slice(0, DISPLAY_MAX_CORRECTIONS),
     apMap,
-    ...(apMap
-      ? {
-          apMapMetadata: {
-            ...AI_PROMPT_VERSIONS.documentApMap,
-            model: reviewModel,
-          },
-        }
-      : {}),
+    progress,
+    progressMetadata: progressJudged
+      ? { ...AI_PROMPT_VERSIONS.documentProgress, model: reviewModel }
+      : null,
+    // 面接の質問は添削した本文に対して作るので、本文が変われば作り直す
+    interviewQuestions: [],
+    interviewQuestionsMetadata: null,
+    /**
+     * 保存は set(merge) で入れ子のマップまで混ぜるため、無いものは null / 空で
+     * 明示的に上書きする（省くと前回の添削の値が残り、別の本文の結果として出る）
+     */
+    apMapMetadata: apMap
+      ? { ...AI_PROMPT_VERSIONS.documentApMap, model: reviewModel }
+      : null,
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.documentReview,
       model: reviewModel,
@@ -354,5 +403,5 @@ ${content}
     console.error("[documents/review] feedback 保存失敗:", err);
   }
 
-  return { feedback, feedbackAt };
+  return { feedback, feedbackAt, feedbackContent: content };
 }
