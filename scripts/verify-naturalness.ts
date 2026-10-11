@@ -100,6 +100,36 @@ const hintsOf = (text: string, writer: "essay" | "document" = "essay") =>
   assert.equal(mergeNaturalness(merged, null, text, 1).length, 1);
 }
 
+// 既存の直しが文を分けているのに、自然さ側が分けていなければ差し替えない
+{
+  const text = "AはBであり、CはDであるので、EはFだ。";
+  const merged = mergeNaturalness(
+    [
+      {
+        location: "",
+        original: "AはBであり、CはDであるので、EはFだ。",
+        suggestion: "AはBだ。CはDなので、EはFだ。",
+        type: "grammar",
+        reason: "主語が入れ替わる。二つに分ける。",
+      },
+    ],
+    [
+      {
+        original: "AはBであり、CはDであるので、EはFだ。",
+        location: "第1段落 1文目",
+        kind: "redundant",
+        problem: "p",
+        rewrite: "AはBで、CはDなので、EはFだ。",
+      },
+    ],
+    text,
+    16
+  );
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].suggestion, "AはBだ。CはDなので、EはFだ。");
+  assert.equal(merged[0].reason, "主語が入れ替わる。二つに分ける。");
+}
+
 // 2文をまたぐ既存の赤ペンが、置き換え済みの文と重なるなら落とす（1文に直しは1つ）
 {
   const text = "Aはすごく良い。Bも良い。";

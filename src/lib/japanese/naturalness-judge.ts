@@ -90,6 +90,7 @@ const SYSTEM_PROMPT = `あなたは高校生の文章に赤ペンを入れる国
 
 ## 挙げないもの
 - 誤りでも不自然でもなく、言い換えた方が少し良いだけの文（好み）
+- 「〜と考える」「〜と思う」で締めた文が続いていないもの（1つだけなら単調ではない。結論の「〜と考える」も正しい書き方）
 - 長いだけの文（別の先生が見ます）
 - 本人の経験として書かれた固有名詞・数字
 迷ったら挙げません。正しい文を直すと、生徒は正しい書き方を誤りだと覚えてしまいます。
@@ -199,6 +200,11 @@ ${hints || "（なし）"}
   }
 }
 
+/** 文の数（句点・感嘆符・疑問符で数える。末尾に句点が無い文も1つ） */
+function sentenceCount(s: string): number {
+  return s.split(/[。！？!?]/).filter((x) => x.trim().length > 0).length;
+}
+
 /**
  * 自然さの点検を赤ペンに合流させる。
  *
@@ -228,6 +234,9 @@ export function mergeNaturalness(
         })
       : undefined;
     if (hit) {
+      // 既存の直しが文を分けているのに、自然さ側の直し先が分けていなければ差し替えない。
+      // 差し替えると「二つに分ける」という理由に、分けていない文が付いた（2026-10-12）
+      if (sentenceCount(it.rewrite) < sentenceCount(hit.suggestion)) continue;
       // 既存の赤ペンが文の一部だけを引用しているときは、文全体の直しに広げる
       hit.original = it.original;
       hit.suggestion = it.rewrite;

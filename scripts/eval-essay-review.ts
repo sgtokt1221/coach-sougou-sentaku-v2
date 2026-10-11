@@ -42,6 +42,7 @@ import {
   type EssayReviewCoreOutput,
 } from "../src/lib/essay/review-core";
 import {
+  AI_MODEL_ESSAY_REVIEW,
   AI_MODEL_REVIEW,
   AI_PROMPT_VERSIONS,
 } from "../src/lib/ai/prompt-versions";
@@ -459,7 +460,7 @@ async function runAll() {
   const todo = jobs.filter(({ c, rep }) => !done.has(`${c.id}#${rep}`));
   console.log(
     `${cases.length}件 × ${REPS}回 = ${jobs.length}試行（済み ${jobs.length - todo.length}、残り ${todo.length}）` +
-      ` / ${AI_MODEL_REVIEW} / ${AI_PROMPT_VERSIONS.essayReview.promptVersion} / 同時 ${CONCURRENCY}`
+      ` / ${AI_MODEL_ESSAY_REVIEW} / ${AI_PROMPT_VERSIONS.essayReview.promptVersion} / 同時 ${CONCURRENCY}`
   );
 
   let next = 0;
@@ -475,7 +476,9 @@ async function runAll() {
         );
         // 別モデルの点を混ぜない（要求したモデルと応答のモデルが違えば失敗扱い）
         const wrong = out.telemetry.calls.find(
-          (x) => x.model && !x.model.startsWith(AI_MODEL_REVIEW)
+          (x) =>
+            x.model &&
+            ![AI_MODEL_ESSAY_REVIEW, AI_MODEL_REVIEW].some((m) => x.model!.startsWith(m))
         );
         if (wrong) throw new Error(`model_mismatch: ${wrong.model}`);
         const row = toRow(c, rep, out);

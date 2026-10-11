@@ -7,7 +7,7 @@ import {
   calculateEssayMetrics,
   calculateFillRate,
 } from "@/lib/essay/review-metrics";
-import { AI_MODEL_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import { AI_MODEL_ESSAY_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
 import { judgeSourceEngagement } from "@/lib/essay/source-engagement-judge";
 import { judgeKnowledgeAccuracy } from "@/lib/essay/knowledge-judge";
@@ -241,9 +241,9 @@ ${input.ocrText}
     naturalness,
   ] = await Promise.all([
       client.messages.parse({
-        model: AI_MODEL_REVIEW,
+        model: AI_MODEL_ESSAY_REVIEW,
         // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
-        // 長い構造化出力(languageCorrections 最大5件 + 各種フィードバック)に食われ、
+        // 長い構造化出力(languageCorrections + 各種フィードバック)に食われ、
         // 採点を吟味する余地が残らずルーブリックの既定値へ丸まっていた。
         max_tokens: isReport || isOralExam ? 16000 : 12000,
         system: systemPrompt,
@@ -546,7 +546,7 @@ ${input.ocrText}
     ...(subQuestions ? { oralExamInsights: subQuestions } : {}),
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.essayReview,
-      model: AI_MODEL_REVIEW,
+      model: AI_MODEL_ESSAY_REVIEW,
       // 1件の費用を後から出せるように、呼び出し全部の合計を残す
       usage: sumUsage(calls),
     },

@@ -39,6 +39,8 @@ const MODEL_PRICING_USD: Record<string, { input: number; output: number }> = {
   "claude-haiku-4-5-20251001": { input: 1.0, output: 5.0 },
   "claude-sonnet-4-6": { input: 3.0, output: 15.0 },
   "claude-sonnet-5": { input: 3.0, output: 15.0 },
+  // 2026-10 時点の第三者サイトの値。公式で未確認
+  "claude-sonnet-5-5": { input: 2.0, output: 10.0 },
 };
 
 /** 為替は概算。必要に応じて更新。 */
