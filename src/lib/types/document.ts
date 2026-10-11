@@ -95,8 +95,11 @@ export interface DocumentVersion {
   wordCount: number;
   createdAt: string;
   feedback?: DocumentFeedback;
-  /** 本文が半分未満に減る保存の前に、サーバーが自動で残した版 */
-  reason?: "before-large-deletion";
+  /**
+   * サーバーが自動で残した版。
+   * before-large-deletion: 本文が半分未満に減る保存の前 / reviewed: 添削した本文
+   */
+  reason?: "before-large-deletion" | "reviewed";
 }
 
 /**
@@ -194,6 +197,15 @@ export interface DocumentImprovement {
   action: string;
   /** 直した文の例。削る・確認する類の指摘では無い場合がある */
   example?: string | null;
+}
+
+/** 添削の履歴1件。`documents/{id}/reviews` と、旧データから組み立てたもの */
+export interface DocumentReviewRecord {
+  id: string;
+  /** 添削した本文 */
+  content: string;
+  feedback: DocumentFeedback;
+  feedbackAt: string;
 }
 
 export interface DocumentFeedback {

@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { FieldValue } from "firebase-admin/firestore";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { buildDocumentReviewPrompt } from "@/lib/ai/prompts/document";
 import { DocumentReviewOutputSchema } from "@/lib/ai/schemas/document-review";
@@ -411,7 +412,10 @@ ${content}
    */
   const feedbackAt = new Date().toISOString();
   try {
-    await adminDb.doc(`documents/${params.documentId}`).set(
+    const docRef = adminDb.doc(`documents/${params.documentId}`);
+    const batch = adminDb.batch();
+    batch.set(
+      docRef,
       {
         feedback,
         feedbackContent: content,
@@ -420,6 +424,31 @@ ${content}
       },
       { merge: true }
     );
+    /**
+     * 添削の履歴。書類直下の feedback は次の添削で上書きされるので、版ごとの添削を
+     * バージョン履歴で読めるようにここへ積む。添削1件は数十KBあり、書類1件に
+     * 積むと 1MB の上限に近づくためサブコレクションに分ける
+     */
+    batch.set(docRef.collection("reviews").doc(), {
+      content,
+      wordCount: content.length,
+      feedback,
+      feedbackAt,
+    });
+    // 自動保存は版を作らないので、添削した本文が版に無ければ積む（履歴から辿れるように）
+    const versions = (documentData.versions ?? []) as { content?: string }[];
+    if (!versions.some((v) => v.content === content)) {
+      batch.update(docRef, {
+        versions: FieldValue.arrayUnion({
+          id: `v-${Date.now()}-reviewed`,
+          content,
+          wordCount: content.length,
+          createdAt: feedbackAt,
+          reason: "reviewed",
+        }),
+      });
+    }
+    await batch.commit();
   } catch (err) {
     // 保存に失敗しても添削結果は返す（画面では見られる）
     console.error("[documents/review] feedback 保存失敗:", err);

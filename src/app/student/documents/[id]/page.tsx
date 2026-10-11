@@ -50,6 +50,7 @@ import type {
   DocumentStatus,
   DocumentAiLikeness,
   DocumentScoreAxis,
+  DocumentReviewRecord,
 } from "@/lib/types/document";
 import {
   documentStatusLabel2,
@@ -159,6 +160,8 @@ export default function DocumentEditorPage() {
    * 版から拾った旧データのように、どの本文への添削か分からないときは null
    */
   const [reviewedContent, setReviewedContent] = useState<string | null>(null);
+  /** 添削の履歴（新しい順）。バージョン履歴で版の本文と一緒に出す */
+  const [reviews, setReviews] = useState<DocumentReviewRecord[]>([]);
   /** 本文の欄に出すもの。「添削を見る」は添削した本文に指摘の印を付けて出す */
   const [editorView, setEditorView] = useState<"write" | "review">("write");
   const [showVersions, setShowVersions] = useState(false);
@@ -204,29 +207,55 @@ export default function DocumentEditorPage() {
   /** AIが書き換えた本文の案。生徒が「置き換える」を押すまで本文には入れない */
   const [rewritten, setRewritten] = useState<string | null>(null);
 
-  const loadDocument = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await authFetch(`/api/documents/${id}`);
-      if (!res.ok) throw new Error();
-      const data: Document = await res.json();
-      setDoc(data);
-      setContent(data.content);
-      setAiLikeness(data.aiLikeness ?? null);
-      // 添削結果は書類直下に保存される。無い場合だけ版から拾う（旧データ救済）
-      const latestWithFeedback = [...(data.versions || [])]
-        .reverse()
-        .find((v) => v.feedback);
-      setFeedback(data.feedback ?? latestWithFeedback?.feedback ?? null);
-      setReviewedContent(
-        data.feedback && data.feedbackContent ? data.feedbackContent : null
-      );
-    } catch {
-      setDoc(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  /**
+   * 書類と添削の履歴を読み、AI添削の欄に出す添削を選ぶ。
+   * 今の本文への添削があればそれ。無ければ直前の添削を「古い」の印付きで出す。
+   * 版に戻した直後（exact）は、その版への添削が無ければ何も出さない。
+   */
+  const loadDocument = useCallback(
+    async (opts?: { exact?: boolean }) => {
+      setLoading(true);
+      try {
+        const [res, reviewsRes] = await Promise.all([
+          authFetch(`/api/documents/${id}`),
+          authFetch(`/api/documents/${id}/reviews`).catch(() => null),
+        ]);
+        if (!res.ok) throw new Error();
+        const data: Document = await res.json();
+        const history: DocumentReviewRecord[] = reviewsRes?.ok
+          ? ((await reviewsRes.json()).reviews ?? [])
+          : [];
+        setDoc(data);
+        setContent(data.content);
+        setAiLikeness(data.aiLikeness ?? null);
+        setReviews(history);
+        // 直近の添削は書類直下の方が新しい（面接の質問を後から足している）
+        const withLatest = (r: DocumentReviewRecord) =>
+          r.feedbackAt === data.feedbackAt && data.feedback ? data.feedback : r.feedback;
+        const current = history.find((r) => r.content === data.content);
+        const shown = current ?? (opts?.exact ? undefined : history[0]);
+        if (shown) {
+          setFeedback(withLatest(shown));
+          setReviewedContent(shown.content);
+        } else if (!reviewsRes?.ok && !opts?.exact) {
+          // 履歴が読めなかったときは、これまでどおり書類直下の添削を出す
+          setFeedback(data.feedback ?? null);
+          setReviewedContent(
+            data.feedback && data.feedbackContent ? data.feedbackContent : null
+          );
+        } else {
+          setFeedback(null);
+          setReviewedContent(null);
+          setEditorView("write");
+        }
+      } catch {
+        setDoc(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [id]
+  );
 
   useEffect(() => {
     loadDocument();
@@ -333,6 +362,35 @@ export default function DocumentEditorPage() {
         setFeedback(data.feedback);
         // 終わったらそのまま本文の上で指摘を読ませる
         setReviewedContent(content);
+        setReviews((prev) => [
+          {
+            id: `new-${data.feedbackAt}`,
+            content,
+            feedback: data.feedback,
+            feedbackAt: data.feedbackAt,
+          },
+          ...prev,
+        ]);
+        // 添削した本文は版に積まれる（自動保存の本文でも履歴から辿れるように）
+        if (!doc.versions?.some((v) => v.content === content)) {
+          setDoc((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  versions: [
+                    ...(prev.versions ?? []),
+                    {
+                      id: `v-reviewed-${data.feedbackAt}`,
+                      content,
+                      wordCount: content.length,
+                      createdAt: data.feedbackAt,
+                      reason: "reviewed",
+                    },
+                  ],
+                }
+              : prev
+          );
+        }
         setEditorView("review");
         setToolsOpen(false);
       } else {
@@ -620,7 +678,7 @@ export default function DocumentEditorPage() {
       });
       if (!res.ok) throw new Error();
       setContent(v.content);
-      await loadDocument();
+      await loadDocument({ exact: true });
       toast.success("この版に戻しました");
     } catch {
       toast.error("戻せませんでした。通信環境を確認してもう一度お試しください");
@@ -830,6 +888,7 @@ export default function DocumentEditorPage() {
           onReview={handleReview}
           contentEmpty={!content.trim()}
           versions={doc.versions}
+          reviews={reviews}
           onRestoreVersion={handleRestoreVersion}
           showVersions={showVersions}
           setShowVersions={setShowVersions}
@@ -926,6 +985,7 @@ export default function DocumentEditorPage() {
               onReview={handleReview}
               contentEmpty={!content.trim()}
               versions={doc.versions}
+              reviews={reviews}
               onRestoreVersion={handleRestoreVersion}
               showVersions={showVersions}
               setShowVersions={setShowVersions}
@@ -1174,6 +1234,7 @@ function ReviewPanel({
   onReview,
   contentEmpty,
   versions,
+  reviews,
   onRestoreVersion,
   showVersions,
   setShowVersions,
@@ -1199,6 +1260,8 @@ function ReviewPanel({
   onReview: () => void;
   contentEmpty: boolean;
   versions: Document["versions"];
+  /** 添削の履歴（新しい順）。本文が同じ版に添えて出す */
+  reviews: DocumentReviewRecord[];
   /** その版の本文に戻す。現在の本文は履歴に残るので失われない */
   onRestoreVersion: (version: Document["versions"][number]) => void;
   showVersions: boolean;
@@ -1227,6 +1290,34 @@ function ReviewPanel({
 }) {
   /** 中身を開いている版。1つずつ開く */
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
+  /**
+   * バージョン履歴の行。版ごとに、本文が同じ添削（いちばん新しいもの）を添える。
+   * 版に無い本文への添削（版を積む前の旧データ）も1行として混ぜ、新しい順に並べる
+   */
+  const historyRows = useMemo(() => {
+    const rows: {
+      version: Document["versions"][number];
+      review: DocumentReviewRecord | undefined;
+    }[] = (versions ?? []).map((v) => ({
+      version: v,
+      review: reviews.find((r) => r.content === v.content),
+    }));
+    for (const r of reviews) {
+      if (rows.some((row) => row.version.content === r.content)) continue;
+      rows.push({
+        version: {
+          id: `review-${r.id}`,
+          content: r.content,
+          wordCount: r.content.length,
+          createdAt: r.feedbackAt,
+        },
+        review: r,
+      });
+    }
+    return rows.sort((a, b) =>
+      b.version.createdAt.localeCompare(a.version.createdAt)
+    );
+  }, [versions, reviews]);
   return (
     <div className="space-y-4">
       {/* AI Review */}
@@ -1501,7 +1592,7 @@ function ReviewPanel({
       </Card>
 
       {/* Version History */}
-      {versions && versions.length > 0 && (
+      {historyRows.length > 0 && (
         <Card data-tool="versions">
           <CardHeader className="pb-3">
             <button
@@ -1510,7 +1601,7 @@ function ReviewPanel({
             >
               <CardTitle className="flex items-center gap-2 text-base">
                 <History className="size-4" />
-                バージョン履歴 ({versions.length})
+                バージョン履歴 ({historyRows.length})
               </CardTitle>
               {showVersions ? (
                 <ChevronUp className="size-4" />
@@ -1521,7 +1612,7 @@ function ReviewPanel({
           </CardHeader>
           {showVersions && (
             <CardContent className="space-y-2">
-              {[...versions].reverse().map((v) => {
+              {historyRows.map(({ version: v, review }) => {
                 const open = openVersionId === v.id;
                 return (
                   <div key={v.id} className="rounded border text-xs">
@@ -1539,7 +1630,7 @@ function ReviewPanel({
                           <span className="text-muted-foreground ml-2">
                             {v.wordCount} 文字
                           </span>
-                          {v.feedback && (
+                          {review && (
                             <Badge
                               variant="secondary"
                               className="ml-2 text-[10px]"
@@ -1573,9 +1664,19 @@ function ReviewPanel({
                     </div>
                     {open && (
                       <div className="space-y-2 border-t p-2">
-                        <div className="bg-muted/40 max-h-60 overflow-y-auto rounded p-2 leading-relaxed whitespace-pre-wrap">
-                          {v.content || "（本文なし）"}
-                        </div>
+                        {review ? (
+                          // その版の本文に、その版への添削の印を付けて出す（読むだけ）
+                          <div className="text-sm">
+                            <DocumentReviewView
+                              reviewedText={review.content}
+                              feedback={review.feedback}
+                            />
+                          </div>
+                        ) : (
+                          <div className="bg-muted/40 max-h-60 overflow-y-auto rounded p-2 leading-relaxed whitespace-pre-wrap">
+                            {v.content || "（本文なし）"}
+                          </div>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
