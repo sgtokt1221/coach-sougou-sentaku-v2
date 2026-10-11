@@ -14,6 +14,10 @@ import {
 } from "@/lib/ai/prompt-versions";
 import { judgeApMap } from "@/lib/documents/ap-map-judge";
 import {
+  judgeNaturalness,
+  mergeNaturalness,
+} from "@/lib/japanese/naturalness-judge";
+import {
   buildProgress,
   collectPreviousIssues,
   judgeProgress,
@@ -46,6 +50,8 @@ function matchingEvidence(content: string, values: string[]): string[] {
  */
 const DISPLAY_MAX_IMPROVEMENTS = 5;
 const DISPLAY_MAX_CORRECTIONS = 5;
+/** 本体の5件に自然さの点検を足した、赤ペン全体の上限 */
+const MAX_LANGUAGE_CORRECTIONS = 16;
 
 export class DocumentReviewError extends Error {
   constructor(
@@ -180,6 +186,16 @@ export async function reviewDocumentCore(params: {
     : Promise.resolve(null);
 
   /**
+   * 日本語の自然さ（話し言葉・重言・ら抜き・決まり文句・語の組み合わせ）。
+   * 本体の赤ペンは5件で、その枠を文法の誤りが先に使うため、不自然さが素通りしていた。
+   */
+  const naturalnessPromise = judgeNaturalness({
+    client,
+    text: content,
+    writer: "document",
+  });
+
+  /**
    * 前回の指摘が直ったか。前回の添削があり、本文が変わっているときだけ判定する。
    * これも並列に走らせ、失敗しても添削は返す（赤ペンの計算分だけ残る）。
    */
@@ -286,6 +302,7 @@ ${content}
   const parsed = response.parsed_output;
   const apMap = await apMapPromise;
   const progressJudged = await progressPromise;
+  const naturalness = await naturalnessPromise;
   const progress =
     previousFeedback && previousIssues
       ? buildProgress({
@@ -354,14 +371,19 @@ ${content}
      * 赤ペンは本文に完全一致する原文だけを残す。作られた引用を弾くため。
      * 直し先が原文と同じものも落とす（直っていない指摘は役に立たない）。
      */
-    languageCorrections: (parsed.languageCorrections ?? [])
-      .filter(
-        (c) =>
-          c.original.length > 0 &&
-          content.includes(c.original) &&
-          c.original !== c.suggestion
-      )
-      .slice(0, DISPLAY_MAX_CORRECTIONS),
+    languageCorrections: mergeNaturalness(
+      (parsed.languageCorrections ?? [])
+        .filter(
+          (c) =>
+            c.original.length > 0 &&
+            content.includes(c.original) &&
+            c.original !== c.suggestion
+        )
+        .slice(0, DISPLAY_MAX_CORRECTIONS),
+      naturalness,
+      content,
+      MAX_LANGUAGE_CORRECTIONS
+    ),
     apMap,
     progress,
     progressMetadata: progressJudged

@@ -17,6 +17,10 @@ import {
   type SentenceCheckResult,
 } from "@/lib/essay/sentence-check-judge";
 import {
+  judgeNaturalness,
+  mergeNaturalness,
+} from "@/lib/japanese/naturalness-judge";
+import {
   deriveWeaknessIssues,
   effectiveSubjectMatch,
   type DerivableFeedback,
@@ -214,8 +218,25 @@ ${input.ocrText}
     onCall,
   });
 
-  const [response, engagement, knowledge, sentenceCheck, subQuestions] =
-    await Promise.all([
+  /**
+   * 日本語の自然さ（話し言葉・重言・ら抜き・決まり文句・語の組み合わせ）。
+   * 1文ずつの点検は誤りだけを見るので、誤りでない不自然さが素通りしていた。
+   */
+  const naturalnessPromise = judgeNaturalness({
+    client,
+    text: input.ocrText,
+    writer: "essay",
+    onCall,
+  });
+
+  const [
+    response,
+    engagement,
+    knowledge,
+    sentenceCheck,
+    subQuestions,
+    naturalness,
+  ] = await Promise.all([
       client.messages.parse({
         model: AI_MODEL_REVIEW,
         // messages.parse は max_tokens を thinking と本文で共有する。旧値の 4096 では
@@ -234,6 +255,7 @@ ${input.ocrText}
       knowledgePromise,
       sentenceCheckPromise,
       subQuestionPromise,
+      naturalnessPromise,
     ]);
 
   const durationMs = Date.now() - startedAt;
@@ -453,9 +475,11 @@ ${input.ocrText}
       correction.original !== correction.suggestion &&
       isRewrite(correction.suggestion, correction.original)
   );
-  const languageCorrections = mergeSentenceCorrections(
-    reviewCorrections,
-    sentenceCheck
+  const languageCorrections = mergeNaturalness(
+    mergeSentenceCorrections(reviewCorrections, sentenceCheck),
+    naturalness,
+    input.ocrText,
+    MAX_LANGUAGE_CORRECTIONS
   );
   const appTargetScore = hasAdmissionPolicy ? 35 : 28;
 
@@ -560,8 +584,8 @@ export function sentenceCheckFields(
   };
 }
 
-/** 赤ペンに並べる上限。本体の5件に、1文ずつの点検で見つけた崩れを足す */
-const MAX_LANGUAGE_CORRECTIONS = 10;
+/** 赤ペンに並べる上限。本体の5件に、1文ずつの点検の崩れと自然さの点検を足す */
+const MAX_LANGUAGE_CORRECTIONS = 16;
 
 /** 文として崩れている（表現力の減点に数える）もの。誤字は数えない */
 function countGrammarErrors(check: SentenceCheckResult | null): number {

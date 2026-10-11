@@ -31,7 +31,7 @@ export interface NaturalJapaneseFinding {
 }
 
 /** 結論の押し付け・空疎な強調・定型の橋渡し（natural-japanese） */
-const STOCK_PHRASES = [
+export const STOCK_PHRASES = [
   "と言えるでしょう",
   "と言えるだろう",
   "と言えます",
@@ -54,10 +54,12 @@ const STOCK_PHRASES = [
 ];
 
 /** 英語を直訳したような言い回し（natural-japanese / yomiyasu） */
-const TRANSLATIONESE = [
+export const TRANSLATIONESE = [
   "することができる",
   "することができます",
   "することが可能",
+  "ということである",
+  "ということです",
   "という観点から",
   "にとって重要",
   "にとって不可欠",
@@ -89,8 +91,8 @@ const FIGURATIVE = [
 ];
 
 /** 話し言葉（どちらの文体でも書類では使わない） */
-const SPOKEN = ["けど", "すごく", "じゃない", "いろんな", "やっぱり", "しちゃ", "ちゃんと", "みたいな", "っていう"];
-const SPOKEN_SENTENCE_HEAD = ["なので", "だから", "でも"];
+export const SPOKEN = ["けど", "すごく", "すごい", "じゃない", "いろんな", "やっぱり", "やっぱ", "めっちゃ", "しちゃ", "ちゃんと", "みたいな", "っていう", "とか"];
+export const SPOKEN_SENTENCE_HEAD = ["なので", "だから", "でも"];
 
 const PARAGRAPH_HEAD_CONNECTIVES = ["しかし", "また", "そして", "そのため", "さらに", "一方", "このように"];
 
