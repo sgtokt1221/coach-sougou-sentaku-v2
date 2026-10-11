@@ -1,3 +1,7 @@
+import {
+  pickDocumentScoreFields,
+  type DocumentScoreFields,
+} from "@/lib/documents/score-axes";
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
@@ -21,15 +25,8 @@ interface DocumentListItem {
   review?: DocumentReview;
   deadline?: string;
   updatedAt: string;
-  aiScore?: {
-    apAlignment?: number;
-    structure: number;
-    originality: number;
-    /** v9 で追加。旧データと学業活動報告書には無い */
-    learningPlan?: number;
-    /** v4 で追加。旧データには無い */
-    expression?: number;
-  };
+  /** 点の欄（v10 の軸と旧軸の両方。並びは score-axes.ts が決める） */
+  aiScore?: DocumentScoreFields;
   aiLikeness?: DocumentAiLikeness;
 }
 
@@ -109,19 +106,7 @@ export async function GET(
             ? data.updatedAt
             : (data.updatedAt?.toDate?.()?.toISOString() ??
               new Date().toISOString()),
-        aiScore: feedback
-          ? {
-              apAlignment:
-                typeof feedback.apAlignmentScore === "number"
-                  ? feedback.apAlignmentScore
-                  : undefined,
-              structure: feedback.structureScore,
-              originality: feedback.originalityScore,
-              learningPlan: feedback.learningPlanScore ?? undefined,
-              // v4 で追加。総合点の分母に関わるので一覧にも返す
-              expression: feedback.expressionScore,
-            }
-          : undefined,
+        aiScore: pickDocumentScoreFields(feedback),
         aiLikeness: (data.aiLikeness as DocumentAiLikeness) ?? undefined,
       };
     });

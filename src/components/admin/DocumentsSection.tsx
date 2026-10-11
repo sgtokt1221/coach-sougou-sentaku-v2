@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  pickDocumentScoreFields,
+  type DocumentScoreFields,
+} from "@/lib/documents/score-axes";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -87,15 +91,8 @@ interface DocumentListItem {
   review?: DocumentReview;
   deadline?: string;
   updatedAt: string;
-  aiScore?: {
-    apAlignment?: number;
-    structure: number;
-    originality: number;
-    /** v9 で追加。旧データと学業活動報告書には無い */
-    learningPlan?: number;
-    /** v4 で追加。旧データには無い */
-    expression?: number;
-  };
+  /** 点の欄（v10 の軸と旧軸の両方。並びは score-axes.ts が決める） */
+  aiScore?: DocumentScoreFields;
   aiLikeness?: DocumentAiLikeness;
   /** この書類を書いていたときの AIコーチ会話（セクション単位） */
   coachThreads?: {
@@ -137,17 +134,12 @@ interface DocumentDetail {
   review?: DocumentReview;
   /** 承認/差し戻し/取り消しの操作履歴（古い順） */
   reviewHistory?: DocumentReviewHistoryEntry[];
-  aiScore?: {
-    apAlignment?: number;
-    structure: number;
-    originality: number;
-    /** v9 で追加。旧データと学業活動報告書には無い */
-    learningPlan?: number;
-    /** v4 で追加。旧データには無い */
-    expression?: number;
-  };
+  /** 点の欄（v10 の軸と旧軸の両方。並びは score-axes.ts が決める） */
+  aiScore?: DocumentScoreFields;
   /** 講評と改善点。生徒側と同じものを管理者にも出す */
   overallFeedback?: string;
+  /** 今回の課題（v10〜）。旧データは overallFeedback */
+  priorityImprovement?: string;
   improvements?: string[];
   /** 改善点の内訳（v8 で追加。旧データには無い） */
   improvementDetails?: DocumentImprovement[];
@@ -173,13 +165,7 @@ interface DocumentDetail {
     content: string;
     wordCount: number;
     createdAt: string;
-    aiScore?: {
-      apAlignment?: number;
-      structure: number;
-      originality: number;
-      learningPlan?: number;
-      expression?: number;
-    };
+    aiScore?: DocumentScoreFields;
     feedbackSummary?: string;
   }[];
   /** この書類を書いていたときの AIコーチ会話（セクション単位） */
@@ -287,18 +273,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
         ...detailDoc,
         feedback,
         feedbackContent,
-        aiScore: {
-          apAlignment:
-            typeof feedback?.apAlignmentScore === "number"
-              ? feedback.apAlignmentScore
-              : undefined,
-          structure: feedback?.structureScore,
-          originality: feedback?.originalityScore,
-          learningPlan: feedback?.learningPlanScore ?? undefined,
-          expression: feedback?.expressionScore,
-        },
+        aiScore: pickDocumentScoreFields(feedback),
         languageCorrections: feedback?.languageCorrections ?? [],
         overallFeedback: feedback?.overallFeedback,
+        priorityImprovement: feedback?.priorityImprovement,
         improvements: feedback?.improvements ?? [],
         improvementDetails: feedback?.improvementDetails,
         apSpecificNotes: feedback?.apSpecificNotes,
@@ -544,7 +522,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                         </td>
                         <td className="hidden px-4 py-3 text-center md:table-cell">
                           {doc.aiScore ? (
-                            <DocumentTotalScoreInline scores={doc.aiScore} />
+                            <DocumentTotalScoreInline
+                              scores={doc.aiScore}
+                              documentType={doc.type}
+                            />
                           ) : (
                             <span className="text-muted-foreground text-xs">
                               未添削
@@ -674,6 +655,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                 detailDoc.feedbackContent ? (
                   // 生徒と同じ画面を読むだけで出す（本文を書き換える操作は渡さない）
                   <DocumentReviewView
+                    documentType={detailDoc.type}
                     reviewedText={detailDoc.feedbackContent}
                     feedback={detailDoc.feedback}
                     onGenerateQuestions={async () => {
@@ -785,6 +767,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                                     <span className="ml-2">
                                       <DocumentTotalScoreInline
                                         scores={v.aiScore}
+                                        documentType={detailDoc.type}
                                       />
                                     </span>
                                   )}
@@ -840,7 +823,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                   </div>
                   <DocumentReviewProgress active={aiReviewBusy} />
                   {detailDoc.aiScore ? (
-                    <DocumentTotalScoreCard scores={detailDoc.aiScore} />
+                    <DocumentTotalScoreCard
+                      scores={detailDoc.aiScore}
+                      documentType={detailDoc.type}
+                    />
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       まだAI添削が実行されていません。上のボタンから実行できます。
@@ -850,11 +836,13 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
 
                 {/* 講評と改善点。生徒が見ているものと同じものを出す。
                     面談で「AIは何を指摘したか」を突き合わせるために要る */}
-                {detailDoc.overallFeedback && (
+                {(detailDoc.priorityImprovement || detailDoc.overallFeedback) && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-semibold">総合評価</h3>
+                    <h3 className="text-sm font-semibold">
+                      {detailDoc.priorityImprovement ? "今回の課題" : "総合評価"}
+                    </h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      {detailDoc.overallFeedback}
+                      {detailDoc.priorityImprovement ?? detailDoc.overallFeedback}
                     </p>
                   </div>
                 )}

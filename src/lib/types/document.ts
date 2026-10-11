@@ -103,89 +103,15 @@ export interface DocumentVersion {
 }
 
 /**
- * 書類の採点軸と配点。合計40点。
- *
- * 小論文の ESSAY_SCORE_WEIGHTS と同じ考え方で、換算をここ1か所に持つ。
- * 画面ごとに合計の出し方が散ると、同じ書類が場所によって違う点に見える。
- *
- * AP合致度を最も重くしているのは、出願書類が「その大学が求める人物像に
- * 合っているか」を示す書類だから。
- *
- * v9（2026-10-05）で「学びの計画・将来像」を足し、表現を 9→5 に下げた。
- * 大学の書類審査が重く見る「入学後に何を学び、何を実現したいか」が軸に無く、
- * 文の書き方（表現）が40点中9点を占めていた。学業活動報告書は学びの計画を
- * 求めない書類なので採点せず、分母から外す（APが無いときと同じ扱い）。
+ * 書類の採点軸（v9 までの旧軸）。読み取り専用。v10 の軸・配点・合計の出し方は
+ * src/lib/documents/score-axes.ts が正本。
  */
-export const DOCUMENT_SCORE_WEIGHTS = {
-  apAlignment: 11,
-  structure: 8,
-  originality: 9,
-  learningPlan: 7,
-  expression: 5,
-} as const;
-
-/** 学びの計画・将来像を採点しない書類（活動の事実と学びを示す書類） */
-export function documentAssessesLearningPlan(
-  documentType: string | undefined
-): boolean {
-  return documentType !== "学業活動報告書";
-}
-
-export type DocumentScoreAxis = keyof typeof DOCUMENT_SCORE_WEIGHTS;
-
-export interface DocumentTotalScore {
-  /** 加重合計（採点できた軸のみ） */
-  total: number;
-  /** 満点（採点できた軸のみ）。APを取得できない書類では28点になる */
-  max: number;
-  /** 満点に対する割合(%)。ランク判定に使う */
-  percentage: number;
-  /** 採点できなかった軸。画面で「AP未評価」等を出すため */
-  missing: DocumentScoreAxis[];
-}
-
-/**
- * 総合点を出す。
- *
- * APを取得できなかった書類では apAlignmentScore が null になる。その場合は
- * 分母からも外す（0点として扱うと、大学未設定というだけで低評価になる）。
- * 旧データには expression が無いので、同じく分母から外す。
- */
-export function calculateDocumentTotal(
-  scores: Partial<Record<DocumentScoreAxis, number | null | undefined>>
-): DocumentTotalScore {
-  const axes = Object.keys(DOCUMENT_SCORE_WEIGHTS) as DocumentScoreAxis[];
-  let total = 0;
-  let max = 0;
-  const missing: DocumentScoreAxis[] = [];
-
-  for (const axis of axes) {
-    const value = scores[axis];
-    if (typeof value !== "number") {
-      missing.push(axis);
-      continue;
-    }
-    const weight = DOCUMENT_SCORE_WEIGHTS[axis];
-    total += value * (weight / 10);
-    max += weight;
-  }
-
-  return {
-    total: Math.round(total),
-    max,
-    percentage: max > 0 ? Math.round((total / max) * 100) : 0,
-    missing,
-  };
-}
-
-/** 画面に出す軸のラベル */
-export const DOCUMENT_SCORE_LABELS: Record<DocumentScoreAxis, string> = {
-  apAlignment: "AP合致度",
-  structure: "構成",
-  originality: "独自性",
-  learningPlan: "学びの計画",
-  expression: "表現",
-};
+export type DocumentScoreAxis =
+  | "apAlignment"
+  | "structure"
+  | "originality"
+  | "learningPlan"
+  | "expression";
 
 /**
  * 改善点1件。どこを・何が問題で・どう直すか・直した文の例。
@@ -209,11 +135,33 @@ export interface DocumentReviewRecord {
 }
 
 export interface DocumentFeedback {
+  // ---- v10〜の軸（src/lib/documents/score-axes.ts が正本）----
+  /** 筋（志望理由書なら「志望の筋」）。0-10。書きかけは null */
+  coherenceScore?: number | null;
+  /** 経験と思考の質。0-10 */
+  insightScore?: number | null;
+  /** 大学との対応。AP未取得・書きかけは null */
+  fitScore?: number | null;
+  /** 学びの計画。採点しない種類（学業活動報告書）・書きかけは null */
+  planScore?: number | null;
+  /** 読みやすさ。0-10 */
+  readabilityScore?: number | null;
+  /** 目標字数の5割未満で採点しなかった（書きかけ）。ランクも点も出さない */
+  incomplete?: boolean;
+  /** 目標字数に対する充足率(%)。サーバー計算値。目標が無ければ null */
+  fillRate?: number | null;
+  /**
+   * 今回の課題。ほかの欄を書き終えてから総合した2文（v10〜）。
+   * 旧データは overallFeedback（全体講評）を読む
+   */
+  priorityImprovement?: string;
+
+  // ---- v9 以前の軸（読み取り専用。v10 の添削では書かない）----
   /** AP未取得時は採点せずnull。 */
-  apAlignmentScore: number | null;
-  apAlignmentAssessability: "assessable" | "insufficient_context";
-  structureScore: number;
-  originalityScore: number;
+  apAlignmentScore?: number | null;
+  apAlignmentAssessability?: "assessable" | "insufficient_context";
+  structureScore?: number;
+  originalityScore?: number;
   /**
    * 学びの計画・将来像（v9 で追加。旧データには無い）。
    * 学業活動報告書では採点せず null
@@ -221,7 +169,11 @@ export interface DocumentFeedback {
   learningPlanScore?: number | null;
   /** 日本語の正確さと読みやすさ（v4 で追加。旧データには無い） */
   expressionScore?: number;
-  overallFeedback: string;
+  /** 全体講評（v9 まで）。v10 は priorityImprovement に置き換えた */
+  overallFeedback?: string;
+  /** AP についての補足（v9 まで） */
+  apSpecificNotes?: string;
+
   /**
    * 改善点（1行にまとめたもの）。v7以前のデータはこれしか無いので残す。
    * v8以降は improvementDetails から組み立てて両方保存する。
@@ -229,13 +181,8 @@ export interface DocumentFeedback {
   improvements: string[];
   /** 改善点の内訳（v8 で追加。旧データには無い） */
   improvementDetails?: DocumentImprovement[];
-  apSpecificNotes: string;
-  scoreEvidence?: {
-    apAlignment: string[];
-    structure: string[];
-    originality: string[];
-    learningPlan?: string[];
-  };
+  /** 点の根拠の引用。v10 は新しい軸のキー、v9 までは旧軸のキー */
+  scoreEvidence?: Record<string, string[]>;
   /** 日本語の直し（赤ペン）。v4 で追加。旧データには無い */
   languageCorrections?: LanguageCorrection[];
   /**
@@ -277,8 +224,18 @@ export interface DocumentApMapItem {
 export interface DocumentReviewProgress {
   /** 前回の添削の時刻 (ISO) */
   previousAt: string | null;
-  /** 前回の5軸の点。合計の推移を出すのに使う */
-  previousScores: Partial<Record<DocumentScoreAxis, number | null>>;
+  /** 前回の5軸の点（v9 までの記録。v10 は previousTotal を使う） */
+  previousScores?: Partial<Record<DocumentScoreAxis, number | null>>;
+  /**
+   * 前回の合計。軸の版が違う合計は比べられないので、版も持つ（v10〜）。
+   * 書きかけだった回は null
+   */
+  previousTotal?: {
+    version: "v10" | "legacy";
+    total: number;
+    max: number;
+    percentage: number;
+  } | null;
   items: DocumentProgressItem[];
 }
 

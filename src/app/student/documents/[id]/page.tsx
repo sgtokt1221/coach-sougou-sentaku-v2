@@ -49,15 +49,14 @@ import type {
   DocumentFeedback,
   DocumentStatus,
   DocumentAiLikeness,
-  DocumentScoreAxis,
   DocumentReviewRecord,
 } from "@/lib/types/document";
 import {
   documentStatusLabel2,
   AI_LIKENESS_LEVEL_LABELS,
   AI_LIKENESS_SUBMIT_THRESHOLD,
-  DOCUMENT_SCORE_WEIGHTS,
 } from "@/lib/types/document";
+import { documentScoreLayout } from "@/lib/documents/score-axes";
 import { axisPoints } from "@/lib/score-rank";
 import type { EssayInlineComment } from "@/lib/types/essay";
 import { DocumentReviewBadge } from "@/components/documents/DocumentReviewBadge";
@@ -96,13 +95,13 @@ function statusVariant2(status: DocumentStatus): "outline" | "default" {
 function ScoreBar({
   label,
   score,
-  axis,
+  weight,
 }: {
   label: string;
   score: number;
-  axis: DocumentScoreAxis;
+  /** その軸の配点 */
+  weight: number;
 }) {
-  const weight = DOCUMENT_SCORE_WEIGHTS[axis];
   const pct = Math.round(score * 10);
   return (
     <div className="space-y-1">
@@ -721,6 +720,7 @@ export default function DocumentEditorPage() {
     reviewView:
       feedback && reviewedContent !== null ? (
         <DocumentReviewView
+          documentType={doc.type}
           reviewedText={reviewedContent}
           feedback={feedback}
           currentContent={content}
@@ -883,6 +883,7 @@ export default function DocumentEditorPage() {
           <TeacherComments inlineComments={doc.inlineComments} />
         </div>
         <ReviewPanel
+          documentType={doc.type}
           feedback={feedback}
           reviewing={reviewing}
           onReview={handleReview}
@@ -980,6 +981,7 @@ export default function DocumentEditorPage() {
           <div className="space-y-4 px-4 pb-6">
             <TeacherComments inlineComments={doc.inlineComments} />
             <ReviewPanel
+              documentType={doc.type}
               feedback={feedback}
               reviewing={reviewing}
               onReview={handleReview}
@@ -1229,6 +1231,7 @@ function EditorPanel({
 }
 
 function ReviewPanel({
+  documentType,
   feedback,
   reviewing,
   onReview,
@@ -1255,6 +1258,8 @@ function ReviewPanel({
   onNaturalize,
   onShowInText,
 }: {
+  /** 書類の種類。点の軸の名前が種類で変わる */
+  documentType?: string;
   feedback: DocumentFeedback | null;
   reviewing: boolean;
   onReview: () => void;
@@ -1290,6 +1295,7 @@ function ReviewPanel({
 }) {
   /** 中身を開いている版。1つずつ開く */
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
+  const scoreLayout = documentScoreLayout(feedback, documentType);
   /**
    * バージョン履歴の行。版ごとに、本文が同じ添削（いちばん新しいもの）を添える。
    * 版に無い本文への添削（版を積む前の旧データ）も1行として混ぜ、新しい順に並べる
@@ -1349,61 +1355,46 @@ function ReviewPanel({
               {/* 軸ごとの点だけだと「結局どうなのか」が読めないので、
                   総合点と判定を先に出す */}
               <DocumentTotalScoreCard
-                scores={{
-                  apAlignment: feedback.apAlignmentScore,
-                  structure: feedback.structureScore,
-                  originality: feedback.originalityScore,
-                  learningPlan: feedback.learningPlanScore,
-                  expression: feedback.expressionScore,
-                }}
+                scores={feedback}
+                documentType={documentType}
+                showAxes={false}
               />
-              <div className="space-y-3">
-                {feedback.apAlignmentScore === null ? (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    APを取得できなかったため、AP合致度は未評価です。
-                  </div>
-                ) : (
-                  <ScoreBar
-                    label="AP合致度"
-                    score={feedback.apAlignmentScore}
-                    axis="apAlignment"
-                  />
-                )}
-                <ScoreBar
-                  label="構成"
-                  score={feedback.structureScore}
-                  axis="structure"
-                />
-                <ScoreBar
-                  label="独自性"
-                  score={feedback.originalityScore}
-                  axis="originality"
-                />
-                {/* v9 で追加。旧データと学業活動報告書には無い */}
-                {typeof feedback.learningPlanScore === "number" && (
-                  <ScoreBar
-                    label="学びの計画"
-                    score={feedback.learningPlanScore}
-                    axis="learningPlan"
-                  />
-                )}
-                {/* v4 で追加。旧データには無いので、あるときだけ出す */}
-                {typeof feedback.expressionScore === "number" && (
-                  <ScoreBar
-                    label="表現"
-                    score={feedback.expressionScore}
-                    axis="expression"
-                  />
-                )}
-              </div>
+              {!scoreLayout.incomplete && (
+                <div className="space-y-3">
+                  {scoreLayout.axes.map((axis) =>
+                    axis.score === null ? (
+                      <div
+                        key={axis.key}
+                        className="text-muted-foreground flex items-center justify-between text-sm"
+                      >
+                        <span>{axis.label}</span>
+                        <span>未評価</span>
+                      </div>
+                    ) : (
+                      <ScoreBar
+                        key={axis.key}
+                        label={axis.label}
+                        score={axis.score}
+                        weight={axis.weight}
+                      />
+                    )
+                  )}
+                </div>
+              )}
 
-              <Separator />
-              <div className="space-y-2">
-                <p className="text-sm font-medium">総合評価</p>
-                <p className="text-muted-foreground text-sm">
-                  {feedback.overallFeedback}
-                </p>
-              </div>
+              {(feedback.priorityImprovement || feedback.overallFeedback) && (
+                <>
+                  <Separator />
+                  <div className="space-y-2 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
+                    <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+                      {feedback.priorityImprovement ? "今回の課題" : "総合評価"}
+                    </p>
+                    <p className="text-sm leading-relaxed">
+                      {feedback.priorityImprovement ?? feedback.overallFeedback}
+                    </p>
+                  </div>
+                </>
+              )}
 
               {/* 改善点などは本文の上で読む（ここに同じものを二重に並べない） */}
               {onShowInText ? (
@@ -1668,6 +1659,7 @@ function ReviewPanel({
                           // その版の本文に、その版への添削の印を付けて出す（読むだけ）
                           <div className="text-sm">
                             <DocumentReviewView
+                              documentType={documentType}
                               reviewedText={review.content}
                               feedback={review.feedback}
                             />

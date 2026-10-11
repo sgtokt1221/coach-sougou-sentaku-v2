@@ -106,21 +106,21 @@ assert.ok(!essayPrompt.includes("gapToPass"));
 const documentPrompt = buildDocumentReviewPrompt({
   hasAdmissionPolicy: false,
 });
-assert.ok(documentPrompt.includes("apAlignmentScoreはnull"));
+assert.ok(documentPrompt.includes("fitScore は null"));
 assert.ok(documentPrompt.includes("APを推測しない"));
 // 改善例は生徒がそのまま貼るので、作った数字の手本を置かない（v9）
 assert.ok(!documentPrompt.includes("69人"), "document: 作った数字の手本が無い");
 assert.ok(
-  documentPrompt.includes("example に事実を作らないでください"),
+  documentPrompt.includes("example に、本文に書かれていない出来事"),
   "document: 改善例に事実を作らない"
 );
 assert.ok(!documentPrompt.includes("迷ったら6点"), "document: 中央に寄せない");
 assert.ok(
-  documentPrompt.includes("learningPlan を採点します") &&
+  documentPrompt.includes("plan（学びの計画）") &&
     buildDocumentReviewPrompt({
       hasAdmissionPolicy: true,
       documentType: "学業活動報告書",
-    }).includes("learningPlan は採点せず null"),
+    }).includes("planScore は null"),
   "document: 学びの計画は活動報告書だけ採点しない"
 );
 
@@ -184,14 +184,13 @@ assert.equal(longAdmissionPolicy.originalLength, 7000);
 assert.equal(prepareAdmissionPolicy("   ").status, "missing");
 
 const validDocumentReview = {
-  apAlignmentScore: null,
-  apAlignmentAssessability: "insufficient_context" as const,
-  structureScore: 6,
-  originalityScore: 5,
-  learningPlanScore: 6,
-  // v4 で追加。フィクスチャが追随しておらず、この検証はずっと落ちていた
-  expressionScore: 6,
-  overallFeedback: "講評",
+  // v10 で軸を組み直した（src/lib/documents/score-axes.ts）
+  coherenceScore: 6,
+  insightScore: 5,
+  fitScore: null,
+  fitAssessability: "insufficient_context" as const,
+  planScore: 6,
+  readabilityScore: 6,
   // v8 で構造化。書き換え例まで埋まっていることを型で担保する
   improvements: [
     {
@@ -202,12 +201,11 @@ const validDocumentReview = {
         "合奏の方針で意見が割れたとき、私は両者の主張を書き出して共通点を探しました。",
     },
   ],
-  apSpecificNotes: "AP未取得",
   scoreEvidence: {
-    apAlignment: [],
-    structure: ["引用"],
-    originality: ["引用"],
-    learningPlan: ["引用"],
+    coherence: ["引用"],
+    insight: ["引用"],
+    fit: [],
+    plan: ["引用"],
   },
   languageCorrections: [
     {
@@ -218,6 +216,7 @@ const validDocumentReview = {
       reason: "主語と述語が噛み合っていない",
     },
   ],
+  priorityImprovement: "なぜ法学で解くのかが書かれていない。「社会の仕組み」を制度の名前で書き直す。",
 };
 assert.equal(
   DocumentReviewOutputSchema.safeParse(validDocumentReview).success,
@@ -226,7 +225,7 @@ assert.equal(
 assert.equal(
   DocumentReviewOutputSchema.safeParse({
     ...validDocumentReview,
-    structureScore: 11,
+    coherenceScore: 11,
   }).success,
   false
 );

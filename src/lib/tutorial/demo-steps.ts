@@ -149,9 +149,9 @@ export const DEMO_STEPS: Record<string, DemoStepConfig> = {
       },
       {
         selector: "[data-tour='docs-feedback']",
-        title: "3軸AI添削",
+        title: "審査官の目でAI添削",
         description:
-          "AP合致度・構成・独自性の3軸で添削。小論文より深い構造評価。",
+          "なぜこの分野か・なぜこの大学か・入学後に何をするか・経験の中で何を考えたか、の4つの問いで添削します。",
       },
     ],
   },

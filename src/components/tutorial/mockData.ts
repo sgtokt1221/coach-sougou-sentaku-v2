@@ -133,11 +133,12 @@ export const DOCUMENTS_MOCK = {
   ],
   feedback: {
     scores: [
-      { label: "AP合致度", score: 7, max: 10 },
-      { label: "構成", score: 8, max: 10 },
-      { label: "独自性", score: 6, max: 10 },
+      { label: "志望の筋", score: 7, max: 10 },
+      { label: "経験と思考の質", score: 6, max: 10 },
+      { label: "大学との対応", score: 6, max: 10 },
+      { label: "学びの計画", score: 5, max: 10 },
     ],
-    overall: "志望理由が明確で、大学の教育方針との関連性がよく示されています。具体的な研究例を追加するとさらに説得力が増します。",
+    overall: "経験から生まれた問いと学部の学びはつながっていますが、入学後に何を学ぶかが分野名にとどまっています。「〇〇を学びたい」の部分を、どの授業でどんな問いを調べるかまで書き直しましょう。",
   },
 };
 

@@ -1,3 +1,4 @@
+import { pickDocumentScoreFields } from "@/lib/documents/score-axes";
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
@@ -92,23 +93,14 @@ export async function GET(
       review: data.review ?? undefined,
       // 誰がいつどのコメントで承認/差し戻し/取り消したか
       reviewHistory: data.reviewHistory ?? [],
-      aiScore: feedback
-        ? {
-            apAlignment:
-              typeof feedback.apAlignmentScore === "number"
-                ? feedback.apAlignmentScore
-                : undefined,
-            structure: feedback.structureScore,
-            originality: feedback.originalityScore,
-            learningPlan: feedback.learningPlanScore ?? undefined,
-            expression: feedback.expressionScore,
-          }
-        : undefined,
+      aiScore: pickDocumentScoreFields(feedback),
       /**
        * 講評と改善点。以前はスコアと赤ペンしか返しておらず、管理者が
        * AI添削を実行できるのに結果の中身を読めなかった（面談で使えない）。
        */
       overallFeedback: feedback?.overallFeedback ?? undefined,
+      // 今回の課題（v10〜）。旧データは overallFeedback
+      priorityImprovement: feedback?.priorityImprovement ?? undefined,
       improvements: feedback?.improvements ?? [],
       // 内訳（どこ・何が問題・どうする・書き換え例）は v8 以降のみ
       improvementDetails: feedback?.improvementDetails ?? undefined,
@@ -137,19 +129,11 @@ export async function GET(
           content: v.content ?? "",
           wordCount: v.wordCount ?? 0,
           createdAt: v.createdAt ?? "",
-          aiScore: v.feedback
-            ? {
-                apAlignment:
-                  typeof v.feedback.apAlignmentScore === "number"
-                    ? v.feedback.apAlignmentScore
-                    : undefined,
-                structure: v.feedback.structureScore,
-                originality: v.feedback.originalityScore,
-                learningPlan: v.feedback.learningPlanScore ?? undefined,
-                expression: v.feedback.expressionScore,
-              }
-            : undefined,
-          feedbackSummary: v.feedback?.overallFeedback ?? undefined,
+          aiScore: pickDocumentScoreFields(v.feedback),
+          feedbackSummary:
+            v.feedback?.priorityImprovement ??
+            v.feedback?.overallFeedback ??
+            undefined,
         })),
       coachThreads,
     });

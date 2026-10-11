@@ -6,6 +6,7 @@ import type {
   DocumentProgressItem,
   DocumentReviewProgress,
 } from "@/lib/types/document";
+import { documentScoreLayout, documentTotal } from "@/lib/documents/score-axes";
 
 /**
  * 再添削のとき、前回の添削の指摘が新しい本文で直ったかを判定する。
@@ -62,6 +63,8 @@ export function collectPreviousIssues(
 export function buildProgress(params: {
   previous: Partial<DocumentFeedback>;
   previousAt: string | null;
+  /** 書類の種類。前回の合計を、その種類の軸の並びで出すのに使う */
+  documentType?: string;
   language: DocumentProgressItem[];
   toJudge: PreviousIssue[];
   judged: Map<
@@ -84,16 +87,20 @@ export function buildProgress(params: {
           : [];
       })
     : [];
-  const p = params.previous;
+  // 前回の合計は、前回の軸の版のまま出す（v10 と旧軸の合計は比べられない）
+  const layout = documentScoreLayout(params.previous, params.documentType);
+  const total = documentTotal(layout);
   return {
     previousAt: params.previousAt,
-    previousScores: {
-      apAlignment: p.apAlignmentScore ?? null,
-      structure: p.structureScore ?? null,
-      originality: p.originalityScore ?? null,
-      learningPlan: p.learningPlanScore ?? null,
-      expression: p.expressionScore ?? null,
-    },
+    previousTotal:
+      layout.incomplete || total.max === 0
+        ? null
+        : {
+            version: layout.version,
+            total: total.total,
+            max: total.max,
+            percentage: total.percentage,
+          },
     items: [...judgedItems, ...params.language],
   };
 }

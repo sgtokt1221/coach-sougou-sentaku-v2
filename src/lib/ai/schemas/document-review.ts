@@ -21,15 +21,18 @@ const evidence = z.array(z.string().max(600)).max(6);
 const quote = z.string().max(600);
 
 export const DocumentReviewOutputSchema = z.object({
-  apAlignmentScore: score.nullable(),
-  apAlignmentAssessability: z.enum(["assessable", "insufficient_context"]),
-  structureScore: score,
-  originalityScore: score,
-  /** 学びの計画・将来像（document-review-v9 で追加）。学業活動報告書では null */
-  learningPlanScore: score.nullable(),
-  /** 日本語の正確さと読みやすさ（document-review-v4 で追加） */
-  expressionScore: score,
-  overallFeedback: z.string().max(2000),
+  /**
+   * v10 で軸を「審査官が書類で確かめる問い」に組み直した（src/lib/documents/score-axes.ts）。
+   * ラベルと基準は書類の種類ごとに違い、プロンプトの「今回の軸」で渡す。
+   */
+  coherenceScore: score,
+  insightScore: score,
+  /** 大学との対応。AP が無いときは null */
+  fitScore: score.nullable(),
+  fitAssessability: z.enum(["assessable", "insufficient_context"]),
+  /** 学びの計画。採点しない種類（学業活動報告書）では null */
+  planScore: score.nullable(),
+  readabilityScore: score,
   /**
    * 改善点。v8 で文字列から構造化した。
    *
@@ -55,12 +58,11 @@ export const DocumentReviewOutputSchema = z.object({
       })
     )
     .max(6),
-  apSpecificNotes: z.string().max(1500),
   scoreEvidence: z.object({
-    apAlignment: evidence,
-    structure: evidence,
-    originality: evidence,
-    learningPlan: evidence,
+    coherence: evidence,
+    insight: evidence,
+    fit: evidence,
+    plan: evidence,
   }),
   /**
    * 日本語の直し（赤ペン）。小論文添削にはあったが書類には無く、
@@ -77,6 +79,11 @@ export const DocumentReviewOutputSchema = z.object({
       })
     )
     .max(6),
+  /**
+   * 今回の課題（v10〜）。ほかの欄を書き終えてから総合して書く。
+   * 構造化出力はスキーマの順に生成されるので、最後に置かないと総合できない
+   */
+  priorityImprovement: z.string().max(1200),
 });
 
 export type DocumentReviewOutput = z.infer<typeof DocumentReviewOutputSchema>;

@@ -182,8 +182,10 @@ assert.equal(applyCorrection("abc", "", "y"), null);
     progress.items.map((i) => i.status),
     ["improved", "unchanged", "resolved"]
   );
-  assert.equal(progress.previousScores.apAlignment, 5);
-  assert.equal(progress.previousScores.originality, null);
+  // 前回の合計は前回の軸の版のまま残す（旧軸: AP5・構成6 → 5*1.1+6*0.8 = 10.3/19）
+  assert.equal(progress.previousTotal?.version, "legacy");
+  assert.equal(progress.previousTotal?.max, 19);
+  assert.equal(progress.previousTotal?.total, 10);
 
   // 判定に失敗したときは赤ペンだけ
   assert.equal(

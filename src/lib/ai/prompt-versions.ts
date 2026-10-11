@@ -332,15 +332,29 @@ export const AI_PROMPT_VERSIONS = {
     //     - 「迷ったら6点」をやめた。6点＝ランクB「合格ラインに到達」なので、
     //       ふつうの書類が合格水準に見えていた
     //     - 配点を AP11・構成8・独自性9・学び7・表現5 に変えた（表現が 9/40 で重すぎた）
-    promptVersion: "document-review-v9",
-    // output-v3: learningPlanScore と scoreEvidence.learningPlan を追加
-    schemaVersion: "document-review-output-v3",
+    // v10（2026-10-11）: 軸を「審査官が書類で確かめる問い」に組み直した（保存キーも変更）。
+    //     82/800字の書類が C、目標超過の書類が全部 B、なぜ法学部かが書かれていない
+    //     書類で「筋が通っている」、APを本文に貼る書き方を褒める、例文に本文に無い
+    //     出来事を作る、を実測で確かめた（評価: scripts/eval-document-review.ts）。
+    //     - 軸: 筋 11・経験と思考の質 10・大学との対応 8・学びの計画 7・読みやすさ 4
+    //       （ラベルと問いは書類の種類ごと。src/lib/documents/score-axes.ts）
+    //     - 幼稚さの印（APの引用・賛辞・網羅、定型の教訓、自己申告の強み）を明示して下げる
+    //     - 字数をサーバーで強制: 5割未満は採点しない、5〜8割と超過は各軸5点以下
+    //     - 全体講評とAPの補足をやめ、総合した「今回の課題」を最後の欄に置いた。
+    //       改善点は内容だけ最大3件、文の直しは赤ペンだけ
+    //     - 自己分析・活動実績は出どころ付きの素材の候補として示すだけにし、例文に入れない
+    promptVersion: "document-review-v10",
+    // output-v4: 軸のキーを coherence/insight/fit/plan/readability に変え、
+    //            overallFeedback・apSpecificNotes をやめ、priorityImprovement を最後に足した
+    schemaVersion: "document-review-output-v4",
   },
   documentApMap: {
     // v1（2026-10-11）: APを要素に分け、本文が応えているかを要素ごとに判定する。
     //     AP合致度が点数1つと自由文だけで、何を足せばよいかが分からなかった。
     //     本体の添削スキーマには足さず、並列の別呼び出しにした（max_tokens の枠を守るため）。
-    promptVersion: "document-ap-map-v1",
+    // v2（2026-10-11）: APの言い直しを応えている根拠にしない。本文の筋と関係しない
+    //     要素は足すよう勧めない（網羅させると何でも詰め込んだ書類になる）。
+    promptVersion: "document-ap-map-v2",
     schemaVersion: "document-ap-map-output-v1",
   },
   documentProgress: {

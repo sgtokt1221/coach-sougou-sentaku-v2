@@ -1,5 +1,7 @@
 "use client";
 
+import type { DocumentScoreFields } from "@/lib/documents/score-axes";
+import { DocumentTotalScoreCard } from "@/components/documents/DocumentTotalScore";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -10,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
@@ -25,18 +26,9 @@ interface DocumentDetail {
   wordCount?: number;
   targetWordCount?: number;
   status?: DocumentStatus;
-  aiScore?: {
-    apAlignment: number;
-    structure: number;
-    originality: number;
-  };
+  /** 点の欄（v10 の軸と旧軸の両方。並びは score-axes.ts が決める） */
+  aiScore?: DocumentScoreFields;
 }
-
-const SCORE_AXES: { key: keyof NonNullable<DocumentDetail["aiScore"]>; label: string }[] = [
-  { key: "apAlignment", label: "AP合致度" },
-  { key: "structure", label: "構成" },
-  { key: "originality", label: "独自性" },
-];
 
 /**
  * セッション画面内で出願書類を読み取り表示するダイアログ。
@@ -113,18 +105,10 @@ export default function DocumentDetailDialog({
             {data.aiScore && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">AI添削スコア</h3>
-                <div className="grid gap-2">
-                  {SCORE_AXES.map((item) => {
-                    const val = data.aiScore![item.key];
-                    return (
-                      <div key={item.key} className="flex items-center gap-3">
-                        <span className="w-20 text-xs text-muted-foreground">{item.label}</span>
-                        <Progress value={val * 10} className="h-2 flex-1" />
-                        <span className="w-8 text-right text-xs font-medium">{val}/10</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                <DocumentTotalScoreCard
+                  scores={data.aiScore}
+                  documentType={data.type}
+                />
               </div>
             )}
 

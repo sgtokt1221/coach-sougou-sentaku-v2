@@ -72,10 +72,10 @@ export default function DemoDocumentsPage() {
 
       <Card data-tour="docs-feedback" className="rounded-2xl">
         <CardHeader>
-          <CardTitle className="text-base">AI添削 (3軸評価)</CardTitle>
+          <CardTitle className="text-base">AI添削</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid gap-2 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {DOCUMENTS_MOCK.feedback.scores.map((s) => (
               <div
                 key={s.label}
@@ -89,7 +89,7 @@ export default function DemoDocumentsPage() {
               </div>
             ))}
           </div>
-          <p className="rounded-lg border-l-4 border-violet-400 bg-violet-50 p-3 text-sm leading-relaxed">
+          <p className="rounded-lg bg-amber-50 p-3 text-sm leading-relaxed dark:bg-amber-950/30">
             {DOCUMENTS_MOCK.feedback.overall}
           </p>
         </CardContent>

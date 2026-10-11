@@ -18,8 +18,8 @@ import {
   type DocumentFeedbackItem,
 } from "@/lib/documents/feedback-anchors";
 import type { Segment } from "@/lib/essay/feedback-anchors";
+import { documentScoreLayout, documentTotal } from "@/lib/documents/score-axes";
 import {
-  calculateDocumentTotal,
   type DocumentApMapItem,
   type DocumentFeedback,
   type DocumentInterviewQuestion,
@@ -132,6 +132,7 @@ function useIsWide(ref: React.RefObject<HTMLDivElement | null>): boolean {
  * 管理者の画面は読むだけ（onApply を渡さない）。
  */
 export function DocumentReviewView({
+  documentType,
   reviewedText,
   feedback,
   currentContent,
@@ -139,6 +140,8 @@ export function DocumentReviewView({
   onGenerateQuestions,
   practiceHref,
 }: {
+  /** 書類の種類。点の軸の名前が種類で変わる */
+  documentType?: string;
   /** 添削した時点の本文。印はこちらに付ける */
   reviewedText: string;
   feedback: DocumentFeedback;
@@ -214,16 +217,34 @@ export function DocumentReviewView({
           PROGRESS_ORDER.indexOf(a.status) - PROGRESS_ORDER.indexOf(b.status)
       )
     : [];
+  // 前回と今回の合計は、軸の版が同じときだけ並べる（v10 と旧軸の合計は比べられない）
+  const currentLayout = documentScoreLayout(feedback, documentType);
+  const current = documentTotal(currentLayout);
   const previousTotal = progress
-    ? calculateDocumentTotal(progress.previousScores)
+    ? (progress.previousTotal ??
+      (progress.previousScores
+        ? {
+            version: "legacy" as const,
+            ...documentTotal(
+              documentScoreLayout(
+                {
+                  apAlignmentScore: progress.previousScores.apAlignment,
+                  structureScore: progress.previousScores.structure ?? undefined,
+                  originalityScore: progress.previousScores.originality ?? undefined,
+                  learningPlanScore: progress.previousScores.learningPlan,
+                  expressionScore: progress.previousScores.expression ?? undefined,
+                },
+                documentType
+              )
+            ),
+          }
+        : null))
     : null;
-  const currentTotal = calculateDocumentTotal({
-    apAlignment: feedback.apAlignmentScore,
-    structure: feedback.structureScore,
-    originality: feedback.originalityScore,
-    learningPlan: feedback.learningPlanScore,
-    expression: feedback.expressionScore,
-  });
+  const comparable =
+    !!previousTotal &&
+    !currentLayout.incomplete &&
+    previousTotal.version === currentLayout.version &&
+    previousTotal.max === current.max;
 
   return (
     <div ref={rootRef} className="@container">
@@ -262,18 +283,16 @@ export function DocumentReviewView({
             </div>
           )}
 
-          {progress && previousTotal && (
+          {progress && (progressItems.length > 0 || comparable) && (
             <section className="space-y-2">
               <div className="flex items-baseline justify-between gap-2">
                 <p className="text-sm font-semibold">前回から</p>
-                {previousTotal.max === currentTotal.max && (
+                {comparable && (
                   <p className="text-sm tabular-nums">
-                    {previousTotal.total}
+                    {previousTotal!.total}
                     <span className="text-muted-foreground mx-1">→</span>
-                    <span className="font-semibold">{currentTotal.total}</span>
-                    <span className="text-muted-foreground">
-                      /{currentTotal.max}
-                    </span>
+                    <span className="font-semibold">{current.total}</span>
+                    <span className="text-muted-foreground">/{current.max}</span>
                   </p>
                 )}
               </div>
@@ -306,11 +325,13 @@ export function DocumentReviewView({
             </section>
           )}
 
-          {feedback.overallFeedback && (
-            <section className="space-y-1.5">
-              <p className="text-sm font-semibold">総合評価</p>
+          {(feedback.priorityImprovement || feedback.overallFeedback) && (
+            <section className="space-y-1.5 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
+              <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+                {feedback.priorityImprovement ? "今回の課題" : "総合評価"}
+              </p>
               <p className="text-sm leading-relaxed">
-                {feedback.overallFeedback}
+                {feedback.priorityImprovement ?? feedback.overallFeedback}
               </p>
             </section>
           )}
