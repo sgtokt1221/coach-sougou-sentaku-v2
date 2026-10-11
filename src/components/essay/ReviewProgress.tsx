@@ -17,7 +17,6 @@ import {
 const TIPS = [
   { icon: PenTool, text: "序論では「問い」を立てると読者を引き込めます" },
   { icon: BookOpen, text: "具体的な数値やデータを引用すると説得力が増します" },
-  { icon: Target, text: "APとの関連を意識して結論を書きましょう" },
   {
     icon: Lightbulb,
     text: "「しかし」の連続は避け、多様な接続語を使いましょう",
@@ -27,8 +26,7 @@ const TIPS = [
   { icon: Target, text: "反論を想定して再反論する構成が高評価のカギ" },
   { icon: Lightbulb, text: "抽象と具体を行き来すると論が深まります" },
   { icon: PenTool, text: "結論で新しい論点を出さず、本論の要約に留めましょう" },
-  { icon: BookOpen, text: "冒頭30字で採点者の印象が決まります" },
-  { icon: Target, text: "よくある理由の一歩先の論点を掘ると独自性UP" },
+  { icon: Target, text: "設問の主題語を本論でも使い続けると、すり替えを防げます" },
   { icon: Lightbulb, text: "800字なら4段落、1200字なら5-6段落が目安です" },
   {
     icon: GraduationCap,
@@ -40,13 +38,19 @@ const TIPS = [
   },
 ];
 
+/** 添削で実際に行っていること（v28）。採点・設問の判定・1文ずつの点検は並行して走る */
 const STAGES = [
-  { label: "答案を読み込んでいます", icon: FileText },
-  { label: "構成・論理性を分析中", icon: BookOpen },
-  { label: "AP合致度を評価中", icon: GraduationCap },
-  { label: "改善ポイントを整理中", icon: Lightbulb },
-  { label: "ブラッシュアップ版を作成中", icon: PenTool },
+  { label: "答案を読み込んでいます", short: "読み込み", icon: FileText },
+  { label: "設問に答えているかを確かめています", short: "設問", icon: Target },
+  { label: "構成と論理を採点しています", short: "採点", icon: BookOpen },
+  { label: "文を1つずつ点検しています", short: "文の点検", icon: PenTool },
+  { label: "今回の課題を1つに絞っています", short: "今回の課題", icon: Lightbulb },
 ];
+
+/** 段階を進める間隔（ミリ秒）。v28 の所要は中央値17秒・最大26秒 */
+const STAGE_INTERVAL_MS = 4000;
+/** 課題文型は約1万字の課題文を読むので、段階をゆっくり進める */
+const STAGE_INTERVAL_LONG_MS = 10000;
 
 /**
  * レポート課題は約1万字の課題文をプロンプトに載せるため、実測でAI呼び出し
@@ -71,11 +75,12 @@ export function ReviewProgress({
   }, []);
 
   useEffect(() => {
+    const step = longRunning ? STAGE_INTERVAL_LONG_MS : STAGE_INTERVAL_MS;
     const timeouts = STAGES.map((_, i) =>
-      setTimeout(() => setStageIndex(i), i * 12000 + 3000)
+      setTimeout(() => setStageIndex(i), i * step + 1500)
     );
     return () => timeouts.forEach(clearTimeout);
-  }, []);
+  }, [longRunning]);
 
   useEffect(() => {
     const interval = setInterval(() => setElapsed((p) => p + 1), 1000);
@@ -87,7 +92,7 @@ export function ReviewProgress({
   const tip = TIPS[tipIndex];
   const TipIcon = tip.icon;
   const progress = Math.min(
-    10 + stageIndex * 18 + Math.floor(elapsed * 0.8),
+    10 + stageIndex * 15 + Math.floor(elapsed * (longRunning ? 0.6 : 1.5)),
     95
   );
   /** 入れ替わる文言の動き。下から入って上へ抜ける */
@@ -179,17 +184,15 @@ export function ReviewProgress({
             <p className="text-muted-foreground text-xs">
               {longRunning
                 ? elapsed < 10
-                  ? "課題文を読み込んで採点します。2〜3分かかることがあります"
-                  : elapsed < 90
+                  ? "課題文と照らして採点します。1分ほどかかることがあります"
+                  : elapsed < 60
                     ? `${elapsed}秒経過...課題文と照らして採点しています`
                     : `${elapsed}秒経過...もう少しお待ちください`
-                : elapsed < 10
-                  ? "AI添削には30〜60秒ほどかかります"
-                  : elapsed < 40
-                    ? `${elapsed}秒経過...もう少しお待ちください`
-                    : elapsed < 70
-                      ? `${elapsed}秒経過...あと少しで完了です`
-                      : `${elapsed}秒経過...もうすぐ結果が表示されます`}
+                : elapsed < 8
+                  ? "20秒ほどで結果が出ます"
+                  : elapsed < 20
+                    ? `${elapsed}秒経過...あと少しで完了です`
+                    : `${elapsed}秒経過...もうすぐ結果が表示されます`}
             </p>
           </div>
         </div>
@@ -247,7 +250,7 @@ export function ReviewProgress({
                         : "text-muted-foreground"
                     }`}
                   >
-                    {s.label.split("を")[0].split("に")[0]}
+                    {s.short}
                   </span>
                 </div>
               );

@@ -8,11 +8,16 @@ import { SMOOTH_EASE } from "@/components/motion/Reveal";
  * レーダー・課題・答案）の骨組みに光を流し、何が出てくるかを先に見せる。
  * 灰色の箱が点滅するだけだと、止まっているのか読み込み中なのかが分からない。
  */
-export function ResultLoading() {
+export function ResultLoading({
+  essay = false,
+}: {
+  /** 小論文の結果画面。答案の下に「ほかに直すこと」と「書き直す」の形を足す */
+  essay?: boolean;
+} = {}) {
   const reduce = useReducedMotion();
   return (
     <motion.div
-      className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:px-6 lg:py-8"
+      className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:px-6 lg:py-8"
       initial={reduce ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={reduce ? undefined : { opacity: 0, y: -8 }}
@@ -39,15 +44,27 @@ export function ResultLoading() {
           <div className="skeleton h-4 w-5/6" />
         </div>
       </div>
-      <div className="bg-card grid content-start gap-3 rounded-2xl p-5">
-        <div className="skeleton h-4 w-32" />
-        {Array.from({ length: 7 }, (_, i) => (
-          <div
-            key={i}
-            className="skeleton h-4"
-            style={{ width: `${[100, 96, 100, 88, 100, 92, 60][i]}%` }}
-          />
-        ))}
+      <div className="grid content-start gap-4">
+        <div className="bg-card grid content-start gap-3 rounded-2xl p-5">
+          <div className="skeleton h-4 w-32" />
+          {Array.from({ length: 7 }, (_, i) => (
+            <div
+              key={i}
+              className="skeleton h-4"
+              style={{ width: `${[100, 96, 100, 88, 100, 92, 60][i]}%` }}
+            />
+          ))}
+        </div>
+        {essay && (
+          <>
+            <div className="bg-card grid gap-3 rounded-2xl p-5">
+              <div className="skeleton h-4 w-28" />
+              <div className="skeleton h-4 w-full" />
+              <div className="skeleton h-4 w-4/5" />
+            </div>
+            <div className="skeleton h-12 w-full !rounded-2xl" />
+          </>
+        )}
       </div>
     </motion.div>
   );

@@ -220,7 +220,7 @@ export default function EssayResultPage() {
   }, [id, hasUnreadComments]);
 
   if (loading) {
-    return <ResultLoading />;
+    return <ResultLoading essay />;
   }
 
   if (error || !result) {
