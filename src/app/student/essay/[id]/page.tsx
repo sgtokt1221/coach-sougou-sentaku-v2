@@ -29,7 +29,7 @@ import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
 import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import {
   FocusCard,
-  GoodPointCard,
+  NextTimeCard,
   OtherFixesCard,
   PreviousFocusCard,
   ResultHero,
@@ -380,7 +380,7 @@ export default function EssayResultPage() {
         </div>
 
         {/*
-          左（スマホでは上）に、ランク・レーダー・今回の課題・次も使える書き方。
+          左（スマホでは上）に、ランク・レーダー・今回の課題・次回からの注意点。
           右に答案・直すこと・書き直しへの導線。PC では左を止めておき、
           課題を見ながら答案の印を追えるようにする。
         */}
@@ -454,11 +454,9 @@ export default function EssayResultPage() {
                 />
               </Reveal>
             )}
-            {(result.feedback.goodPoints ?? [])[0] && (
-              <Reveal delay={0.55}>
-                <GoodPointCard text={result.feedback.goodPoints[0]} />
-              </Reveal>
-            )}
+            <Reveal delay={0.55}>
+              <NextTimeCard issues={result.feedback.repeatedIssues} />
+            </Reveal>
           </div>
 
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">

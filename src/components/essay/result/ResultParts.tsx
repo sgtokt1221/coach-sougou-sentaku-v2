@@ -15,6 +15,9 @@ import { CountUp, PopIn, Reveal } from "@/components/motion/Reveal";
 import { VERDICT_STYLE } from "@/components/essay/OralExamQuestionsCard";
 import { useAnchoredFeedback } from "@/components/essay/AnchoredFeedbackView";
 import type { ScoreRank } from "@/lib/score-rank";
+import { useAuthSWR } from "@/lib/api/swr";
+import { essayIssueEntry } from "@/lib/growth/weakness-taxonomy";
+import type { WeaknessRecord } from "@/lib/types/growth";
 import type { EssayFocus } from "@/lib/essay/result-focus";
 import type {
   EssayFeedback,
@@ -234,14 +237,50 @@ export function FocusCard({
   );
 }
 
-/** 次も使える書き方。1つだけ */
-export function GoodPointCard({ text }: { text: string }) {
+/** 次回からの注意点に出す弱点の数 */
+const NEXT_TIME_MAX = 2;
+
+/**
+ * 次回からの注意点。この答案で見つかった弱点を、どの設問でも使える書き方にして出す。
+ * 回数は弱点DBの記録（提出のたびに積まれる）から引く。
+ */
+export function NextTimeCard({
+  issues,
+}: {
+  issues: { area: string; category?: string | null }[] | undefined;
+}) {
+  const { data } = useAuthSWR<{ weaknesses: WeaknessRecord[] }>(
+    "/api/growth/weaknesses?context=all"
+  );
+  const seen = new Set<string>();
+  const items = (issues ?? []).flatMap((issue) => {
+    const entry = essayIssueEntry(issue);
+    if (!entry?.nextTime || seen.has(entry.id)) return [];
+    seen.add(entry.id);
+    const record = data?.weaknesses.find(
+      (w) => w.canonicalId === entry.id || w.area === entry.label
+    );
+    return [{ entry, count: record?.count ?? 0 }];
+  });
+  if (items.length === 0) return null;
   return (
-    <div className="grid gap-1.5 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/30">
-      <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-        次も使える書き方
+    <div className="grid gap-3 rounded-2xl bg-sky-50 p-5 dark:bg-sky-950/30">
+      <p className="text-sm font-bold text-sky-800 dark:text-sky-300">
+        次回からの注意点
       </p>
-      <p className="text-[15px] leading-relaxed">{text}</p>
+      {items.slice(0, NEXT_TIME_MAX).map(({ entry, count }) => (
+        <div key={entry.id} className="grid gap-0.5">
+          <p className="text-sm font-semibold">
+            {entry.label}
+            {count >= 2 && (
+              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
+                これまで{count}回
+              </span>
+            )}
+          </p>
+          <p className="text-[15px] leading-relaxed">{entry.nextTime}</p>
+        </div>
+      ))}
     </div>
   );
 }

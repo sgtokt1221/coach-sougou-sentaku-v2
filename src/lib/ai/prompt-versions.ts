@@ -259,7 +259,9 @@ export const AI_PROMPT_VERSIONS = {
     //      - 「〜として」「具体的に」を問う設問では、立場ならではの手立てを独立した要求にする
     //        （誰でもできる関わり方だけなら missing → 回答力5以下）
     //      - 表現の上限をサーバーで足した（崩れた文1つで6、100字超の文で4、80字超2文で5、誤字3つで5）
-    promptVersion: "essay-review-v31",
+    // v32（2026-10-12）: 今回の課題の1文目を、題材の言葉を使わない「どの答案にも使える書き方の原則」にした。
+    //      2文目でその原則を今回の書き直しにどう使うかを書く
+    promptVersion: "essay-review-v32",
     schemaVersion: "essay-review-output-v5",
   },
   interviewScore: {

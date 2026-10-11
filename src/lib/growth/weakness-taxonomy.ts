@@ -32,6 +32,8 @@ export interface TaxonomyEntry {
   label: string;
   /** 生徒・講師のカードに出す1行の説明 */
   description: string;
+  /** 次の答案で何をするか（結果画面の「次回からの注意点」）。どの設問でも使える書き方で書く */
+  nextTime?: string;
   /** 決定論マッピング用の語彙 (text に部分一致したらヒット) */
   keywords: string[];
   /** v2 でこのエントリにまとめた旧 ID（保存済みの canonicalId を寄せる） */
@@ -52,6 +54,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "structure",
     label: "結論で立場を言い切れていない",
     description: "結論が無い、または「大切だ」で終わっている",
+    nextTime: "最後の段落は「以上から、私は〜と考える」と、設問への答えを一文で言い切って締める。",
     keywords: ["結論", "締め", "結びの", "結びが", "まとめ方", "落としどころ"],
     oldLabels: ["結論が不明確・欠落している"],
   },
@@ -62,6 +65,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "structure",
     label: "結論が本論・序論の繰り返しにとどまる",
     description: "結論で新しい到達点を示していない",
+    nextTime: "結論では序論を言い直さず、本論で示した理由や条件を踏まえた形で主張を述べ直す。",
     keywords: [
       "結論",
       "繰り返し",
@@ -80,6 +84,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "structure",
     label: "1つの段落に複数の話題が混ざっている",
     description: "段落の区切りと話題の切れ目が合っていない",
+    nextTime: "1つの段落には1つの話題だけを書き、段落の最初の一文でその話題を示す。",
     keywords: [
       "話題が混在",
       "複数の話題",
@@ -96,6 +101,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "structure",
     label: "段落どうしのつながりが示されていない",
     description: "前の段落から次の段落へ移る理由が書かれていない",
+    nextTime: "段落の頭に「第一に」「一方で」「では」など、前の段落との関係を示す言葉を置く。",
     keywords: [
       "流れ",
       "つながり",
@@ -112,6 +118,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "structure",
     label: "序論・本論・結論の配分が偏っている",
     description: "序論や具体例に字数を取られ、論じる部分が薄い",
+    nextTime: "書く前に序論・本論・結論の字数を割り振り、本論に全体の半分以上を使う。",
     keywords: ["序論", "本論", "バランス", "配分", "比率", "構成のバランス"],
     oldLabels: ["序論・本論・結論の構成バランスが悪い"],
   },
@@ -124,6 +131,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "responsiveness",
     label: "設問が求めた要素が欠けている",
     description: "「比較せよ」「二つ挙げよ」などの要求に答えていない",
+    nextTime: "書き始める前に設問の要求（「挙げ」「比較し」「具体的に」など）を書き出し、書き終えたら一つずつ確かめる。",
     keywords: [
       "設問が求め",
       "求められている",
@@ -134,6 +142,8 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
       "触れていない",
       "条件を満た",
       "指定された",
+      // v31 で「〜として」を問う設問の要求にした「立場ならではの手立て」
+      "ならではの",
       // 単独の「欠けている」「要素」は「具体性に欠けている」「具体的な要素が欠けている」
       // も拾うので、設問に紐づく形だけにする
       "設問の要素",
@@ -149,6 +159,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "responsiveness",
     label: "設問の主題からずれている",
     description: "問われたことと別の話題が中心になっている",
+    nextTime: "設問の主題の言葉を最初に決め、どの段落もその言葉について書いているかを確かめる。",
     keywords: [
       "設問",
       "テーマからずれ",
@@ -168,6 +179,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "responsiveness",
     label: "課題文・資料を読み違えている",
     description: "筆者の主張や資料の数値を取り違えている",
+    nextTime: "書き始める前に、課題文の筆者の主張と資料の数値を一文にまとめ、その読みに沿って書く。",
     keywords: ["読み違", "誤読", "読み誤", "資料の数値"],
   },
   {
@@ -175,6 +187,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "responsiveness",
     label: "専門用語・知識を取り違えている",
     description: "基礎の定義や仕組みが誤っている（口頭試問型）",
+    nextTime: "定義や仕組みは、教科書の言葉で説明できることだけを書く。あいまいな用語は使わない。",
     keywords: ["知識の誤り", "用語の誤り", "定義が誤", "事実誤認", "専門用語"],
   },
   {
@@ -182,6 +195,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "responsiveness",
     label: "字数が大きく足りない",
     description: "指定字数の7割に届いていない",
+    nextTime: "理由を二つと、反論への応答まで入れる組み立てを先に決めてから書き、指定字数の8割以上を埋める。",
     keywords: ["字数不足", "字数が足り", "分量が足り"],
   },
 
@@ -191,6 +205,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "logic",
     label: "根拠が一般論で具体性がない",
     description: "誰でも書ける理由にとどまり、事実・例・仕組みがない",
+    nextTime: "理由には、誰でも言える一般論でなく、具体例・事実・数値のどれかを一つ添える。",
     keywords: [
       "根拠",
       "裏付け",
@@ -230,6 +245,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "logic",
     label: "理由から主張への筋道が飛んでいる",
     description: "間の説明が抜けている、または因果を取り違えている",
+    nextTime: "「AだからB」と書いたら、なぜAならBになるのかを一文足す。",
     keywords: [
       "飛躍",
       "短絡",
@@ -249,6 +265,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "logic",
     label: "一部の例から全体を言い切っている",
     description: "違うものを一括りにして論じている",
+    nextTime: "一つの例から言えるのはその範囲まで。「〜の場合は」と範囲を付けて主張する。",
     keywords: ["一括り", "ひとくくり", "一般化", "決めつけ"],
   },
   {
@@ -256,6 +273,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "logic",
     label: "主張どうしが食い違っている",
     description: "前と後ろで逆の立場を取っている",
+    nextTime: "書き終えたら序論と結論の主張を並べ、同じ立場になっているかを確かめる。",
     keywords: ["矛盾", "一貫", "整合", "ぶれ", "筋が通", "食い違"],
     oldLabels: ["主張に矛盾・一貫性の欠如がある"],
   },
@@ -267,6 +285,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "reasoningMaturity",
     label: "反対意見・別の立場を扱っていない",
     description: "自分と違う見方に触れていない",
+    nextTime: "自分と反対の立場を一つ挙げ、それでも自分の主張が成り立つ理由を書く。",
     keywords: ["反対意見", "反論", "一面的", "多面", "視野", "偏り", "片側"],
     oldLabels: ["反対意見・多面的な視点への配慮が不足している"],
   },
@@ -275,6 +294,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "reasoningMaturity",
     label: "反論への応答が弱い",
     description: "反論を挙げたが、なぜ退けられるかを示していない",
+    nextTime: "反論を挙げたら「確かに〜。しかし〜」の形で、なぜそれでも自分の主張が成り立つかまで書く。",
     keywords: [
       "再反論",
       "反駁",
@@ -295,6 +315,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "reasoningMaturity",
     label: "問題を単一の原因で単純化している",
     description: "原因や立場を1つに絞って片付けている",
+    nextTime: "原因や立場を一つで片付けず、少なくとももう一つの原因・立場を検討する。",
     keywords: ["単純化", "単一の原因", "単一原因", "一つの原因", "二項対立"],
     oldLabels: ["問題を単一の原因・視点で単純化している"],
   },
@@ -303,6 +324,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "reasoningMaturity",
     label: "解決策の実行面を考えていない",
     description: "誰がやるか、制約、副作用に触れていない",
+    nextTime: "解決策には、誰が行うか・何が壁になるか・どう続けるかのどれかを一つ添える。",
     keywords: [
       "実行主体",
       "実現可能",
@@ -322,6 +344,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "expression",
     label: "主語と述語が噛み合わない文がある",
     description: "文頭の「〜は」と文末が対応していない",
+    nextTime: "書いた文の主語と述語だけを抜き出し、それだけでつながるかを確かめる。",
     keywords: ["主述", "ねじれ", "主語と述語", "述語"],
   },
   {
@@ -329,6 +352,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "expression",
     label: "助詞や語の使い方が誤っている",
     description: "助詞の選び違い、語の組み合わせ、語の抜けで意味が取りにくい",
+    nextTime: "書き終えたら、助詞（が・を・に・で）に気をつけて一文ずつ読み直す。",
     keywords: [
       "文法",
       "てにをは",
@@ -357,6 +381,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "expression",
     label: "誤字・脱字が多い",
     description: "漢字や送り仮名の誤り、字の重なりがある",
+    nextTime: "提出の前に、漢字と送り仮名を見直す時間を必ず取る。",
     // 「表記」は表記ゆれ（誤字ではない）も拾うので入れない
     keywords: ["誤字", "脱字", "誤変換", "送り仮名"],
   },
@@ -365,6 +390,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "expression",
     label: "一文が長く読みにくい",
     description: "読点で節をつなぎ続け、80字を超える文がある",
+    nextTime: "一文は60字前後を目安にし、読点が三つを超えたら文を切る。",
     keywords: [
       "一文が長",
       "一文の長さ",
@@ -380,6 +406,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "expression",
     label: "同じ言葉や言い回しが重なっている",
     description: "同じ語・同じ結論を繰り返している、回りくどい",
+    nextTime: "同じ語や同じ文末が続いたら、言い換えるか一文にまとめる。",
     keywords: [
       "冗長",
       "回りくど",
@@ -399,6 +426,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "expression",
     label: "文体・文末が整っていない",
     description: "常体と敬体の混在、「〜と考える」の連発、話し言葉",
+    nextTime: "文末は「だ・である」でそろえ、「だから」「〜けど」などの話し言葉を使わない。",
     keywords: [
       "文体",
       "文末",
@@ -423,6 +451,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "apAlignment",
     label: "志望理由・動機が浅い",
     description: "なぜこの大学・学部かが言えていない",
+    nextTime: "なぜこの学部でなければならないかを、自分の経験と学部で学ぶことをつなげて書く。",
     keywords: [
       "志望理由",
       "志望動機",
@@ -442,6 +471,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "apAlignment",
     label: "アドミッションポリシーとの結びつきが弱い",
     description: "AP が求める力と答案の論点が対応していない",
+    nextTime: "APの言葉をなぞらず、APが求める力を自分の主張や経験のどこで示しているかを書く。",
     keywords: [
       "アドミ",
       "ポリシー",
@@ -457,6 +487,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "apAlignment",
     label: "どの大学にも言える一般論にとどまる",
     description: "志望先の特色に触れていない",
+    nextTime: "志望先の学部で学べることや取り組みに、少なくとも一つ具体的に触れる。",
     keywords: ["ありきたりな志望", "どこでも", "抽象的な志望", "汎用的"],
   },
 
@@ -1035,6 +1066,20 @@ export function weaknessGroupOf(w: {
   const entry = entryOf(w);
   if (entry?.id.startsWith("iv.")) return "interview";
   return weaknessCategoryOf(w);
+}
+
+/**
+ * 添削結果の弱点（repeatedIssues の1件）を正規の項目へ引く。弱点DBに積むときと同じ解決
+ * （analyze.ts の consolidateExisting）なので、DB の記録と同じ項目になる
+ */
+export function essayIssueEntry(issue: {
+  area: string;
+  category?: string | null;
+}): TaxonomyEntry | null {
+  return resolveCanonical(issue.area, {
+    categoryHint: issue.category as ResolveOptions["categoryHint"],
+    domain: "essay",
+  });
 }
 
 /** カードに出す1行の説明。正規タクソノミーに無い弱点は空文字 */
