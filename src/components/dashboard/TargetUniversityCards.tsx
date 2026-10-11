@@ -71,13 +71,38 @@ function resolveScheduleCell(current?: string, lastYear?: string): string {
 /** 展開部の入試日程4項目（出願開始/締切/試験日/合格発表）。 */
 function scheduleRows(
   schedule?: ResolvedUniversity["schedule"],
-  scheduleLastYear?: ResolvedUniversity["scheduleLastYear"],
+  scheduleLastYear?: ResolvedUniversity["scheduleLastYear"]
 ) {
   return [
-    { label: "出願開始", date: resolveScheduleCell(schedule?.applicationStart, scheduleLastYear?.applicationStart), icon: FileEdit },
-    { label: "出願締切", date: resolveScheduleCell(schedule?.applicationEnd, scheduleLastYear?.applicationEnd), icon: ScrollText },
-    { label: "試験日", date: resolveScheduleCell(schedule?.examDate, scheduleLastYear?.examDate), icon: CalendarClock },
-    { label: "合格発表", date: resolveScheduleCell(schedule?.resultDate, scheduleLastYear?.resultDate), icon: Trophy },
+    {
+      label: "出願開始",
+      date: resolveScheduleCell(
+        schedule?.applicationStart,
+        scheduleLastYear?.applicationStart
+      ),
+      icon: FileEdit,
+    },
+    {
+      label: "出願締切",
+      date: resolveScheduleCell(
+        schedule?.applicationEnd,
+        scheduleLastYear?.applicationEnd
+      ),
+      icon: ScrollText,
+    },
+    {
+      label: "試験日",
+      date: resolveScheduleCell(schedule?.examDate, scheduleLastYear?.examDate),
+      icon: CalendarClock,
+    },
+    {
+      label: "合格発表",
+      date: resolveScheduleCell(
+        schedule?.resultDate,
+        scheduleLastYear?.resultDate
+      ),
+      icon: Trophy,
+    },
   ];
 }
 
@@ -88,12 +113,18 @@ interface EventInfo {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-function getNextEvent(schedule: ResolvedUniversity["schedule"]): EventInfo | null {
+function getNextEvent(
+  schedule: ResolvedUniversity["schedule"]
+): EventInfo | null {
   if (!schedule) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const events: { type: string; date: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  const events: {
+    type: string;
+    date: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
     { type: "出願開始", date: schedule.applicationStart, icon: FileEdit },
     { type: "出願締切", date: schedule.applicationEnd, icon: ScrollText },
     { type: "試験日", date: schedule.examDate, icon: CalendarClock },
@@ -116,7 +147,12 @@ function getNextEvent(schedule: ResolvedUniversity["schedule"]): EventInfo | nul
  * カウントダウンの見た目を日数によって切り替える。
  * 7日以内: 赤、30日以内: 橙、それ以上: 青緑 (teal)
  */
-function countdownStyle(daysLeft: number): { bg: string; text: string; ring: string; label?: string } {
+function countdownStyle(daysLeft: number): {
+  bg: string;
+  text: string;
+  ring: string;
+  label?: string;
+} {
   if (daysLeft === 0) {
     return {
       bg: "from-rose-500 to-rose-600",
@@ -153,7 +189,10 @@ interface Props {
   compact?: boolean;
 }
 
-export function TargetUniversityCards({ targetUniversities, compact = false }: Props) {
+export function TargetUniversityCards({
+  targetUniversities,
+  compact = false,
+}: Props) {
   const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
   const [loading, setLoading] = useState(true);
   /** 展開中のカード（compound id）。null は全て折りたたみ。 */
@@ -187,7 +226,10 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
       return (
         <div className="flex gap-2 overflow-x-auto">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[70px] w-[180px] rounded-xl shrink-0" />
+            <Skeleton
+              key={i}
+              className="h-[70px] w-[180px] shrink-0 rounded-xl"
+            />
           ))}
         </div>
       );
@@ -195,7 +237,7 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
     return (
       <div className="space-y-5">
         {[1, 2].map((i) => (
-          <Skeleton key={i} className="h-48 lg:h-56 rounded-3xl" />
+          <Skeleton key={i} className="h-48 rounded-3xl lg:h-56" />
         ))}
       </div>
     );
@@ -205,28 +247,28 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
     if (compact) {
       return (
         <Link href="/student/settings" className="block">
-          <div className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-3 text-sm text-muted-foreground hover:border-primary/50 transition-colors">
+          <div className="border-border text-muted-foreground hover:border-primary/50 flex items-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm transition-colors">
             <GraduationCap className="size-4" />
             志望校を設定
-            <Settings className="size-3.5 ml-auto" />
+            <Settings className="ml-auto size-3.5" />
           </div>
         </Link>
       );
     }
     return (
       <Link href="/student/settings">
-        <Card className="border-dashed hover:border-primary/50 transition-colors cursor-pointer">
+        <Card className="hover:border-primary/50 cursor-pointer border-dashed transition-colors">
           <CardContent className="flex items-center gap-4 py-6">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
-              <GraduationCap className="size-6 text-muted-foreground" />
+            <div className="bg-muted flex size-12 items-center justify-center rounded-xl">
+              <GraduationCap className="text-muted-foreground size-6" />
             </div>
             <div className="flex-1">
               <p className="font-semibold">志望校を設定しましょう</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 志望校を設定すると、カウントダウンやスケジュールが表示されます
               </p>
             </div>
-            <Settings className="size-5 text-muted-foreground" />
+            <Settings className="text-muted-foreground size-5" />
           </CardContent>
         </Card>
       </Link>
@@ -235,7 +277,7 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
 
   if (compact) {
     return (
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
+      <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1">
         {resolved.map((item) => {
           const nextEvent = getNextEvent(item.schedule);
           const cd = nextEvent ? countdownStyle(nextEvent.daysLeft) : null;
@@ -243,27 +285,35 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
             <Link
               key={`${item.universityId}:${item.facultyId}`}
               href={`/student/universities/${item.universityId}/${item.facultyId}`}
-              className="shrink-0 snap-start group"
+              className="group shrink-0 snap-start"
             >
-              <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-card px-3 py-2.5 min-w-[180px] hover:border-primary/40 transition-colors">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                  <GraduationCap className="size-4 text-primary" />
+              <div className="border-border/60 bg-card hover:border-primary/40 flex min-w-[180px] items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-colors">
+                <div className="bg-primary/10 flex size-9 shrink-0 items-center justify-center rounded-lg">
+                  <GraduationCap className="text-primary size-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate leading-tight">{item.universityName}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{item.facultyName}</p>
+                  <p className="truncate text-sm leading-tight font-semibold">
+                    {item.universityName}
+                  </p>
+                  <p className="text-muted-foreground truncate text-[11px]">
+                    {item.facultyName}
+                  </p>
                 </div>
                 {nextEvent && cd ? (
-                  <div className={`flex flex-col items-center rounded-lg bg-gradient-to-br ${cd.bg} ${cd.text} px-2 py-1 shrink-0 min-w-[48px]`}>
-                    <span className="text-[9px] font-bold uppercase opacity-90 leading-none">
+                  <div
+                    className={`flex flex-col items-center rounded-lg bg-gradient-to-br ${cd.bg} ${cd.text} min-w-[48px] shrink-0 px-2 py-1`}
+                  >
+                    <span className="text-[9px] leading-none font-bold uppercase opacity-90">
                       {nextEvent.type.slice(0, 2)}
                     </span>
-                    <span className="text-base font-black tabular-nums leading-tight">
-                      {nextEvent.daysLeft === 0 ? "本日" : `${nextEvent.daysLeft}日`}
+                    <span className="text-base leading-tight font-black tabular-nums">
+                      {nextEvent.daysLeft === 0
+                        ? "本日"
+                        : `${nextEvent.daysLeft}日`}
                     </span>
                   </div>
                 ) : (
-                  <Trophy className="size-4 text-muted-foreground shrink-0" />
+                  <Trophy className="text-muted-foreground size-4 shrink-0" />
                 )}
               </div>
             </Link>
@@ -273,8 +323,21 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
     );
   }
 
+  /**
+   * 1校なら横いっぱいに出す。複数校はスマホでは横にスワイプ（縦に積むと
+   * 1枚が画面の半分近くあり、スキルや弱点がずっと下に押し出される）。
+   * PC は縦に積む（ダッシュボードでは横幅の2/3の列に入るので、2列にすると
+   * 大学名が1文字ずつ折り返す）。
+   */
+  const multiple = resolved.length > 1;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
+    <div
+      className={
+        multiple
+          ? "-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-1 lg:mx-0 lg:grid lg:grid-cols-1 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0"
+          : "grid grid-cols-1"
+      }
+    >
       {resolved.map((item) => {
         const key = `${item.universityId}:${item.facultyId}`;
         const nextEvent = getNextEvent(item.schedule);
@@ -286,64 +349,68 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
         return (
           <Card
             key={key}
-            className="relative overflow-hidden rounded-3xl border-border/60 transition-all duration-300"
+            className={`border-border/60 relative overflow-hidden rounded-3xl transition-all duration-300 ${multiple ? "w-[85%] shrink-0 snap-start lg:w-auto" : ""}`}
           >
             {/* 背景の装飾グラデーション */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-primary/[0.06] pointer-events-none" />
-            <div className="absolute top-0 right-0 size-64 bg-gradient-to-bl from-primary/[0.1] to-transparent rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 size-52 bg-gradient-to-tr from-primary/[0.06] to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="from-primary/[0.03] to-primary/[0.06] pointer-events-none absolute inset-0 bg-gradient-to-br via-transparent" />
+            <div className="from-primary/[0.1] pointer-events-none absolute top-0 right-0 size-64 rounded-full bg-gradient-to-bl to-transparent blur-3xl" />
+            <div className="from-primary/[0.06] pointer-events-none absolute -bottom-20 -left-20 size-52 rounded-full bg-gradient-to-tr to-transparent blur-3xl" />
 
             {/* ヘッダー（タップで AP・日程を展開） */}
             <button
               type="button"
               onClick={() => setExpandedKey(isOpen ? null : key)}
               aria-expanded={isOpen}
-              className="relative w-full text-left cursor-pointer"
+              className="relative w-full cursor-pointer text-left"
             >
               <CardContent className="relative p-6 lg:p-10">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
                   {/* 左: 大学名 */}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <GraduationCap className="size-5 text-primary shrink-0" />
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">
+                    <div className="mb-3 flex items-center gap-2">
+                      <GraduationCap className="text-primary size-5 shrink-0" />
+                      <p className="text-muted-foreground text-xs font-semibold tracking-[0.2em] uppercase">
                         志望校
                       </p>
                     </div>
-                    <h3 className="text-3xl lg:text-5xl font-black text-foreground leading-[1.1] tracking-tight">
+                    <h3 className="text-foreground text-3xl leading-[1.1] font-black tracking-tight lg:text-5xl">
                       {item.universityName}
                     </h3>
-                    <p className="text-base lg:text-xl text-muted-foreground mt-2 font-medium">
+                    <p className="text-muted-foreground mt-2 text-base font-medium lg:text-xl">
                       {item.facultyName}
                     </p>
                   </div>
 
                   {/* 右: カウントダウン */}
                   {nextEvent && cd ? (
-                    <div className="flex items-center gap-5 lg:flex-col lg:items-end lg:text-right shrink-0">
+                    <div className="flex shrink-0 items-center gap-5 lg:flex-col lg:items-end lg:text-right">
                       <div
-                        className={`flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br ${cd.bg} ${cd.text} px-6 lg:px-8 py-4 lg:py-5 shadow-xl ring-4 ${cd.ring} min-w-[140px] lg:min-w-[180px]`}
+                        className={`flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br ${cd.bg} ${cd.text} px-6 py-4 shadow-xl ring-4 lg:px-8 lg:py-5 ${cd.ring} min-w-[140px] lg:min-w-[180px]`}
                       >
-                        <span className="text-[11px] lg:text-xs font-bold uppercase tracking-[0.15em] opacity-90">
+                        <span className="text-[11px] font-bold tracking-[0.15em] uppercase opacity-90 lg:text-xs">
                           残り
                         </span>
-                        <div className="flex items-baseline gap-1 mt-0.5">
-                          <span className="text-5xl lg:text-7xl font-black tabular-nums leading-none">
+                        <div className="mt-0.5 flex items-baseline gap-1">
+                          <span className="text-5xl leading-none font-black tabular-nums lg:text-7xl">
                             {nextEvent.daysLeft}
                           </span>
-                          <span className="text-lg lg:text-2xl font-bold opacity-90">日</span>
+                          <span className="text-lg font-bold opacity-90 lg:text-2xl">
+                            日
+                          </span>
                         </div>
                       </div>
-                      <div className="flex-1 lg:flex-initial min-w-0">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1 lg:justify-end">
+                      <div className="min-w-0 flex-1 lg:flex-initial">
+                        <div className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs lg:justify-end">
                           <NextIcon className="size-3.5" />
                           <span>次のイベント</span>
                         </div>
-                        <p className="text-lg lg:text-2xl font-bold text-foreground leading-tight">
+                        <p className="text-foreground text-lg leading-tight font-bold lg:text-2xl">
                           {nextEvent.type}
                         </p>
-                        <p className="text-sm text-muted-foreground mt-0.5 tabular-nums">
-                          {new Date(nextEvent.date + "T00:00:00").toLocaleDateString("ja-JP", {
+                        <p className="text-muted-foreground mt-0.5 text-sm tabular-nums">
+                          {new Date(
+                            nextEvent.date + "T00:00:00"
+                          ).toLocaleDateString("ja-JP", {
                             year: "numeric",
                             month: "long",
                             day: "numeric",
@@ -352,7 +419,7 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
                         </p>
                         {cd.label && (
                           <span
-                            className={`inline-block mt-2 text-[11px] font-bold uppercase tracking-[0.15em] px-2.5 py-1 rounded-full bg-gradient-to-r ${cd.bg} ${cd.text} shadow-sm`}
+                            className={`mt-2 inline-block rounded-full bg-gradient-to-r px-2.5 py-1 text-[11px] font-bold tracking-[0.15em] uppercase ${cd.bg} ${cd.text} shadow-sm`}
                           >
                             {cd.label}
                           </span>
@@ -360,66 +427,76 @@ export function TargetUniversityCards({ targetUniversities, compact = false }: P
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+                    <div className="text-muted-foreground flex shrink-0 items-center gap-2 text-sm">
                       <Trophy className="size-5" />
                       全日程終了
                     </div>
                   )}
                 </div>
 
-                <span className="absolute bottom-4 right-5 flex items-center gap-1 text-xs text-muted-foreground/70">
+                <span className="text-muted-foreground/70 absolute right-5 bottom-4 flex items-center gap-1 text-xs">
                   {isOpen ? "閉じる" : "AP・日程"}
-                  <ChevronDown className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
                 </span>
               </CardContent>
             </button>
 
             {/* 展開部: AP要旨 + 入試日程 + 詳細リンク */}
             {isOpen && (
-              <div className="relative border-t border-border/60 px-6 lg:px-10 py-5 space-y-4">
+              <div className="border-border/60 relative space-y-4 border-t px-6 py-5 lg:px-10">
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  <p className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
                     アドミッションポリシー
                   </p>
                   {item.admissionPolicy ? (
-                    <p className="text-sm leading-relaxed line-clamp-4">{item.admissionPolicy}</p>
+                    <p className="line-clamp-4 text-sm leading-relaxed">
+                      {item.admissionPolicy}
+                    </p>
                   ) : (
-                    <p className="text-sm text-muted-foreground">未登録</p>
+                    <p className="text-muted-foreground text-sm">未登録</p>
                   )}
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                  <p className="text-muted-foreground mb-1.5 text-xs font-semibold tracking-wide uppercase">
                     入試日程
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {scheduleRows(item.schedule, item.scheduleLastYear).map((r) => {
-                      const unannounced = r.date.startsWith("未発表");
-                      return (
-                        <div
-                          key={r.label}
-                          className="flex items-center gap-2 rounded-lg border border-border/50 px-3 py-2"
-                        >
-                          <r.icon className="size-3.5 text-muted-foreground shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-[11px] text-muted-foreground leading-none mb-0.5">{r.label}</p>
-                            <p
-                              className={`text-sm font-medium leading-tight ${
-                                unannounced ? "text-muted-foreground" : "tabular-nums truncate"
-                              }`}
-                            >
-                              {r.date}
-                            </p>
+                    {scheduleRows(item.schedule, item.scheduleLastYear).map(
+                      (r) => {
+                        const unannounced = r.date.startsWith("未発表");
+                        return (
+                          <div
+                            key={r.label}
+                            className="border-border/50 flex items-center gap-2 rounded-lg border px-3 py-2"
+                          >
+                            <r.icon className="text-muted-foreground size-3.5 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-muted-foreground mb-0.5 text-[11px] leading-none">
+                                {r.label}
+                              </p>
+                              <p
+                                className={`text-sm leading-tight font-medium ${
+                                  unannounced
+                                    ? "text-muted-foreground"
+                                    : "truncate tabular-nums"
+                                }`}
+                              >
+                                {r.date}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      }
+                    )}
                   </div>
                 </div>
 
                 <Link
                   href={detailHref}
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                  className="text-primary inline-flex items-center gap-1 text-sm font-semibold hover:underline"
                 >
                   詳細を見る
                   <ArrowRight className="size-4" />
