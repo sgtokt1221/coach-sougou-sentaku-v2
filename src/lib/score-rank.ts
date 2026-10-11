@@ -18,13 +18,14 @@ export function getRankFromPercentage(percentage: number): ScoreRank {
   return "F";
 }
 
+/** 色はダッシュボード等の RANK_META（skill-check/rank.ts）と揃える。S=金 A=緑 B=水色 C=琥珀 D=赤 */
 export function getRankInfo(rank: ScoreRank): RankInfo {
   switch (rank) {
     case "S":
       return {
         rank: "S",
         label: "神級",
-        gradient: "from-amber-400 via-amber-500 to-amber-500",
+        gradient: "from-amber-300 via-amber-400 to-amber-600",
         glowColor: "#f59e0b",
         ringColor: "ring-amber-500",
         description: "AP要件を大きく超える完成度",
@@ -33,16 +34,16 @@ export function getRankInfo(rank: ScoreRank): RankInfo {
       return {
         rank: "A",
         label: "極めて優秀",
-        gradient: "from-purple-400 via-violet-500 to-purple-600",
-        glowColor: "#8b5cf6",
-        ringColor: "ring-purple-500",
+        gradient: "from-emerald-300 via-emerald-500 to-teal-600",
+        glowColor: "#10b981",
+        ringColor: "ring-emerald-500",
         description: "合格水準を安定して超える",
       };
     case "B":
       return {
         rank: "B",
         label: "良好",
-        gradient: "from-sky-400 via-sky-500 to-sky-600",
+        gradient: "from-sky-300 via-sky-500 to-sky-600",
         glowColor: "#0ea5e9",
         ringColor: "ring-sky-500",
         description: "合格ラインに到達",
@@ -51,18 +52,18 @@ export function getRankInfo(rank: ScoreRank): RankInfo {
       return {
         rank: "C",
         label: "標準",
-        gradient: "from-emerald-400 via-teal-500 to-emerald-600",
-        glowColor: "#10b981",
-        ringColor: "ring-emerald-500",
+        gradient: "from-amber-300 via-amber-400 to-amber-500",
+        glowColor: "#f59e0b",
+        ringColor: "ring-amber-400",
         description: "あと一歩で合格水準",
       };
     case "D":
       return {
         rank: "D",
         label: "要改善",
-        gradient: "from-amber-400 via-amber-500 to-amber-600",
-        glowColor: "#f59e0b",
-        ringColor: "ring-amber-500",
+        gradient: "from-rose-300 via-rose-500 to-rose-600",
+        glowColor: "#f43f5e",
+        ringColor: "ring-rose-500",
         description: "基礎固めが必要",
       };
     case "F":
