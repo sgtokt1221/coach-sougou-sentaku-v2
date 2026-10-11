@@ -257,7 +257,7 @@ export function FocusCard({
           </Dialog>
         )}
       </div>
-      <p className="text-base leading-relaxed">{focus.text}</p>
+      <p className="text-base leading-relaxed whitespace-pre-line">{focus.text}</p>
       {quotes.map((q) => (
         <p
           key={q}

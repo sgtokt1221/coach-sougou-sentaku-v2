@@ -261,7 +261,9 @@ export const AI_PROMPT_VERSIONS = {
     //      - 表現の上限をサーバーで足した（崩れた文1つで6、100字超の文で4、80字超2文で5、誤字3つで5）
     // v32（2026-10-12）: 今回の課題の1文目を、題材の言葉を使わない「どの答案にも使える書き方の原則」にした。
     //      2文目でその原則を今回の書き直しにどう使うかを書く
-    promptVersion: "essay-review-v32",
+    // v33（2026-10-12）: 今回の課題を、コーチの声かけの3文（良いところ・いちばんの課題・指針）にした。
+    //      各文を改行で区切り、指針は題材の語を使わない原則＋今回の一言
+    promptVersion: "essay-review-v33",
     schemaVersion: "essay-review-output-v5",
   },
   interviewScore: {
