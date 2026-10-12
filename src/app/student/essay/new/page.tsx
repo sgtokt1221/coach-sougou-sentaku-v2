@@ -33,7 +33,10 @@ import {
   Star,
   AlertTriangle,
 } from "lucide-react";
-import { WeaknessReminderCard } from "@/components/growth/WeaknessReminderCard";
+import {
+  WeaknessChips,
+  WeaknessReminderCard,
+} from "@/components/growth/WeaknessReminderCard";
 import { ManuscriptEditor } from "@/components/essay/ManuscriptEditor";
 import { checkImageQuality } from "@/components/essay/CaptureQualityCheck";
 import { CharLimitSelector } from "@/components/essay/CharLimitSelector";
@@ -2860,10 +2863,11 @@ export default function EssayNewPage() {
                       </Card>
                     )}
                   <Card>
-                    <CardHeader>
+                    <CardHeader className="space-y-2">
                       <CardTitle className="text-sm lg:text-base">
                         {oralExamMode ? "小問に答える" : "小論文を入力"}
                       </CardTitle>
+                      <WeaknessChips />
                     </CardHeader>
                     <CardContent className="space-y-4 p-3 lg:p-4">
                       {/* 口頭試問型: 小問ごとに欄を分ける（提出時に1本へ連結する） */}
