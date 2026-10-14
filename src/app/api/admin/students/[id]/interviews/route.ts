@@ -16,6 +16,7 @@ function resolveUniName(uniId: string, facId: string): { uniName: string; facNam
 export interface InterviewListItem {
   id: string;
   mode: InterviewMode;
+  documentGrill?: boolean;
   targetUniversity: string;
   targetFaculty: string;
   scores: InterviewScores | null;
@@ -152,6 +153,7 @@ export async function GET(
       return {
         id: doc.id,
         mode: data.mode ?? "individual",
+        documentGrill: data.documentGrill === true,
         targetUniversity: resolved.uniName,
         targetFaculty: resolved.facName,
         scores: data.scores ?? null,

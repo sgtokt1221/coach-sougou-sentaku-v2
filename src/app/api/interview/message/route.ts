@@ -82,7 +82,8 @@ export async function POST(request: NextRequest) {
         presentationContent,
         undefined,
         oralExam,
-        (sessionData?.statementSnapshot as string | undefined) ?? undefined
+        (sessionData?.statementSnapshot as string | undefined) ?? undefined,
+        sessionData?.documentGrill === true
       );
     }
 

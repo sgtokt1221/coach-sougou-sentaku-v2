@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
         universityName: data.universityContext?.universityName ?? "",
         facultyName: data.universityContext?.facultyName ?? "",
         mode: data.mode ?? "individual",
+        documentGrill: data.documentGrill === true,
         inputMode: data.inputMode ?? "text",
         startedAt:
           data.startedAt?.toDate?.()?.toISOString() ??

@@ -28,7 +28,7 @@ import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
 import type { InterviewMode } from "@/lib/types/interview";
-import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
+import { interviewModeLabel } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
 import { InterviewInProgressSection } from "@/components/interview/InterviewInProgressSection";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
@@ -39,6 +39,7 @@ interface InterviewHistoryItem {
   universityName: string;
   facultyName: string;
   mode: InterviewMode;
+  documentGrill?: boolean;
   practicedAt: string;
   totalScore: number;
   /** 合計の満点。口頭試問は50、それ以外は40。旧データは無し */
@@ -79,6 +80,7 @@ export default function InterviewHistoryPage() {
       facultyName:
         item.facultyName ?? item.universityContext?.facultyName ?? "",
       mode: item.mode ?? "individual",
+      documentGrill: item.documentGrill === true,
       practicedAt:
         item.practicedAt ??
         (item.startedAt
@@ -237,7 +239,7 @@ export default function InterviewHistoryPage() {
                         variant={MODE_VARIANT[item.mode]}
                         className="text-xs"
                       >
-                        {INTERVIEW_MODE_LABELS[item.mode]}
+                        {interviewModeLabel(item.mode, item.documentGrill)}
                       </Badge>
                     </div>
                     <p className="text-muted-foreground mt-1 text-xs">

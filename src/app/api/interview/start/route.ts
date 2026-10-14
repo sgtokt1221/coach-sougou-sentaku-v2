@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       homeworkAssignmentId,
       oralExam,
       documentIds,
+      documentGrill: documentGrillRequested,
     } = body;
     /** 口頭試問以外では分野を持ち回らない（他モードのプロンプトに混ざらないように） */
     const oralExamTopic =
@@ -42,6 +43,18 @@ export async function POST(request: NextRequest) {
           }
         : undefined;
     const resolvedInputMode = inputMode ?? "text";
+    /**
+     * 書類激詰めは個人面接だけ。宿題・スキルチェックや決まったお題で始めるときは
+     * そのお題が優先なので使わない
+     */
+    const documentGrill =
+      documentGrillRequested === true &&
+      mode === "individual" &&
+      (sourceType ?? "manual") === "manual" &&
+      !(
+        typeof customOpeningQuestion === "string" &&
+        customOpeningQuestion.trim()
+      );
 
     /**
      * 誰の面接かはトークンからだけ決める。
@@ -156,6 +169,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 書類なしでは詰められない。選んだ書類が空・読めなかったときもここで止める
+    if (documentGrill && !statementSnapshot.trim()) {
+      return NextResponse.json(
+        {
+          error: "書類激詰めモードには、本文のある書類を1通以上選んでください",
+        },
+        { status: 400 }
+      );
+    }
+
     // 宿題提出など固定のお題で開始したい場合は Claude を呼ばず、お題をそのまま冒頭発話にする
     const fixedOpening =
       typeof customOpeningQuestion === "string" &&
@@ -194,7 +217,8 @@ export async function POST(request: NextRequest) {
         presentationContent,
         contentCandidates,
         oralExamTopic,
-        statementSnapshot
+        statementSnapshot,
+        documentGrill
       );
 
       // GD の導入は 司会→健太→美咲→翔太→司会(締め) の 5 発話を一度に返すため長めに
@@ -216,7 +240,9 @@ export async function POST(request: NextRequest) {
       openingMessage =
         response.content[0].type === "text"
           ? response.content[0].text
-          : "本日はお越しいただきありがとうございます。まず、志望理由をお聞かせください。";
+          : documentGrill
+            ? "よろしくお願いします。提出書類の内容から伺います。志望理由書で一番伝えたいことは何ですか。"
+            : "本日はお越しいただきありがとうございます。まず、志望理由をお聞かせください。";
     }
 
     const sessionId = crypto.randomUUID();
@@ -237,6 +263,7 @@ export async function POST(request: NextRequest) {
           sourceType: sourceType ?? "manual",
           // 続きのターンと採点でも同じ分野を使うため、セッションに残す
           ...(oralExamTopic ? { oralExam: oralExamTopic } : {}),
+          ...(documentGrill ? { documentGrill: true } : {}),
           ...(homeworkAssignmentId ? { homeworkAssignmentId } : {}),
           ...(fixedOpening ? { openingMessage: fixedOpening } : {}),
         });

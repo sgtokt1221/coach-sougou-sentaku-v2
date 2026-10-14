@@ -114,6 +114,8 @@ export interface InProgressInterview {
   universityName: string;
   facultyName: string;
   mode: InterviewMode;
+  /** 書類激詰めモード（mode は individual） */
+  documentGrill?: boolean;
   inputMode: "text" | "voice";
   startedAt: string;
   lastActiveAt?: string;
@@ -154,6 +156,8 @@ export interface Interview {
   homeworkAssignmentId?: string;
   /** mode === "oral_exam" のときの出題分野 */
   oralExam?: OralExamTopic;
+  /** 書類激詰めモード（mode は individual のまま。採点も個人面接と同じ） */
+  documentGrill?: boolean;
 }
 
 /**
@@ -189,6 +193,8 @@ export interface InterviewStartRequest {
    * 空の配列は「渡さない」。省略したときは志望校の書類から自動で1通選ぶ
    */
   documentIds?: string[];
+  /** 書類激詰めモード。mode === "individual" のときだけ有効で、書類1通以上が必須 */
+  documentGrill?: boolean;
 }
 
 export interface InterviewStartResponse {
@@ -262,6 +268,18 @@ export const INTERVIEW_MODE_LABELS: Record<InterviewMode, string> = {
   presentation: "プレゼンテーション",
   oral_exam: "口頭試問",
 };
+
+/**
+ * 面接の種類の表示名。書類激詰めは mode が individual なので、
+ * INTERVIEW_MODE_LABELS[mode] を直接引くと「個人面接」と出てしまう
+ */
+export function interviewModeLabel(
+  mode: InterviewMode,
+  documentGrill?: boolean
+): string {
+  if (mode === "individual" && documentGrill) return "書類激詰め";
+  return INTERVIEW_MODE_LABELS[mode];
+}
 
 export const INTERVIEW_MODE_DESCRIPTIONS: Record<InterviewMode, string> = {
   individual: "志望理由や将来ビジョンについて面接官と1対1で対話します",

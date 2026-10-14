@@ -26,7 +26,10 @@ import {
   type GdSpeakerKey,
   type SelfAnalysisContext,
 } from "@/lib/ai/prompts/interview-realtime";
-import { buildSubmittedDocumentBlock } from "@/lib/ai/prompts/interview";
+import {
+  buildGrillDocumentBlock,
+  buildSubmittedDocumentBlock,
+} from "@/lib/ai/prompts/interview";
 import type { InterviewMode } from "@/lib/types/interview";
 import type { InterviewTendency } from "@/lib/types/university";
 import {
@@ -258,6 +261,7 @@ export async function POST(request: NextRequest) {
     let oralExam: { subject: string; scope?: string } | undefined;
     /** 面接官に読ませる志望理由書。開始時にセッションへ写した本文を使う（文字の面接と同じ） */
     let submittedDocument = "";
+    let documentGrill = false;
     if (sessionId) {
       try {
         const { adminDb } = await import("@/lib/firebase/admin");
@@ -267,6 +271,7 @@ export async function POST(request: NextRequest) {
         if (typeof data?.statementSnapshot === "string") {
           submittedDocument = data.statementSnapshot;
         }
+        documentGrill = mode === "individual" && data?.documentGrill === true;
       } catch (err) {
         console.warn(
           "[gemini-live-session] セッション情報を引けませんでした",
@@ -284,11 +289,15 @@ export async function POST(request: NextRequest) {
       presentationContent,
       selfAnalysis,
       contentCandidates,
-      oralExam
+      oralExam,
+      documentGrill
     );
     const token = await issueGeminiLiveToken(
       ai,
-      instructions + buildSubmittedDocumentBlock(mode, submittedDocument),
+      instructions +
+        (documentGrill
+          ? buildGrillDocumentBlock(submittedDocument)
+          : buildSubmittedDocumentBlock(mode, submittedDocument)),
       GEMINI_INDIVIDUAL_VOICE,
       {
         strictTurnTaking: true,

@@ -37,7 +37,7 @@ import type {
   VideoAnalysis,
   AppearanceAnalysis,
 } from "@/lib/types/interview";
-import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
+import { interviewModeLabel } from "@/lib/types/interview";
 import type { GrowthEvent } from "@/lib/types/essay";
 import type { RepeatedIssue } from "@/lib/types/essay";
 import type { SessionSummary } from "@/lib/types/session";
@@ -58,6 +58,7 @@ import {
 } from "@/lib/interview/axis-layout";
 
 interface InterviewResult {
+  documentGrill?: boolean;
   id: string;
   universityName: string;
   facultyName: string;
@@ -117,6 +118,7 @@ export default function InterviewResultPage() {
             universityName: data.universityName ?? "",
             facultyName: data.facultyName ?? "",
             mode: data.mode ?? "individual",
+            documentGrill: data.documentGrill === true,
             practicedAt: data.practicedAt ?? new Date().toISOString(),
             duration: data.duration ?? 0,
             scores: data.scores,
@@ -217,7 +219,7 @@ export default function InterviewResultPage() {
                 {result.universityName} {result.facultyName}
                 <span className="mx-2 text-slate-300">•</span>
                 <span className="font-medium text-slate-600">
-                  {INTERVIEW_MODE_LABELS[result.mode]}
+                  {interviewModeLabel(result.mode, result.documentGrill)}
                 </span>
                 <span className="mx-2 text-slate-300">•</span>
                 <span className="text-slate-500">

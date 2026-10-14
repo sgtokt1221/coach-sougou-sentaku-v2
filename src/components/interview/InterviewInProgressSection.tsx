@@ -9,7 +9,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import {
-  INTERVIEW_MODE_LABELS,
+  interviewModeLabel,
   type InProgressInterview,
 } from "@/lib/types/interview";
 
@@ -59,7 +59,7 @@ export function InterviewInProgressSection() {
                     {s.universityName} {s.facultyName}
                   </span>
                   <Badge variant="secondary" className="text-xs">
-                    {INTERVIEW_MODE_LABELS[s.mode]}
+                    {interviewModeLabel(s.mode, s.documentGrill)}
                   </Badge>
                   <Badge variant="outline" className="text-[10px]">
                     {s.inputMode === "voice" ? (

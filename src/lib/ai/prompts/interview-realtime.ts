@@ -35,8 +35,11 @@ export function buildRealtimeIndividualInstructions(
   selfAnalysis?: SelfAnalysisContext,
   contentCandidates?: string[],
   /** 口頭試問の出題分野。他のモードでは使わない */
-  oralExam?: OralExamTopic
+  oralExam?: OralExamTopic,
+  /** 書類激詰めモード。個人面接のときだけ効く（書類は呼び出し側で buildGrillDocumentBlock を付ける） */
+  documentGrill?: boolean
 ): string {
+  const grill = mode === "individual" && documentGrill === true;
   // バンク(superadmin管理の想定質問/お題)。優先候補として提示しつつ AP 動的生成も維持。
   const candidatesBlock =
     contentCandidates && contentCandidates.length > 0
@@ -62,6 +65,13 @@ ${contentCandidates.map((c) => `- ${c}`).join("\n")}
 
   // Realtime API は前半の指示を重視するため、第一声テンプレートを冒頭に配置
   const openingScript = (() => {
+    if (grill) {
+      return `## あなたの最初の発言（この形で話し始めること）
+「よろしくお願いします。提出していただいた書類から伺います。」と一言だけ挨拶し、
+**続けて同じ発言の中で、下の提出書類から一文を「」で言葉どおりに引用して1問目を出すこと**。
+例:「志望理由書に『〇〇』とありますが、それは具体的に何をしたことですか。」
+**自己紹介・高校生活・雑談から始めてはいけない。**`;
+    }
     switch (mode) {
       case "individual":
         return `## あなたの最初の発言（必ずこの通りに話し始めること）
@@ -104,6 +114,20 @@ ${contentCandidates.map((c) => `- ${c}`).join("\n")}
 ${FACULTY_AGENCY_FOCUS_INTERVIEW}`;
 
   const phaseGuide = (() => {
+    if (grill) {
+      return `## このモードの性格 (最重要)
+- 提出書類を読み込んだ面接官として、**書類の中身を冷静に精査する**。最初から最後まで書類を起点に質問する
+- 書類の弱いところから、次の論点を順不同で突く
+  - 抽象的な言葉 (「社会に貢献したい」「多様な視点」など) → 具体的に何を指すのか
+  - 根拠の薄い主張 → それを裏づける経験・事実は何か
+  - 理由と結論のつながりの飛躍 (経験 → 志望動機 → 将来像)
+  - 本学・本学部でなければならない理由 (AP と書類の対応)
+  - 書類どうしの食い違い、書類と回答の食い違い (「書類では〜と書かれていますが」)
+- 1 つの論点は 2〜3 段掘ってから次へ移る。はぐらかしにはもう一段だけ具体を求め、出なければ次の論点へ
+- あいまいな答えを相槌で流さない。回答を褒めない
+- 否定から入る・人格を否定する・「それは他の大学でもできますよね」と突き放す、といった圧迫はしない。突くのは書類と回答の中身
+- 目安 8〜12 往復。「最後に伝えたいことはありますか」と聞いたうえで「以上で面接を終了いたします。本日はありがとうございました」と締める`;
+    }
     switch (mode) {
       case "individual":
         return `## AP 連動の基本方針

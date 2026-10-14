@@ -38,11 +38,12 @@ import type {
   InterviewScores,
   InterviewFeedback,
 } from "@/lib/types/interview";
-import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
+import { interviewModeLabel } from "@/lib/types/interview";
 
 interface InterviewListItem {
   id: string;
   mode: InterviewMode;
+  documentGrill?: boolean;
   targetUniversity: string;
   targetFaculty: string;
   scores: InterviewScores | null;
@@ -61,6 +62,7 @@ interface ConversationSummary {
 interface InterviewDetail {
   id: string;
   mode: InterviewMode;
+  documentGrill?: boolean;
   targetUniversity: string;
   targetFaculty: string;
   messages: InterviewMessage[];
@@ -72,7 +74,7 @@ interface InterviewDetail {
 }
 
 
-function modeBadge(mode: InterviewMode) {
+function modeBadge(mode: InterviewMode, documentGrill?: boolean) {
   const colors: Record<InterviewMode, string> = {
     individual: "bg-sky-50 text-sky-700 border-sky-300",
     group_discussion: "bg-purple-50 text-purple-700 border-purple-300",
@@ -81,7 +83,7 @@ function modeBadge(mode: InterviewMode) {
   };
   return (
     <Badge variant="outline" className={`text-[10px] ${colors[mode]}`}>
-      {INTERVIEW_MODE_LABELS[mode]}
+      {interviewModeLabel(mode, documentGrill)}
     </Badge>
   );
 }
@@ -243,7 +245,7 @@ export function InterviewsSection({
                             {interview.targetUniversity}{" "}
                             {interview.targetFaculty}
                           </span>
-                          {modeBadge(interview.mode)}
+                          {modeBadge(interview.mode, interview.documentGrill)}
                         </div>
                         <div className="text-muted-foreground flex items-center gap-3 text-xs">
                           <span>
@@ -300,7 +302,7 @@ export function InterviewsSection({
             {detailData && (
               <DialogDescription>
                 {detailData.targetUniversity} {detailData.targetFaculty} -{" "}
-                {INTERVIEW_MODE_LABELS[detailData.mode]}
+                {interviewModeLabel(detailData.mode, detailData.documentGrill)}
               </DialogDescription>
             )}
           </DialogHeader>
@@ -319,22 +321,25 @@ export function InterviewsSection({
                   <div className="space-y-2">
                     {/* 軸はモードと版で違う（口頭試問は専門知識・応用思考力が合計に入る）。
                         4軸固定だと合計と合わなかった */}
-                    {interviewAxisLayout(detailData.mode, detailData.scores).map(
-                      (axis) => (
-                        <div key={axis.key} className="flex items-center gap-3">
-                          <span className="text-muted-foreground w-28 text-xs">
-                            {interviewAxisLabel(axis)}
-                          </span>
-                          <Progress
-                            value={((detailData.scores![axis.key] ?? 0) / 10) * 100}
-                            className="h-2 flex-1"
-                          />
-                          <span className="w-8 text-right text-sm font-medium">
-                            {detailData.scores![axis.key]}
-                          </span>
-                        </div>
-                      )
-                    )}
+                    {interviewAxisLayout(
+                      detailData.mode,
+                      detailData.scores
+                    ).map((axis) => (
+                      <div key={axis.key} className="flex items-center gap-3">
+                        <span className="text-muted-foreground w-28 text-xs">
+                          {interviewAxisLabel(axis)}
+                        </span>
+                        <Progress
+                          value={
+                            ((detailData.scores![axis.key] ?? 0) / 10) * 100
+                          }
+                          className="h-2 flex-1"
+                        />
+                        <span className="w-8 text-right text-sm font-medium">
+                          {detailData.scores![axis.key]}
+                        </span>
+                      </div>
+                    ))}
                     <div className="flex items-center justify-between border-t pt-1">
                       <span className="text-sm font-medium">合計</span>
                       <span

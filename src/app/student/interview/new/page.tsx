@@ -25,6 +25,7 @@ import {
   X,
   Plus,
   History,
+  FileSearch,
 } from "lucide-react";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import { toast } from "sonner";
@@ -62,12 +63,30 @@ const MODE_ICONS: Record<
   oral_exam: BookOpen,
 };
 
-const MODES: InterviewMode[] = [
+/**
+ * 面接形式のカード。書類激詰めは mode が individual の変種なので、
+ * カードとしては別に並べ、選んだら mode=individual と documentGrill を立てる
+ */
+type ModeCard = InterviewMode | "document_grill";
+const MODE_CARDS: ModeCard[] = [
   "individual",
+  "document_grill",
   "group_discussion",
   "presentation",
   "oral_exam",
 ];
+const CARD_ICON: Record<
+  ModeCard,
+  React.ComponentType<{ className?: string }>
+> = { ...MODE_ICONS, document_grill: FileSearch };
+const CARD_LABEL: Record<ModeCard, string> = {
+  ...INTERVIEW_MODE_LABELS,
+  document_grill: "書類激詰めモード",
+};
+const CARD_DESCRIPTION: Record<ModeCard, string> = {
+  ...INTERVIEW_MODE_DESCRIPTIONS,
+  document_grill: "提出書類の一文を引いて、最初から書類の中身を詰められます",
+};
 
 /**
  * 口頭試問の分野の入力補助。学部名から、その学部でよく指定される分野を出す。
@@ -159,6 +178,11 @@ export default function InterviewNewPage() {
     null
   );
   const [selectedMode, setSelectedMode] = useState<InterviewMode | null>(null);
+  const [documentGrill, setDocumentGrill] = useState(false);
+  const selectedCard: ModeCard | null =
+    selectedMode === "individual" && documentGrill
+      ? "document_grill"
+      : selectedMode;
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
   const [isLoading, setIsLoading] = useState(false);
   const [presentationContent, setPresentationContent] = useState<string | null>(
@@ -305,9 +329,14 @@ export default function InterviewNewPage() {
             usesDocuments && selectedDocIds !== null
               ? selectedDocIds
               : undefined,
+          documentGrill: documentGrill || undefined,
         }),
       });
-      if (!res.ok) throw new Error("面接の開始に失敗しました");
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error ?? "面接セッションの開始に失敗しました");
+        return;
+      }
       const data = await res.json();
       sessionStorage.setItem(
         `interview_session_${data.sessionId}`,
@@ -315,6 +344,7 @@ export default function InterviewNewPage() {
           universityId,
           facultyId,
           mode: selectedMode,
+          documentGrill: documentGrill || undefined,
           inputMode,
           universityContext: data.universityContext,
           openingMessage: data.openingMessage,
@@ -551,13 +581,18 @@ export default function InterviewNewPage() {
                   <CardTitle className="text-base">面接形式を選択</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 p-3 lg:p-4">
-                  {MODES.map((mode) => {
-                    const Icon = MODE_ICONS[mode];
-                    const isSelected = selectedMode === mode;
+                  {MODE_CARDS.map((card) => {
+                    const Icon = CARD_ICON[card];
+                    const isSelected = selectedCard === card;
                     return (
                       <button
-                        key={mode}
-                        onClick={() => setSelectedMode(mode)}
+                        key={card}
+                        onClick={() => {
+                          setSelectedMode(
+                            card === "document_grill" ? "individual" : card
+                          );
+                          setDocumentGrill(card === "document_grill");
+                        }}
                         className={[
                           "w-full rounded-lg border p-3 text-left transition-colors lg:p-4",
                           isSelected
@@ -581,10 +616,10 @@ export default function InterviewNewPage() {
                                 isSelected ? "text-primary" : "",
                               ].join(" ")}
                             >
-                              {INTERVIEW_MODE_LABELS[mode]}
+                              {CARD_LABEL[card]}
                             </p>
                             <p className="text-muted-foreground mt-0.5 text-xs">
-                              {INTERVIEW_MODE_DESCRIPTIONS[mode]}
+                              {CARD_DESCRIPTION[card]}
                             </p>
                           </div>
                         </div>
@@ -735,11 +770,31 @@ export default function InterviewNewPage() {
               )}
 
               {/* 面接官に渡す提出書類（個人面接・プレゼン） */}
+              {documentGrill && docsData && docOptions.length === 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      面接官に渡す書類
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 text-sm lg:p-4">
+                    書類がありません。
+                    <Link
+                      href="/student/documents"
+                      className="text-primary ml-1 underline"
+                    >
+                      出願書類を作る
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
               {usesDocuments && docOptions.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">
-                      面接官に渡す書類（任意）
+                      {documentGrill
+                        ? "面接官に渡す書類"
+                        : "面接官に渡す書類（任意）"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 p-3 lg:p-4">
@@ -747,7 +802,8 @@ export default function InterviewNewPage() {
                       本番の面接官は提出書類を読んで質問します。この面接で提出する書類を選んでください（
                       {MAX_INTERVIEW_DOCUMENTS}
                       通まで）。面接官は書類の内容を掘り下げ、採点では書類と答えが食い違っていないかも見ます。
-                      何も選ばなければ書類なしで面接します。
+                      {!documentGrill &&
+                        "何も選ばなければ書類なしで面接します。"}
                     </p>
                     {docOptions.map((d) => {
                       const checked = (selectedDocIds ?? []).includes(d.id);
@@ -878,7 +934,12 @@ export default function InterviewNewPage() {
 
               <Button
                 className="w-full"
-                disabled={!selectedCompoundId || !selectedMode || isLoading}
+                disabled={
+                  !selectedCompoundId ||
+                  !selectedMode ||
+                  isLoading ||
+                  (documentGrill && (selectedDocIds ?? []).length === 0)
+                }
                 onClick={handleStart}
               >
                 {isLoading ? "準備中..." : "面接を開始する"}

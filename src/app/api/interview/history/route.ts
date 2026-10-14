@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
         universityId: data.universityId,
         facultyId: data.facultyId,
         mode: data.mode,
+        documentGrill: data.documentGrill === true,
         status: data.status,
         startedAt:
           data.startedAt?.toDate?.()?.toISOString() ?? new Date().toISOString(),

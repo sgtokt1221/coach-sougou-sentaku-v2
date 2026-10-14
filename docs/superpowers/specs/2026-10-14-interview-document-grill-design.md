@@ -29,7 +29,7 @@
 - 表示名は `interviewModeLabel(mode, documentGrill)`（`src/lib/types/interview.ts`）を正本にし、
   `INTERVIEW_MODE_LABELS[mode]` を直接引いている8箇所（生徒の履歴・結果・セッション・進行中一覧・InterviewHistory、管理者 InterviewsSection 2箇所）を置き換える。
   そのため次の API は `documentGrill` を返す: `/api/interview/history`、`/api/interview/[id]`、`/api/interview/in-progress`、
-  `/api/admin/students/[id]/interviews`、`/api/admin/students/[id]/interviews/[interviewId]`、`/api/interview/start`（セッション画面の `sessionInfo` 用）。
+  `/api/admin/students/[id]/interviews`、`/api/admin/students/[id]/interviews/[interviewId]`、`/api/interview/[id]/messages`（履歴から再開したときのセッション画面用。新規開始時は開始画面が sessionStorage に書く）。
 - BigQuery への書き出しは変えない（`mode = individual` として集計に入る）。
 
 ## 開始画面（`/student/interview/new`）
@@ -46,7 +46,7 @@
 - 宿題・スキルチェック経由（`sourceType` が `homework` / `skill_check`、`customOpeningQuestion` あり）では `documentGrill` を無視する（決まったお題で始めるため）。
 - 文字の面接で Claude の返答が文字でなかったときの予備の第一声は、激詰めでは「よろしくお願いします。提出書類の内容から伺います。志望理由書で一番伝えたいことは何ですか。」にする。
 - セッションに `documentGrill: true` を保存する。
-- 続きのターン（`message` / `voice-message`）と音声セッション（`gemini-live-session`）は、セッションの `documentGrill` を読んでプロンプトを切り替える。
+- 続きのターン（`message`）と音声セッション（`gemini-live-session`）は、セッションの `documentGrill` を読んでプロンプトを切り替える。
 
 ## プロンプト
 
@@ -82,6 +82,8 @@
 - `openingScript`: 一言の挨拶の直後に、書類の一文を引用した1問目を出す指示（自己紹介を求めない）。
 - `phaseGuide`: 上の論点と調子を短く書いた版。
 - 呼んでいるのは `gemini-live-session` だけ。そこで後ろに付けている `buildSubmittedDocumentBlock` を、激詰めのときは `buildGrillDocumentBlock` に替える。
+
+`voice-message` はどこからも呼ばれていないので触らない。
 
 ## 採点
 

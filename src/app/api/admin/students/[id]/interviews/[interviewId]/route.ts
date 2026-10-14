@@ -54,6 +54,7 @@ export async function GET(
     return NextResponse.json({
       id: interviewDoc.id,
       mode: data.mode ?? "individual",
+      documentGrill: data.documentGrill === true,
       targetUniversity: data.universityContext?.universityName ?? "",
       targetFaculty: data.universityContext?.facultyName ?? "",
       messages: data.messages ?? [],

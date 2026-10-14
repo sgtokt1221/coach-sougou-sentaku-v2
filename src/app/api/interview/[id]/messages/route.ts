@@ -85,6 +85,7 @@ export async function GET(
       id,
       status: d.status ?? "in_progress",
       mode: d.mode ?? "individual",
+      documentGrill: d.documentGrill === true,
       inputMode: d.inputMode ?? "text",
       universityId: d.universityId ?? "",
       facultyId: d.facultyId ?? "",

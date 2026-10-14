@@ -53,7 +53,7 @@ import type { VoiceProvider } from "@/lib/interview/realtime/voice-session-facto
 import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
 import { stripFillers } from "@/lib/interview/transcript";
 import { transcribeTurnViaStt } from "@/lib/interview/stt-client";
-import { INTERVIEW_MODE_LABELS } from "@/lib/types/interview";
+import { interviewModeLabel } from "@/lib/types/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import VoiceAnalyzer, {
@@ -76,6 +76,8 @@ import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 
 interface SessionInfo {
+  /** 書類激詰めモード（表示用。質問の切り替えはサーバーがセッションの値で行う） */
+  documentGrill?: boolean;
   universityId: string;
   facultyId: string;
   mode: InterviewMode;
@@ -388,6 +390,7 @@ export default function InterviewSessionPage() {
           universityId: doc.universityId ?? "",
           facultyId: doc.facultyId ?? "",
           mode: doc.mode ?? "individual",
+          documentGrill: doc.documentGrill === true,
           inputMode: doc.inputMode ?? "text",
           universityContext: doc.universityContext ?? {
             universityName: "",
@@ -749,7 +752,7 @@ export default function InterviewSessionPage() {
   }
 
   const isVoiceMode = sessionInfo?.inputMode === "voice";
-  const modeLabel = sessionInfo ? INTERVIEW_MODE_LABELS[sessionInfo.mode] : "";
+  const modeLabel = sessionInfo ? interviewModeLabel(sessionInfo.mode, sessionInfo.documentGrill) : "";
 
   function renderCheatSheet() {
     if (!sessionInfo) return null;
