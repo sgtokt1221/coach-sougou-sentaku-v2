@@ -28,7 +28,9 @@
 - 型: `Interview.documentGrill?: boolean`、`InterviewStartRequest.documentGrill?: boolean`、`InProgressInterview.documentGrill?: boolean`
 - 表示名は `interviewModeLabel(mode, documentGrill)`（`src/lib/types/interview.ts`）を正本にし、
   `INTERVIEW_MODE_LABELS[mode]` を直接引いている8箇所（生徒の履歴・結果・セッション・進行中一覧・InterviewHistory、管理者 InterviewsSection 2箇所）を置き換える。
-  そのため履歴・結果・進行中・管理者の API は `documentGrill` を返す。
+  そのため次の API は `documentGrill` を返す: `/api/interview/history`、`/api/interview/[id]`、`/api/interview/in-progress`、
+  `/api/admin/students/[id]/interviews`、`/api/admin/students/[id]/interviews/[interviewId]`、`/api/interview/start`（セッション画面の `sessionInfo` 用）。
+- BigQuery への書き出しは変えない（`mode = individual` として集計に入る）。
 
 ## 開始画面（`/student/interview/new`）
 
@@ -40,6 +42,9 @@
 
 - `documentGrill === true` かつ `mode === "individual"` のときだけ有効。他のモードなら無視する。
 - 読み込んだ書類（`statementSnapshot`）が空なら 400 を返す（書類なしで詰めることはできないため）。
+  選んだ書類の本文が全部空のとき・`dev-user`（書類を読まない）のときもこれに当たる。画面は返ってきたエラー文を出す。
+- 宿題・スキルチェック経由（`sourceType` が `homework` / `skill_check`、`customOpeningQuestion` あり）では `documentGrill` を無視する（決まったお題で始めるため）。
+- 文字の面接で Claude の返答が文字でなかったときの予備の第一声は、激詰めでは「よろしくお願いします。提出書類の内容から伺います。志望理由書で一番伝えたいことは何ですか。」にする。
 - セッションに `documentGrill: true` を保存する。
 - 続きのターン（`message` / `voice-message`）と音声セッション（`gemini-live-session`）は、セッションの `documentGrill` を読んでプロンプトを切り替える。
 
