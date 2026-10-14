@@ -55,6 +55,7 @@ export async function GET(
       id: interviewDoc.id,
       mode: data.mode ?? "individual",
       documentGrill: data.documentGrill === true,
+      documentDefense: data.documentDefense ?? null,
       targetUniversity: data.universityContext?.universityName ?? "",
       targetFaculty: data.universityContext?.facultyName ?? "",
       messages: data.messages ?? [],

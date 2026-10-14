@@ -158,6 +158,42 @@ export interface Interview {
   oralExam?: OralExamTopic;
   /** 書類激詰めモード（mode は individual のまま。採点も個人面接と同じ） */
   documentGrill?: boolean;
+  /** 書類の文ごとの判定。書類を渡した個人面接だけ */
+  documentDefense?: DocumentDefense;
+}
+
+/** 書類の一文が面接の答えで持ちこたえたか */
+export type DocumentDefenseVerdict = "held" | "shaky" | "broke";
+
+export const DOCUMENT_DEFENSE_VERDICT_LABELS: Record<
+  DocumentDefenseVerdict,
+  string
+> = {
+  held: "持ちこたえた",
+  shaky: "揺らいだ",
+  broke: "崩れた",
+};
+
+export interface DocumentDefenseItem {
+  /** 書類の一文（本文と一致） */
+  quote: string;
+  documentTitle: string;
+  /** 面接官がその文について聞いたこと */
+  asked: string;
+  verdict: DocumentDefenseVerdict;
+  reason: string;
+  /** 面接でこう補う */
+  supplement: string;
+}
+
+/**
+ * 書類を渡した個人面接で、面接官が突いた書類の文ごとの判定
+ * （src/lib/interview/document-defense-judge.ts）。採点とは別に保存する
+ */
+export interface DocumentDefense {
+  items: DocumentDefenseItem[];
+  model: string;
+  promptVersion?: string;
 }
 
 /**

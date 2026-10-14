@@ -24,6 +24,9 @@ import {
   InterviewScoreParseError,
 } from "@/lib/interview/score-core";
 import { loadStatementForInterview } from "@/lib/interview/statement-context";
+import { judgeDocumentDefense } from "@/lib/interview/document-defense-judge";
+import { AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import type { DocumentDefense } from "@/lib/types/interview";
 
 export const maxDuration = 120;
 
@@ -203,6 +206,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 面接スコアリングをコア関数経由で呼ぶ (宿題提出フローからも同じ関数を呼ぶ)
+    /**
+     * 書類の文ごとの判定。面接官が実際に読んでいた書類（開始時の写し）があるときだけ。
+     * 採点と同時に走らせ、失敗しても採点は返す
+     */
+    let documentDefensePromise: Promise<DocumentDefense | null> =
+      Promise.resolve(null);
     let scores: InterviewScores;
     let feedback: InterviewFeedback;
     let conversationSummary: {
@@ -289,6 +298,19 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      if (
+        sessionStatementSnapshot.trim() &&
+        (sessionMode || mode) === "individual" &&
+        process.env.ANTHROPIC_API_KEY
+      ) {
+        const { default: Anthropic } = await import("@anthropic-ai/sdk");
+        documentDefensePromise = judgeDocumentDefense({
+          client: new Anthropic(),
+          statementSnapshot: sessionStatementSnapshot,
+          messages: scoringMessages,
+        });
+      }
+
       const coreResult = await scoreInterviewCore({
         messages: scoringMessages,
         universityName,
@@ -330,6 +352,15 @@ export async function POST(request: NextRequest) {
       }
       throw coreErr;
     }
+
+    const judgedDefense = await documentDefensePromise;
+    const documentDefense: DocumentDefense | null = judgedDefense
+      ? {
+          ...judgedDefense,
+          promptVersion:
+            AI_PROMPT_VERSIONS.interviewDocumentDefense.promptVersion,
+        }
+      : null;
 
     /**
      * 弱点タグ（会話内容）。弱点として挙がったものだけを使う。
@@ -429,6 +460,7 @@ export async function POST(request: NextRequest) {
             ...(voiceAnalysis ? { voiceAnalysis } : {}),
             ...(videoAnalysis ? { videoAnalysis } : {}),
             ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
+            ...(documentDefense ? { documentDefense } : {}),
           },
           { merge: true }
         );
@@ -536,6 +568,7 @@ export async function POST(request: NextRequest) {
       ...(videoAnalysis ? { videoAnalysis } : {}),
       ...(appearanceAnalysis ? { appearanceAnalysis } : {}),
       ...(transcription ? { transcription } : {}),
+      ...(documentDefense ? { documentDefense } : {}),
     });
   } catch (error) {
     console.error("Interview end error:", error);

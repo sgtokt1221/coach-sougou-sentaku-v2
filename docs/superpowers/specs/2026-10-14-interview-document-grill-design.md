@@ -13,7 +13,7 @@
 | 項目 | 決定 |
 | --- | --- |
 | 名前 | 書類激詰めモード（履歴・結果などの短い表示は「書類激詰め」） |
-| 置き方 | 面接の種類を選ぶ画面の5枚目のカード |
+| 置き方 | 個人面接の「面接官に渡す書類」欄の2択（普通／激詰）。2026-10-14 に5枚目のカードから変更 |
 | 内部の扱い | `mode: "individual"` ＋ `documentGrill: true`。新しい `InterviewMode` は作らない |
 | 調子 | 冷静に詰める。丁寧語のまま、褒めない、相槌で流さない。圧迫（否定から入る・突き放す）はしない |
 | 採点 | 個人面接と同じ（`interview-score-v5`、軸は `axis-layout.ts` の個人面接） |
@@ -34,8 +34,8 @@
 
 ## 開始画面（`/student/interview/new`）
 
-- カード「書類激詰めモード」を選ぶと、内部では `selectedMode = "individual"` と `documentGrill = true` を設定する。
-- 書類選択の欄は個人面接と同じものを出す。選んだ書類が0通なら開始ボタンを押せない。
+- 個人面接を選ぶと、書類欄の上に「普通／激詰」の2択が出る。激詰を選ぶと `documentGrill = true` で送る。
+- 激詰で選んだ書類が0通なら開始ボタンを押せない。書類が1通も無い生徒には書類欄ごと出ない（激詰は選べない）。
 - 書類の自動選択（`documentIds` 省略）は使わず、生徒が選んだ書類を必ず送る。
 
 ## API（`/api/interview/start`）
@@ -84,6 +84,15 @@
 - 呼んでいるのは `gemini-live-session` だけ。そこで後ろに付けている `buildSubmittedDocumentBlock` を、激詰めのときは `buildGrillDocumentBlock` に替える。
 
 `voice-message` はどこからも呼ばれていないので触らない。
+
+## 結果画面: 突かれた書類の文
+
+書類を渡した個人面接（普通・激詰の両方）の結果に、面接官が突いた書類の文ごとの判定を出す。
+
+- 判定は採点とは別の呼び出し `src/lib/interview/document-defense-judge.ts`（`interview-document-defense-v1`）。`/api/interview/end` で採点と同時に走らせ、失敗しても採点は返す
+- 書類の文はサーバーで切って番号で返させる（本文に無い文を作らせない）。最後の答えの無い問いは判定に渡さない
+- 1件 = 書類の一文／面接官の問い／判定（持ちこたえた・揺らいだ・崩れた）／答え／面接でこう補う。書類の書き直しは出さない
+- 保存は `interviews/{id}.documentDefense`。生徒の結果画面（スコアの下・弱点パターンの上）と管理者の面接詳細に `DocumentDefenseSection` で出す
 
 ## 採点
 

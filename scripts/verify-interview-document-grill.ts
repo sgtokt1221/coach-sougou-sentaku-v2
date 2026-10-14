@@ -11,6 +11,7 @@ import {
   buildSubmittedDocumentBlock,
 } from "../src/lib/ai/prompts/interview";
 import { buildRealtimeIndividualInstructions } from "../src/lib/ai/prompts/interview-realtime";
+import { splitDocumentSentences } from "../src/lib/interview/document-defense-judge";
 import {
   interviewModeLabel,
   type InterviewMode,
@@ -117,5 +118,19 @@ assert.ok(rt("individual").includes("簡単に自己紹介をお願いできま�
 assert.equal(interviewModeLabel("individual", true), "書類激詰め");
 assert.equal(interviewModeLabel("individual"), "個人面接");
 assert.equal(interviewModeLabel("oral_exam", true), "口頭試問");
+
+// 書類の文の切り分け（PDF から貼った文中の改行を詰める。書類ごとに題名を持つ）
+const split = splitDocumentSentences(
+  `<document title="志望理由書" type="志望理由書">\n私は地域の高齢者の孤\n立を解消したいと考えます。理由は二つあります。\n</document>\n<document title="自己推薦書" type="自己推薦書">\n部活動で部長を務めました！\n</document>`
+);
+assert.deepEqual(
+  split.map((x) => [x.documentTitle, x.text]),
+  [
+    ["志望理由書", "私は地域の高齢者の孤立を解消したいと考えます。"],
+    ["志望理由書", "理由は二つあります。"],
+    ["自己推薦書", "部活動で部長を務めました！"],
+  ]
+);
+assert.equal(splitDocumentSentences("   ").length, 0);
 
 console.log("verify-interview-document-grill: OK");

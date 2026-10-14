@@ -725,6 +725,7 @@ export default function InterviewSessionPage() {
           universityName: sessionInfo?.universityContext?.universityName ?? "",
           facultyName: sessionInfo?.universityContext?.facultyName ?? "",
           mode: sessionInfo?.mode ?? "individual",
+          documentGrill: sessionInfo?.documentGrill === true,
           duration: elapsed,
           practicedAt: new Date().toISOString(),
         })

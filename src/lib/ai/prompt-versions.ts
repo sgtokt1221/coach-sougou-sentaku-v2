@@ -304,6 +304,12 @@ export const AI_PROMPT_VERSIONS = {
     promptVersion: "interview-score-v5",
     schemaVersion: "interview-score-output-v1",
   },
+  interviewDocumentDefense: {
+    // v1（2026-10-14）: 書類を渡した個人面接で、面接官が突いた書類の文ごとに
+    //     持ちこたえた／揺らいだ／崩れた と「面接でこう補う」を出す（採点とは別呼び出し）
+    promptVersion: "interview-document-defense-v1",
+    schemaVersion: "interview-document-defense-output-v1",
+  },
   chocoReview: {
     // v2: 手書きJSON＋正規表現パースから構造化出力へ移行し、模範段落の引用禁止と
     //     命令・データ境界を追加した。

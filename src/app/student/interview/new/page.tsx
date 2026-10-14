@@ -25,7 +25,6 @@ import {
   X,
   Plus,
   History,
-  FileSearch,
 } from "lucide-react";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import { toast } from "sonner";
@@ -43,6 +42,7 @@ import {
   INTERVIEW_MODE_DESCRIPTIONS,
 } from "@/lib/types/interview";
 import { FeatureHero } from "@/components/shared/FeatureHero";
+import { SegmentControl } from "@/components/shared/SegmentControl";
 
 interface ResolvedUniversity {
   universityId: string;
@@ -63,31 +63,12 @@ const MODE_ICONS: Record<
   oral_exam: BookOpen,
 };
 
-/**
- * 面接形式のカード。書類激詰めは mode が individual の変種なので、
- * カードとしては別に並べ、選んだら mode=individual と documentGrill を立てる
- */
-type ModeCard = InterviewMode | "document_grill";
-const MODE_CARDS: ModeCard[] = [
+const MODES: InterviewMode[] = [
   "individual",
-  "document_grill",
   "group_discussion",
   "presentation",
   "oral_exam",
 ];
-const CARD_ICON: Record<
-  ModeCard,
-  React.ComponentType<{ className?: string }>
-> = { ...MODE_ICONS, document_grill: FileSearch };
-const CARD_LABEL: Record<ModeCard, string> = {
-  ...INTERVIEW_MODE_LABELS,
-  document_grill: "書類激詰めモード",
-};
-const CARD_DESCRIPTION: Record<ModeCard, string> = {
-  ...INTERVIEW_MODE_DESCRIPTIONS,
-  document_grill: "提出書類の一文を引いて、最初から書類の中身を詰められます",
-};
-
 /**
  * 口頭試問の分野の入力補助。学部名から、その学部でよく指定される分野を出す。
  * 決め打ちの候補であって、正解ではない（生徒は募集要項を見て自分で入れる）。
@@ -178,11 +159,9 @@ export default function InterviewNewPage() {
     null
   );
   const [selectedMode, setSelectedMode] = useState<InterviewMode | null>(null);
-  const [documentGrill, setDocumentGrill] = useState(false);
-  const selectedCard: ModeCard | null =
-    selectedMode === "individual" && documentGrill
-      ? "document_grill"
-      : selectedMode;
+  /** 書類激詰めモード。書類欄の2択で選ぶ（個人面接のときだけ） */
+  const [grillChoice, setGrillChoice] = useState(false);
+  const documentGrill = selectedMode === "individual" && grillChoice;
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
   const [isLoading, setIsLoading] = useState(false);
   const [presentationContent, setPresentationContent] = useState<string | null>(
@@ -581,18 +560,13 @@ export default function InterviewNewPage() {
                   <CardTitle className="text-base">面接形式を選択</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 p-3 lg:p-4">
-                  {MODE_CARDS.map((card) => {
-                    const Icon = CARD_ICON[card];
-                    const isSelected = selectedCard === card;
+                  {MODES.map((mode) => {
+                    const Icon = MODE_ICONS[mode];
+                    const isSelected = selectedMode === mode;
                     return (
                       <button
-                        key={card}
-                        onClick={() => {
-                          setSelectedMode(
-                            card === "document_grill" ? "individual" : card
-                          );
-                          setDocumentGrill(card === "document_grill");
-                        }}
+                        key={mode}
+                        onClick={() => setSelectedMode(mode)}
                         className={[
                           "w-full rounded-lg border p-3 text-left transition-colors lg:p-4",
                           isSelected
@@ -616,10 +590,10 @@ export default function InterviewNewPage() {
                                 isSelected ? "text-primary" : "",
                               ].join(" ")}
                             >
-                              {CARD_LABEL[card]}
+                              {INTERVIEW_MODE_LABELS[mode]}
                             </p>
                             <p className="text-muted-foreground mt-0.5 text-xs">
-                              {CARD_DESCRIPTION[card]}
+                              {INTERVIEW_MODE_DESCRIPTIONS[mode]}
                             </p>
                           </div>
                         </div>
@@ -770,24 +744,6 @@ export default function InterviewNewPage() {
               )}
 
               {/* 面接官に渡す提出書類（個人面接・プレゼン） */}
-              {documentGrill && docsData && docOptions.length === 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      面接官に渡す書類
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-3 text-sm lg:p-4">
-                    書類がありません。
-                    <Link
-                      href="/student/documents"
-                      className="text-primary ml-1 underline"
-                    >
-                      出願書類を作る
-                    </Link>
-                  </CardContent>
-                </Card>
-              )}
               {usesDocuments && docOptions.length > 0 && (
                 <Card>
                   <CardHeader>
@@ -798,6 +754,18 @@ export default function InterviewNewPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 p-3 lg:p-4">
+                    {selectedMode === "individual" && (
+                      <SegmentControl
+                        value={grillChoice ? "grill" : "normal"}
+                        onChange={(v) => setGrillChoice(v === "grill")}
+                        fullWidth
+                        size="sm"
+                        options={[
+                          { id: "normal", label: "普通" },
+                          { id: "grill", label: "激詰" },
+                        ]}
+                      />
+                    )}
                     <p className="text-muted-foreground text-xs leading-relaxed">
                       本番の面接官は提出書類を読んで質問します。この面接で提出する書類を選んでください（
                       {MAX_INTERVIEW_DOCUMENTS}

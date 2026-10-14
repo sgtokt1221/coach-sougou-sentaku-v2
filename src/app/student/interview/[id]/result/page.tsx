@@ -37,7 +37,11 @@ import type {
   VideoAnalysis,
   AppearanceAnalysis,
 } from "@/lib/types/interview";
-import { interviewModeLabel } from "@/lib/types/interview";
+import {
+  interviewModeLabel,
+  type DocumentDefense,
+} from "@/lib/types/interview";
+import { DocumentDefenseSection } from "@/components/interview/DocumentDefenseSection";
 import type { GrowthEvent } from "@/lib/types/essay";
 import type { RepeatedIssue } from "@/lib/types/essay";
 import type { SessionSummary } from "@/lib/types/session";
@@ -59,6 +63,7 @@ import {
 
 interface InterviewResult {
   documentGrill?: boolean;
+  documentDefense?: DocumentDefense;
   id: string;
   universityName: string;
   facultyName: string;
@@ -119,6 +124,7 @@ export default function InterviewResultPage() {
             facultyName: data.facultyName ?? "",
             mode: data.mode ?? "individual",
             documentGrill: data.documentGrill === true,
+            documentDefense: data.documentDefense,
             practicedAt: data.practicedAt ?? new Date().toISOString(),
             duration: data.duration ?? 0,
             scores: data.scores,
@@ -367,6 +373,13 @@ export default function InterviewResultPage() {
             </Badge>
           </div>
         </div>
+
+        {/* 書類を渡した個人面接: 突かれた書類の文ごとの結果 */}
+        {result.documentDefense && result.documentDefense.items.length > 0 && (
+          <div className="mb-8">
+            <DocumentDefenseSection defense={result.documentDefense} />
+          </div>
+        )}
 
         {/* 繰り返し弱点を目立たせるカード */}
         {result.feedback.repeatedIssues.length > 0 && (

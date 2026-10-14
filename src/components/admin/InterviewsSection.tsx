@@ -38,7 +38,11 @@ import type {
   InterviewScores,
   InterviewFeedback,
 } from "@/lib/types/interview";
-import { interviewModeLabel } from "@/lib/types/interview";
+import {
+  interviewModeLabel,
+  type DocumentDefense,
+} from "@/lib/types/interview";
+import { DocumentDefenseSection } from "@/components/interview/DocumentDefenseSection";
 
 interface InterviewListItem {
   id: string;
@@ -63,6 +67,7 @@ interface InterviewDetail {
   id: string;
   mode: InterviewMode;
   documentGrill?: boolean;
+  documentDefense?: DocumentDefense;
   targetUniversity: string;
   targetFaculty: string;
   messages: InterviewMessage[];
@@ -354,6 +359,14 @@ export function InterviewsSection({
               )}
 
               {/* Feedback */}
+              {detailData.documentDefense &&
+                detailData.documentDefense.items.length > 0 && (
+                  <DocumentDefenseSection
+                    defense={detailData.documentDefense}
+                    compact
+                  />
+                )}
+
               {detailData.feedback && (
                 <div className="space-y-3">
                   <p className="text-sm font-medium">フィードバック</p>
