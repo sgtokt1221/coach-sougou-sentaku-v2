@@ -91,6 +91,8 @@ export async function POST(request: NextRequest) {
     let sessionFacultyId = "";
     let sessionStatementSnapshot = "";
     let sessionMode = mode ?? "";
+    /** 書類激詰め。自己紹介をしないので、採点で自己紹介を見ない */
+    let sessionDocumentGrill = false;
     let homeworkAssignmentIdFromSession: string | undefined;
     /** 口頭試問の出題分野（開始時に保存したもの）。採点でも同じ分野で見る */
     let sessionOralExam: { subject: string; scope?: string } | undefined;
@@ -131,6 +133,7 @@ export async function POST(request: NextRequest) {
           }
           // モードもセッション側を優先する（別モードの基準で採点させない）
           if (sessionData.mode) sessionMode = sessionData.mode;
+          sessionDocumentGrill = sessionData.documentGrill === true;
           const stored = sessionData.messages;
           if (Array.isArray(stored) && stored.length > 0) {
             scoringMessages = stored;
@@ -319,6 +322,8 @@ export async function POST(request: NextRequest) {
         mode: sessionMode || mode,
         presentationContent,
         ...(sessionOralExam ? { oralExam: sessionOralExam } : {}),
+        documentGrill: sessionDocumentGrill,
+        durationSeconds: typeof duration === "number" ? duration : undefined,
         selfAnalysisContext,
         statementContext,
         videoAnalysis,

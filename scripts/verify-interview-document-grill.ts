@@ -9,6 +9,8 @@ import {
   buildInterviewSystemPrompt,
   buildGrillDocumentBlock,
   buildSubmittedDocumentBlock,
+  buildIndividualTimeCue,
+  buildInterviewEvaluationPrompt,
 } from "../src/lib/ai/prompts/interview";
 import { buildRealtimeIndividualInstructions } from "../src/lib/ai/prompts/interview-realtime";
 import { splitDocumentSentences } from "../src/lib/interview/document-defense-judge";
@@ -99,7 +101,7 @@ assert.ok(
   "音声: 1問目で引用する"
 );
 assert.ok(
-  !rtGrill.includes("簡単に自己紹介をお願いできますか"),
+  !rtGrill.includes("3分程度で自己紹介をお願いできますか"),
   "音声: 自己紹介を求めない"
 );
 assert.ok(rtGrill.includes("書類の中身を冷静に精査"));
@@ -112,7 +114,51 @@ for (const mode of [
   if (mode !== "individual")
     assert.equal(rt(mode, true), rt(mode), `音声 ${mode}: 目印を無視`);
 }
-assert.ok(rt("individual").includes("簡単に自己紹介をお願いできますか"));
+assert.ok(rt("individual").includes("3分程度で自己紹介をお願いできますか"));
+
+// 所要時間（10〜20分）と自己紹介（3分程度）
+assert.ok(build("individual").includes("3分程度で自己紹介をお願いします"));
+for (const p of [build("individual"), grill, rt("individual"), rtGrill]) {
+  assert.ok(/10\s*〜\s*20\s*分/.test(p), "個人・激詰めは10〜20分");
+}
+assert.ok(buildIndividualTimeCue(5 * 60).includes("まだ締めくくりに入らず"));
+assert.ok(buildIndividualTimeCue(12 * 60).includes("15分に向けて"));
+assert.ok(buildIndividualTimeCue(16 * 60).includes("締めくくりに向かって"));
+assert.ok(
+  buildIndividualTimeCue(19 * 60).includes("以上で面接を終了いたします")
+);
+
+// 採点: 自己紹介の見方は通常の個人面接だけ。短く終わった回は材料の範囲で採点
+const evalOf = (
+  mode: string,
+  opts?: { documentGrill?: boolean; durationSeconds?: number }
+) =>
+  buildInterviewEvaluationPrompt(
+    "大",
+    "学部",
+    "AP",
+    mode,
+    undefined,
+    undefined,
+    opts
+  );
+assert.ok(evalOf("individual").includes("自己紹介の見方"));
+assert.ok(
+  !evalOf("individual", { documentGrill: true }).includes("自己紹介の見方")
+);
+assert.ok(!evalOf("oral_exam").includes("自己紹介の見方"));
+assert.ok(
+  evalOf("individual", { durationSeconds: 6 * 60 }).includes("想定より短く")
+);
+assert.ok(
+  !evalOf("individual", { durationSeconds: 15 * 60 }).includes("想定より短く")
+);
+assert.ok(
+  evalOf("individual", { durationSeconds: 15 * 60 }).includes("15 分でした")
+);
+assert.ok(
+  !evalOf("group_discussion", { durationSeconds: 6 * 60 }).includes("面接時間")
+);
 
 // 表示名
 assert.equal(interviewModeLabel("individual", true), "書類激詰め");

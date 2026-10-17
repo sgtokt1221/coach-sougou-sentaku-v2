@@ -17,30 +17,31 @@ ${FACULTY_AGENCY_FOCUS_INTERVIEW}
 ## 面接の進め方（個人面接）
 - 受験生と1対1で面接を行います
 - 一度に1つの質問のみ行ってください
-- 全体で8〜10ターンを目安に、以下の「起承転結」構造で面接を進めてください
+- **面接全体は10〜20分（目安15分）で終えてください。** 以下の「起承転結」構造で進めます
+- 経過時間が知らされたら、それに合わせて配分を調整してください
 - 面接官としての発言のみ出力してください。JSON出力や評価コメントは不要です
 {{SUBMITTED_DOCUMENT}}
 ## 面接の起承転結（必ずこの流れに従ってください）
 
-### 起（導入 / ターン1〜2）
+### 起（導入 / 最初の4分ほど）
 - 緊張をほぐす挨拶から始めてください
-- 自己紹介や高校生活について軽く聞き、場を温めてください
-- 例：「簡単に自己紹介をお願いします」「高校ではどんなことに力を入れてきましたか？」
+- **最初の質問は「3分程度で自己紹介をお願いします」と、時間を指定して自己紹介を求めてください**
+- 自己紹介を受けて、高校で力を入れたことなどを軽く聞き、場を温めてください
 
-### 承（核心の深掘り / ターン3〜5）
+### 承（核心の深掘り / 〜10分ごろ）
 - 志望理由を聞き、回答を深掘りしてください。提出書類があれば、書類に書かれた経験や
   志望動機を名指しで引いて（「書類に〜とありますが」）、その中身を掘ってください
 - 「なぜこの大学・学部なのか」「きっかけとなった具体的な経験は何か」を掘り下げてください
 - 曖昧な回答には「具体的にはどういう意味ですか？」「例えば？」と追及してください
 - アドミッションポリシーに関連する質問を必ず1つ以上含めてください
 
-### 転（揺さぶり・視点転換 / ターン6〜7）
+### 転（揺さぶり・視点転換 / 〜15分ごろ）
 - 受験生の回答を踏まえた上で、別の角度から問いかけてください
 - 例：「もし〇〇だったらどうしますか？」「反対の意見もありますが、どう考えますか？」
 - 将来のビジョン、社会貢献、困難への対処について聞いてください
 - 受験生の思考の柔軟性と本気度を確認してください
 
-### 結（締めくくり / ターン8〜10）
+### 結（締めくくり / 最後の2〜3分）
 - 「最後に何か伝えたいこと」や「本学への質問」を聞いてください
 - 面接の締めの挨拶をしてください
 - 「以上で面接を終了いたします」と明確に終了を伝えてください
@@ -340,6 +341,20 @@ const EVALUATION_BASE = `あなたは総合型選抜（旧AO入試）の面接�
    「熱意」は採点しません。熱意は会話の文字から測れないため、v5 で一貫性に置き換えました
 4. **具体性（specificity）**: 具体的なエピソード・経験の活用（いつ・どこで・何をした・どうなったか）`;
 
+/**
+ * 個人面接（通常版）の自己紹介の見方。面接官は「3分程度で」と時間を指定して求める。
+ * 書類激詰めは自己紹介をしないので付けない。
+ */
+const EVALUATION_SELF_INTRO = `
+## 自己紹介の見方（個人面接）
+面接官は冒頭で「3分程度で自己紹介を」と時間を指定しています。指定された長さに収めて要点を伝えられるかは、本番でも見られます。
+- 3分で話す中身として過不足があるかを **明確さ（clarity）** に反映してください
+  - 短すぎる: 名前と学校名だけ、1〜2文で終わる → 下げる
+  - 長すぎる: 1つの経験の経緯を延々と語り、何を伝えたい人なのかが出てこない → 下げる
+  - 良い: 自分が何者か・高校で力を入れたこと・志望につながる関心が、3分に収まる量で筋道立っている
+- 字数で機械的に判定しないでください（テキスト入力の回もあります）
+- 自己紹介に過不足があれば、improvements か personalizedAdvice に1件、本人の自己紹介を「」で引いて書いてください`;
+
 const EVALUATION_MODE_ADDITIONS: Record<string, string> = {
   individual: "",
   presentation: `
@@ -393,9 +408,25 @@ const EVALUATION_SCORES_JSON: Record<string, string> = {
 function buildEvaluationPrompt(
   mode: string,
   presentationContent?: string,
-  oralExam?: OralExamTopic
+  oralExam?: OralExamTopic,
+  options?: InterviewEvaluationOptions
 ): string {
   const modeKey = mode in EVALUATION_MODE_ADDITIONS ? mode : "individual";
+  const isIndividual = modeKey === "individual";
+  const introSection =
+    isIndividual && !options?.documentGrill ? EVALUATION_SELF_INTRO : "";
+  /**
+   * 個人面接は10〜20分で行う。早く打ち切られた回に、聞けていない観点を
+   * 推測で補って採点させない。
+   */
+  const duration = options?.durationSeconds;
+  const durationSection =
+    isIndividual && typeof duration === "number" && duration > 0
+      ? `\n## 面接時間\n- この面接は ${Math.max(1, Math.round(duration / 60))} 分でした（想定は10〜20分）。\n` +
+        (duration < INDIVIDUAL_INTERVIEW_MIN_SECONDS
+          ? `- 想定より短く終わっています。聞けていない観点を推測で補わず、会話にある材料だけで採点してください。\n`
+          : "")
+      : "";
   const presSection = presentationContent
     ? `\n## 受験生の提出資料（採点の参考にしてください）\n${presentationContent}\n`
     : "";
@@ -406,8 +437,8 @@ function buildEvaluationPrompt(
       : "";
 
   return `${EVALUATION_BASE}
-${EVALUATION_MODE_ADDITIONS[modeKey]}
-${oralSection}${presSection}
+${EVALUATION_MODE_ADDITIONS[modeKey]}${introSection}
+${oralSection}${presSection}${durationSection}
 ## 志望大学・学部情報
 {{UNIVERSITY_NAME}} {{FACULTY_NAME}}
 {{ADMISSION_POLICY}}
@@ -554,7 +585,8 @@ ${FACULTY_AGENCY_FOCUS_INTERVIEW}
   - 書類どうしの食い違い、書類と回答の食い違い（「書類では〜と書かれていますが」）
 - 1つの論点は2〜3段掘ってから次の論点へ移ってください
 - 同じ答えの繰り返しや、はぐらかしには、もう一段だけ具体を求め、それでも出なければ次の論点へ移ってください
-- 全体で8〜12往復を目安にし、最後は「最後に伝えたいことはありますか」と聞いたうえで「以上で面接を終了いたします」と明確に終了を伝えてください
+- **面接全体は10〜20分（目安15分）で終えてください。** 経過時間が知らされたら、それに合わせて論点の数を調整してください
+- 最後は「最後に伝えたいことはありますか」と聞いたうえで「以上で面接を終了いたします」と明確に終了を伝えてください
 
 ## 過去の弱点リスト（参考：重点的に確認すべき領域）
 {{WEAKNESS_LIST}}
@@ -579,6 +611,37 @@ ${submittedDocument.trim()}
 - 引用は書類の言葉どおりにすること。書類に無いことを書類にあるかのように言わないこと
 - 面接の答えが書類と食い違ったら、その場で「書類では〜と書かれていますが」と突くこと
 `;
+}
+
+/** 個人面接（書類激詰めを含む）の所要時間。10〜20分、目安15分 */
+export const INDIVIDUAL_INTERVIEW_MIN_SECONDS = 10 * 60;
+export const INDIVIDUAL_INTERVIEW_WRAP_UP_SECONDS = 15 * 60;
+export const INDIVIDUAL_INTERVIEW_FINAL_SECONDS = 18 * 60;
+export const INDIVIDUAL_INTERVIEW_MAX_SECONDS = 20 * 60;
+
+/**
+ * 個人面接の経過時間を面接官に伝える連絡。面接官は時計を持たないので、
+ * 渡さないとターン数だけで進み、10分に届かず終わったり20分を超えたりする。
+ *
+ * 最後の受験生発言に添えて渡す。システムプロンプトの末尾に足しただけでは、
+ * 19分でも新しい論点に入った（起承転結の指示の方が勝つ）。
+ */
+export function buildIndividualTimeCue(elapsedSeconds: number): string {
+  return `<面接官だけに見える連絡（受験生の発言ではない。触れずに従うこと）>\n${individualTimeCueBody(elapsedSeconds)}\n</面接官だけに見える連絡>`;
+}
+
+function individualTimeCueBody(elapsedSeconds: number): string {
+  const min = Math.floor(elapsedSeconds / 60);
+  if (elapsedSeconds >= INDIVIDUAL_INTERVIEW_FINAL_SECONDS) {
+    return `経過時間は ${min} 分です。終了の20分が迫っています。新しい論点には入らず、いまの発言で「最後に伝えたいことはありますか」と聞くか、すでに聞いていれば「以上で面接を終了いたします」と締めてください。`;
+  }
+  if (elapsedSeconds >= INDIVIDUAL_INTERVIEW_WRAP_UP_SECONDS) {
+    return `経過時間は ${min} 分です。締めくくりに向かってください。残り1〜2問で「最後に伝えたいことはありますか」へ進み、20分までに終えてください。`;
+  }
+  if (elapsedSeconds < INDIVIDUAL_INTERVIEW_MIN_SECONDS) {
+    return `経過時間は ${min} 分です。面接は10〜20分で行います。まだ締めくくりに入らず、深掘りを続けてください。`;
+  }
+  return `経過時間は ${min} 分です。目安の15分に向けて、まだ触れていない大事な論点を優先してください。`;
 }
 
 export function buildInterviewSystemPrompt(
@@ -635,18 +698,27 @@ ${contentCandidates.map((c) => `- ${c}`).join("\n")}`;
   return base;
 }
 
+export interface InterviewEvaluationOptions {
+  /** 書類激詰め。自己紹介をしないので、自己紹介の見方を付けない */
+  documentGrill?: boolean;
+  /** 面接にかかった秒数。個人面接で、想定（10〜20分）より短い回の扱いに使う */
+  durationSeconds?: number;
+}
+
 export function buildInterviewEvaluationPrompt(
   universityName: string,
   facultyName: string,
   admissionPolicy: string,
   mode?: string,
   presentationContent?: string,
-  oralExam?: OralExamTopic
+  oralExam?: OralExamTopic,
+  options?: InterviewEvaluationOptions
 ): string {
   return buildEvaluationPrompt(
     mode ?? "individual",
     presentationContent,
-    oralExam
+    oralExam,
+    options
   )
     .replace("{{UNIVERSITY_NAME}}", universityName)
     .replace("{{FACULTY_NAME}}", facultyName)

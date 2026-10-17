@@ -39,6 +39,10 @@ export interface InterviewScoreCoreInput {
   presentationContent?: string;
   /** 口頭試問の出題分野。専門知識の正確性をこの分野の中で見るために渡す */
   oralExam?: { subject: string; scope?: string };
+  /** 書類激詰め。自己紹介をしないので、自己紹介の見方を外す */
+  documentGrill?: boolean;
+  /** 面接にかかった秒数。個人面接は10〜20分の想定で見る */
+  durationSeconds?: number;
   /** 自己分析の整形済みコンテキスト (改行区切りテキスト) */
   selfAnalysisContext?: string;
   /** その志望校向けの志望理由書（statement-context.ts）。答えとの食い違いを見る */
@@ -106,7 +110,11 @@ export async function scoreInterviewCore(
     input.admissionPolicy,
     input.mode,
     input.presentationContent,
-    input.oralExam
+    input.oralExam,
+    {
+      documentGrill: input.documentGrill,
+      durationSeconds: input.durationSeconds,
+    }
   );
 
   /**

@@ -372,6 +372,14 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     };
   }, [stop]);
 
+  /**
+   * 面接官への指示を会話に差し込む（応答は起こさない。次の応答から効く）。
+   * 個人面接の経過時間を伝えるのに使う。面接官は時計を持たないため。
+   */
+  const addInterviewerNote = useCallback((text: string) => {
+    sessionRef.current?.addConversationItem("system", text);
+  }, []);
+
   const start = useCallback(
     async (startOpts?: {
       priorMessages?: InterviewMessage[];
@@ -842,6 +850,7 @@ export function useRealtimeInterview(options: UseRealtimeInterviewOptions) {
     forceEndTurn,
     start,
     stop,
+    addInterviewerNote,
     isActive: status === "connected",
   };
 }

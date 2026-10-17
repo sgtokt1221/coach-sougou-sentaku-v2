@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { buildInterviewSystemPrompt } from "@/lib/ai/prompts/interview";
+import {
+  buildIndividualTimeCue,
+  buildInterviewSystemPrompt,
+  INDIVIDUAL_INTERVIEW_MAX_SECONDS,
+} from "@/lib/ai/prompts/interview";
 import type {
   InterviewMessageResponse,
   InterviewMessage,
@@ -96,13 +100,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const effectiveMode = mode ?? sessionData?.mode ?? "individual";
+
     const client = new Anthropic();
 
     // ai→assistant, student→user に変換
-    const claudeMessages = messages.map((m) => ({
+    const claudeMessages: Anthropic.MessageParam[] = messages.map((m) => ({
       role: m.role === "ai" ? ("assistant" as const) : ("user" as const),
       content: m.content,
     }));
+
+    /**
+     * 個人面接（書類激詰めを含む）は10〜20分。面接官は時計を持たないので、
+     * 毎ターン最後の受験生発言に経過時間を添える（この呼び出しだけ。会話の記録には残さない）
+     */
+    const lastMsg = claudeMessages[claudeMessages.length - 1];
+    if (
+      effectiveMode === "individual" &&
+      typeof elapsedSeconds === "number" &&
+      lastMsg?.role === "user" &&
+      typeof lastMsg.content === "string"
+    ) {
+      claudeMessages[claudeMessages.length - 1] = {
+        role: "user",
+        content: [
+          { type: "text", text: lastMsg.content },
+          { type: "text", text: buildIndividualTimeCue(elapsedSeconds) },
+        ],
+      };
+    }
 
     // GD は複数人の連続発話を含むため max_tokens を拡張
     const maxTokens = mode === "group_discussion" ? 1200 : 512;
@@ -149,16 +175,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // GD は Phase 構造で 10〜14 ターン、約 15 分で収束するよう調整
-    const maxTurns = mode === "group_discussion" ? 18 : 16;
+    // GD は Phase 構造で 10〜14 ターン、約 15 分で収束するよう調整。
+    // 個人面接は時間（10〜20分）で締めるので、ターンの上限は打ち切りの保険として広めに取る
+    const maxTurns =
+      mode === "group_discussion"
+        ? 18
+        : effectiveMode === "individual"
+          ? 40
+          : 16;
     const minTurns = mode === "group_discussion" ? 10 : 8;
 
-    // GD の 15 分ハード制限: 14 分超過かつ minTurns 到達済みなら強制終了
+    // GD の 15 分ハード制限: 14 分超過かつ minTurns 到達済みなら強制終了。
+    // 個人面接は 20 分で打ち切る
     const timeUp =
-      mode === "group_discussion" &&
       typeof elapsedSeconds === "number" &&
-      elapsedSeconds >= 14 * 60 &&
-      messages.length >= minTurns;
+      messages.length >= minTurns &&
+      ((mode === "group_discussion" && elapsedSeconds >= 14 * 60) ||
+        (effectiveMode === "individual" &&
+          elapsedSeconds >= INDIVIDUAL_INTERVIEW_MAX_SECONDS));
 
     /**
      * 面接を続けるか。

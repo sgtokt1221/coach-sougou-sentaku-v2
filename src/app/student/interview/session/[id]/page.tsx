@@ -54,6 +54,11 @@ import { resolveVoiceProvider } from "@/lib/interview/voice-provider";
 import { stripFillers } from "@/lib/interview/transcript";
 import { transcribeTurnViaStt } from "@/lib/interview/stt-client";
 import { interviewModeLabel } from "@/lib/types/interview";
+import {
+  buildIndividualTimeCue,
+  INDIVIDUAL_INTERVIEW_FINAL_SECONDS,
+  INDIVIDUAL_INTERVIEW_WRAP_UP_SECONDS,
+} from "@/lib/ai/prompts/interview";
 import { FluidLoader } from "@/components/shared/FluidLoader";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import VoiceAnalyzer, {
@@ -521,6 +526,30 @@ export default function InterviewSessionPage() {
     })();
   }, [sessionInfo, realtime, showPreflight]);
 
+  /**
+   * 音声の個人面接は、面接官（Gemini Live）が経過時間を知らない。
+   * 15分（締めに向かう）と18分（締める）で、試験官が話していない間に1回ずつ伝える。
+   * テキスト面接は /api/interview/message が毎ターン伝えている。
+   */
+  const timeCueSentRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!realtimeActive || sessionInfo?.mode !== "individual") return;
+    if (realtime.status !== "connected" || realtime.aiSpeaking) return;
+    // 遅い方から見る。18分を過ぎてから届いたときに15分の分を重ねて送らない
+    for (const at of [
+      INDIVIDUAL_INTERVIEW_FINAL_SECONDS,
+      INDIVIDUAL_INTERVIEW_WRAP_UP_SECONDS,
+    ]) {
+      if (elapsed < at) continue;
+      if (!timeCueSentRef.current.has(at)) {
+        timeCueSentRef.current.add(INDIVIDUAL_INTERVIEW_WRAP_UP_SECONDS);
+        timeCueSentRef.current.add(at);
+        realtime.addInterviewerNote(buildIndividualTimeCue(elapsed));
+      }
+      break;
+    }
+  }, [elapsed, realtimeActive, sessionInfo?.mode, realtime]);
+
   // カンペ用: 自分の弱点を取得
   useEffect(() => {
     let cancelled = false;
@@ -923,9 +952,15 @@ export default function InterviewSessionPage() {
           </button>
           <span
             className={`font-mono text-sm tabular-nums ${
-              sessionInfo?.mode === "group_discussion" && elapsed >= 14 * 60
+              (sessionInfo?.mode === "group_discussion" &&
+                elapsed >= 14 * 60) ||
+              (sessionInfo?.mode === "individual" &&
+                elapsed >= INDIVIDUAL_INTERVIEW_FINAL_SECONDS)
                 ? "font-semibold text-rose-600"
-                : sessionInfo?.mode === "group_discussion" && elapsed >= 11 * 60
+                : (sessionInfo?.mode === "group_discussion" &&
+                      elapsed >= 11 * 60) ||
+                    (sessionInfo?.mode === "individual" &&
+                      elapsed >= INDIVIDUAL_INTERVIEW_WRAP_UP_SECONDS)
                   ? "font-semibold text-amber-600"
                   : "text-muted-foreground"
             }`}
