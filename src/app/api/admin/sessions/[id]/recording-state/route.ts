@@ -33,10 +33,16 @@ export async function PATCH(
     return NextResponse.json({ error: "入力が不正です" }, { status: 400 });
   }
 
-  const existing: SessionRecordingState = session.recordingState ?? {
-    teacherRecording: false,
-    studentRecording: false,
-  };
+  /**
+   * 録音を始め直すときは前回の状態を持ち越さない。停止の印（stopRequestedAt）が
+   * 残ると生徒に参加の案内が出ず、前回の生徒の録音が今回の講師の録音と組まれる。
+   */
+  const isRestart =
+    body.teacherRecording === true && typeof body.teacherStartedAt === "string";
+  const existing: SessionRecordingState =
+    isRestart || !session.recordingState
+      ? { teacherRecording: false, studentRecording: false }
+      : session.recordingState;
   const nextState: SessionRecordingState = {
     ...existing,
     ...(typeof body.teacherRecording === "boolean"
@@ -49,12 +55,18 @@ export async function PATCH(
       ? { stopRequestedAt: body.stopRequestedAt }
       : {}),
   };
-  await ref.set(
-    {
-      recordingState: nextState,
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true },
-  );
+  const { FieldValue } = await import("firebase-admin/firestore");
+  // update で recordingState を丸ごと置き換える（set merge は入れ子の古い項目を残す）
+  await ref.update({
+    recordingState: nextState,
+    ...(isRestart
+      ? {
+          studentRecordingPath: FieldValue.delete(),
+          studentRecordingUrl: FieldValue.delete(),
+          studentTranscription: FieldValue.delete(),
+        }
+      : {}),
+    updatedAt: new Date().toISOString(),
+  });
   return NextResponse.json({ recordingState: nextState });
 }

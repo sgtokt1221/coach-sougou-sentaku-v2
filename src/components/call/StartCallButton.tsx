@@ -20,6 +20,7 @@ export function StartCallButton({
   sessionId,
   label = "通話",
   compact = false,
+  newTab = false,
   className,
 }: {
   participantUids: string[];
@@ -28,6 +29,11 @@ export function StartCallButton({
   label?: string;
   /** アイコンだけの小さいボタンにする（入力欄の並びに置くとき） */
   compact?: boolean;
+  /**
+   * 通話を新しいタブで開く。セッション画面では録音を続けたまま通話するのに使う
+   * （同じタブで移ると、録音中の画面が閉じて録音が黙って消える）
+   */
+  newTab?: boolean;
   className?: string;
 }) {
   const router = useRouter();
@@ -38,6 +44,8 @@ export function StartCallButton({
 
   async function start() {
     setBusy(true);
+    // ポップアップとして止められないよう、押した瞬間にタブを開いておき、行き先はあとで入れる
+    const tab = newTab ? window.open("", "_blank") : null;
     try {
       const res = await authFetch("/api/calls", {
         method: "POST",
@@ -49,12 +57,15 @@ export function StartCallButton({
       });
       const data = await res.json();
       if (!res.ok || !data.callId) {
+        tab?.close();
         toast.error(data.error ?? "通話を開始できませんでした");
         return;
       }
-      router.push(`/call/${data.callId}`);
+      if (tab) tab.location.href = `/call/${data.callId}`;
+      else router.push(`/call/${data.callId}`);
     } catch (err) {
       console.warn("[StartCallButton] start failed", err);
+      tab?.close();
       toast.error("通話を開始できませんでした");
     } finally {
       setBusy(false);

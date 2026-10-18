@@ -2,21 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { assertSessionAccess } from "@/lib/api/session-auth";
 import type { Session } from "@/lib/types/session";
+import { recordingFormatOf } from "@/lib/audio/recording-format";
 
 export const maxDuration = 60;
 
 const MAX_SIZE_BYTES = 25 * 1024 * 1024;
-const ALLOWED_MIMES = [
-  "audio/webm",
-  "audio/webm;codecs=opus",
-  "audio/mp4",
-  "audio/m4a",
-  "audio/mpeg",
-  "audio/mp3",
-  "audio/wav",
-  "video/mp4",
-  "video/webm",
-];
 
 export async function POST(
   request: NextRequest,
@@ -54,7 +44,8 @@ export async function POST(
     );
   }
   const contentType = (file.type || "audio/webm").toLowerCase();
-  if (!ALLOWED_MIMES.some((m) => contentType.startsWith(m.split(";")[0]))) {
+  const format = recordingFormatOf(contentType);
+  if (!format) {
     return NextResponse.json(
       { error: `対応していない形式です (${contentType})` },
       { status: 415 },
@@ -66,14 +57,14 @@ export async function POST(
 
   // Storage upload
   let recordingUrl = "";
-  const recordingPath = `sessions/${id}/recording.webm`;
+  const recordingPath = `sessions/${id}/recording.${format.ext}`;
   try {
     const { getStorage } = await import("firebase-admin/storage");
     const bucket = getStorage().bucket();
     const sFile = bucket.file(recordingPath);
     const buffer = Buffer.from(await file.arrayBuffer());
     await sFile.save(buffer, {
-      contentType: "audio/webm",
+      contentType: format.mime,
       resumable: false,
     });
     const [url] = await sFile.getSignedUrl({
@@ -90,8 +81,12 @@ export async function POST(
   }
 
   const now = new Date().toISOString();
+  const { FieldValue } = await import("firebase-admin/firestore");
   await adminDb.doc(`sessions/${id}`).set(
     {
+      // 録り直し・取り込みのとき、前の録音の文字起こしを使い回させない
+      transcription: FieldValue.delete(),
+      lessonTranscript: FieldValue.delete(),
       recordingUrl,
       recordingPath,
       recordingSizeBytes: file.size,

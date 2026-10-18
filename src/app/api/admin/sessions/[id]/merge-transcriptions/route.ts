@@ -2,17 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { assertSessionAccess } from "@/lib/api/session-auth";
 import type { Session, LessonTranscription } from "@/lib/types/session";
+import { recordingFormatOfPath } from "@/lib/audio/recording-format";
 
 export const maxDuration = 300;
 
 async function whisperTranscribe(
   audio: Buffer,
+  path: string,
   apiKey: string,
   prompt?: string,
 ): Promise<LessonTranscription> {
   const formData = new FormData();
-  const blob = new Blob([audio as unknown as BlobPart], { type: "audio/webm" });
-  formData.append("file", blob, "recording.webm");
+  // Whisper はファイル名の拡張子で形式を見るので、保存した形式のまま渡す
+  const { ext, mime } = recordingFormatOfPath(path);
+  const blob = new Blob([audio as unknown as BlobPart], { type: mime });
+  formData.append("file", blob, `recording.${ext}`);
   formData.append("model", "whisper-1");
   formData.append("language", "ja");
   formData.append("response_format", "verbose_json");
@@ -168,15 +172,25 @@ export async function POST(
     const { getStorage } = await import("firebase-admin/storage");
     const bucket = getStorage().bucket();
 
-    // teacher (未処理 or 強制再実行)
+    // teacher (未処理のときだけ。録り直すと録音の保存時に前の文字起こしを消している)
     if (hasTeacher && !teacherTrans) {
       const [buf] = await bucket.file(session.recordingPath!).download();
-      teacherTrans = await whisperTranscribe(buf, apiKey, prompt);
+      teacherTrans = await whisperTranscribe(
+        buf,
+        session.recordingPath!,
+        apiKey,
+        prompt,
+      );
     }
     // student
     if (hasStudent && !studentTrans) {
       const [buf] = await bucket.file(session.studentRecordingPath!).download();
-      studentTrans = await whisperTranscribe(buf, apiKey, prompt);
+      studentTrans = await whisperTranscribe(
+        buf,
+        session.studentRecordingPath!,
+        apiKey,
+        prompt,
+      );
     }
   } catch (err) {
     console.error("[merge-transcriptions] Whisper failed:", err);

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import type { Session } from "@/lib/types/session";
+import { recordingFormatOf } from "@/lib/audio/recording-format";
 
 export const maxDuration = 60;
 
 const MAX_SIZE_BYTES = 25 * 1024 * 1024;
-const ALLOWED_MIMES = ["audio/webm", "audio/webm;codecs=opus", "audio/mp4"];
 
 /** 生徒の録音ファイルアップロード */
 export async function POST(
@@ -47,7 +47,9 @@ export async function POST(
     );
   }
   const contentType = (file.type || "audio/webm").toLowerCase();
-  if (!ALLOWED_MIMES.some((m) => contentType.startsWith(m.split(";")[0]))) {
+  const format = recordingFormatOf(contentType);
+  // 生徒の録音はブラウザの録音だけ（webm か Safari の mp4）
+  if (!format || (format.ext !== "webm" && format.ext !== "m4a")) {
     return NextResponse.json(
       { error: `対応していない形式です (${contentType})` },
       { status: 415 },
@@ -58,7 +60,7 @@ export async function POST(
     typeof durationSecRaw === "string" ? parseInt(durationSecRaw, 10) : 0;
 
   // Storage
-  const recordingPath = `sessions/${id}/student-recording.webm`;
+  const recordingPath = `sessions/${id}/student-recording.${format.ext}`;
   let recordingUrl = "";
   try {
     const { getStorage } = await import("firebase-admin/storage");
@@ -66,7 +68,7 @@ export async function POST(
     const sFile = bucket.file(recordingPath);
     const buffer = Buffer.from(await file.arrayBuffer());
     await sFile.save(buffer, {
-      contentType: "audio/webm",
+      contentType: format.mime,
       resumable: false,
     });
     const [url] = await sFile.getSignedUrl({
@@ -87,8 +89,11 @@ export async function POST(
     teacherRecording: false,
     studentRecording: false,
   };
+  const { FieldValue } = await import("firebase-admin/firestore");
   await ref.set(
     {
+      // 前の録音の文字起こしを使い回させない
+      studentTranscription: FieldValue.delete(),
       studentRecordingUrl: recordingUrl,
       studentRecordingPath: recordingPath,
       studentRecordingSizeBytes: file.size,

@@ -319,12 +319,21 @@ export const SESSION_STATUS_LABELS: Record<SessionStatus, string> = {
 /** duration 未設定セッションの既定所要時間（分）。終了判定に使う。 */
 export const SESSION_DEFAULT_DURATION_MIN = 60;
 
+/**
+ * scheduledAt を読む。タイムゾーン無し（`2026-09-26T17:00`）は日本時間として読む。
+ * そのまま new Date すると、サーバー（UTC）では9時間遅い時刻になる。
+ */
+export function parseScheduledAt(scheduledAt: string): number {
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/i.test(scheduledAt);
+  return new Date(hasZone ? scheduledAt : `${scheduledAt}+09:00`).getTime();
+}
+
 /** セッションの終了予定時刻(ms)。duration 未設定は既定 60 分で計算。 */
 export function sessionEndTime(session: {
   scheduledAt: string;
   duration?: number | null;
 }): number {
-  const start = new Date(session.scheduledAt).getTime();
+  const start = parseScheduledAt(session.scheduledAt);
   const mins =
     typeof session.duration === "number" && session.duration > 0
       ? session.duration
@@ -346,7 +355,7 @@ export function shouldMarkEnded(
 ): boolean {
   if (session.status !== "scheduled" && session.status !== "in_progress")
     return false;
-  const start = new Date(session.scheduledAt).getTime();
+  const start = parseScheduledAt(session.scheduledAt);
   if (Number.isNaN(start)) return false;
   return sessionEndTime(session) <= now;
 }

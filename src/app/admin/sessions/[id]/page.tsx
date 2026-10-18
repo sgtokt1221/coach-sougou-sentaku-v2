@@ -433,6 +433,7 @@ export default function AdminSessionDetailPage() {
                 participantUids={[session.studentId]}
                 sessionId={session.id}
                 label="通話を始める"
+                newTab
               />
             </div>
           </>
