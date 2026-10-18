@@ -92,8 +92,14 @@ export async function PATCH(
     if (denied) return denied;
     const updatePayload: Record<string, unknown> = { ...updates, updatedAt: new Date().toISOString() };
 
-    // セッション完了時にサマリーを自動生成
-    if (updates.status === "completed" && prevData.status !== "completed") {
+    // セッション完了時にサマリーを自動生成。材料がメモしか無いので、メモがあり
+    // 報告書がまだ無いときだけ。録音した回は文字起こしの後（extract-reflection）で作る
+    if (
+      updates.status === "completed" &&
+      prevData.status !== "completed" &&
+      prevData.notes?.trim() &&
+      !prevData.summary
+    ) {
       try {
         const summary = await generateSessionSummary({
           notes: prevData.notes,

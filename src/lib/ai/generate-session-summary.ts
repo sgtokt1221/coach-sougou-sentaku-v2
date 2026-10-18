@@ -17,6 +17,8 @@ const EMPTY_SUMMARY: SessionSummary = {
 export async function generateSessionSummary(params: {
   notes?: string;
   type?: string;
+  /** 授業の文字起こし。あればこれを主な材料にする（メモだけだと中身が無い回が多い） */
+  transcript?: string;
 }): Promise<SessionSummary> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -27,7 +29,15 @@ export async function generateSessionSummary(params: {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
     const client = new Anthropic();
     const prompt = buildSummaryPrompt({ type: params.type });
-    const contentText = params.notes || "（メモなし）";
+    const contentText =
+      [
+        params.transcript?.trim()
+          ? `## 授業の文字起こし\n\n${params.transcript.trim()}`
+          : "",
+        params.notes?.trim() ? `## 講師のメモ\n\n${params.notes.trim()}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n") || "（メモなし）";
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -35,7 +45,7 @@ export async function generateSessionSummary(params: {
       messages: [
         {
           role: "user",
-          content: `${prompt}\n\n## セッションメモ\n\n${contentText}`,
+          content: `${prompt}\n\n${contentText}`,
         },
       ],
     });

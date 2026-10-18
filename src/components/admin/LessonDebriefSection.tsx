@@ -20,7 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { authFetch } from "@/lib/api/client";
 import type { LessonDebrief } from "@/lib/types/session";
@@ -33,20 +32,15 @@ function StringListEditor({
   items,
   onChange,
   placeholder,
-  emptyHint,
   maxLength = 300,
 }: {
   items: string[];
   onChange: (next: string[]) => void;
   placeholder: string;
-  emptyHint: string;
   maxLength?: number;
 }) {
   return (
     <div className="space-y-1.5">
-      {items.length === 0 && (
-        <p className="text-xs text-muted-foreground py-1">{emptyHint}</p>
-      )}
       {items.map((v, i) => (
         <div key={i} className="flex items-center gap-2">
           <span className="w-5 shrink-0 text-right text-xs text-muted-foreground">
@@ -149,26 +143,18 @@ export function LessonDebriefSection({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
-        <p className="text-xs text-muted-foreground">
-          録音して授業を終了すると、AIが反省点・次回課題・弱点を自動で下書きします。内容を確認・修正して保存してください。
-        </p>
-
         {/* 反省点・課題 */}
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <Lightbulb className="size-4 text-amber-600" />
             <span className="text-sm font-medium">反省点・課題</span>
-            <Badge variant="outline" className="text-[10px] font-normal">
-              AIが下書き
-            </Badge>
           </div>
           <StringListEditor
             items={reflectionPoints}
             onChange={(next) =>
               setState((s) => ({ ...s, reflectionPoints: next }))
             }
-            placeholder="授業終了後にAIが自動で下書きします（手動でも追記可）"
-            emptyHint="まだ反省点はありません（録音して授業を終了するとAIが下書きします）"
+            placeholder="反省点・課題"
             maxLength={300}
           />
         </div>
@@ -180,9 +166,6 @@ export function LessonDebriefSection({
           <div className="flex items-center gap-1.5">
             <Target className="size-4 text-sky-600" />
             <span className="text-sm font-medium">次回やること</span>
-            <span className="text-[10px] text-muted-foreground">
-              (次回のAI台本に反映)
-            </span>
           </div>
           <Textarea
             value={state.nextAgendaSeed}
@@ -191,7 +174,7 @@ export function LessonDebriefSection({
             }
             rows={3}
             maxLength={1000}
-            placeholder="授業終了後にAIが下書きします（手動で修正可）／例: 次回はここを掘る・ここに注意"
+            placeholder="次回やること"
           />
         </div>
 
@@ -208,8 +191,7 @@ export function LessonDebriefSection({
             onChange={(next) =>
               setState((s) => ({ ...s, newWeaknessAreas: next }))
             }
-            placeholder="授業終了後にAIが自動で追加します（手動でも追加可）"
-            emptyHint="授業終了後にAIが自動で追加します（手動でも追加可）"
+            placeholder="弱点"
             maxLength={100}
           />
           {suggestions.length > 0 && (
@@ -243,9 +225,6 @@ export function LessonDebriefSection({
           <div className="flex items-center gap-1.5">
             <NotebookPen className="size-4 text-muted-foreground" />
             <span className="text-sm font-medium">気づきメモ</span>
-            <span className="text-[10px] text-muted-foreground">
-              (講師の自由記述)
-            </span>
           </div>
           <Textarea
             value={state.notes}

@@ -288,6 +288,15 @@ export default function AdminSessionDetailPage() {
 
   // 授業形態。Meet をやめたので format が唯一の正本。未設定は対面として扱う
   const isOnline = session.format === "online";
+  /** 共有できる中身があるか。空の報告書を共有しても生徒の画面には何も出ない */
+  const hasSummary = Boolean(
+    session.summary &&
+    (session.summary.overview?.trim() ||
+      (session.summary.topicsDiscussed?.length ?? 0) > 0 ||
+      (session.summary.actionItems?.length ?? 0) > 0 ||
+      (session.summary.strengths?.length ?? 0) > 0 ||
+      (session.summary.improvements?.length ?? 0) > 0)
+  );
 
   // 探究授業セッション（生徒が講師に教える回）は専用レイアウトにする
   const isResearchSession =
@@ -476,7 +485,8 @@ export default function AdminSessionDetailPage() {
             onClick={() =>
               patchSession({ sharedWithStudent: !session.sharedWithStudent })
             }
-            disabled={saving}
+            // 共有中の取り消しはいつでもできる
+            disabled={saving || (!session.sharedWithStudent && !hasSummary)}
           >
             <Share2 className="mr-1 size-4" />
             {session.sharedWithStudent ? "報告書を共有中" : "報告書を共有"}
@@ -593,6 +603,8 @@ export default function AdminSessionDetailPage() {
               sessionId={id}
               session={session}
               onSessionUpdate={(s) => setSession(s)}
+              // オンラインの回は通話画面で録音する
+              allowStart={!isOnline}
             />
             <PreviousSessionDebriefCard sessionId={id} />
             <LessonPrepSection
@@ -682,12 +694,15 @@ export default function AdminSessionDetailPage() {
               </Card>
             )}
             <LessonDebriefSection
+              // AI の下書きが届いたら作り直して表示する（initial は最初の1回しか読まない）
+              key={`debrief-${session.debrief?.capturedAt ?? ""}`}
               sessionId={id}
               initial={session.debrief}
               existingWeaknessAreas={[]}
               onChange={(d) => setSession({ ...session, debrief: d })}
             />
             <ManualSummaryCard
+              key={`summary-${session.summary?.generatedAt ?? ""}`}
               sessionId={id}
               initial={session.summary}
               onSaved={(summary) => setSession({ ...session, summary })}

@@ -3,10 +3,12 @@ import { requireRole } from "@/lib/api/auth";
 import { assertSessionAccess } from "@/lib/api/session-auth";
 import { buildLessonReflectionPrompt } from "@/lib/ai/prompts/lesson-reflection";
 import { extractJsonObject } from "@/lib/ai/extract-json";
-import type { Session, LessonDebrief } from "@/lib/types/session";
+import type { Session, LessonDebrief, SessionSummary } from "@/lib/types/session";
+import { generateSessionSummary } from "@/lib/ai/generate-session-summary";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 
-export const maxDuration = 60;
+// 振り返りと報告書の2つを AI で作る
+export const maxDuration = 120;
 
 /**
  * POST /api/admin/sessions/[id]/extract-reflection
@@ -15,6 +17,9 @@ export const maxDuration = 60;
  * debrief に下書き保存する。録音終了フローから自動で呼ばれる。
  * - reflectionPoints: 常に AI 結果で更新
  * - nextAgendaSeed / newWeaknessAreas: 空のときのみ下書き (講師の手編集を尊重)
+ *
+ * 生徒に見せる指導報告書 (summary) も同じ文字起こしから並行して下書きする。
+ * 講師が保存した報告書 (source: "teacher") は上書きしない。
  */
 export async function POST(
   request: NextRequest,
@@ -62,6 +67,18 @@ export async function POST(
     lessonGoal: session.prepPlan?.goal,
     transcript,
   });
+
+  const keepTeacherSummary = session.summary?.source === "teacher";
+  const summaryPromise: Promise<SessionSummary | null> = keepTeacherSummary
+    ? Promise.resolve(null)
+    : generateSessionSummary({
+        transcript: session.lessonTranscript?.fullText,
+        notes: session.notes,
+        type: session.type,
+      }).catch((err) => {
+        console.error("[extract-reflection] summary failed:", err);
+        return null;
+      });
 
   let parsed: {
     reflectionPoints?: string[];
@@ -122,10 +139,21 @@ export async function POST(
     capturedAt: new Date().toISOString(),
   };
 
+  // 生成に失敗すると空の報告書が返る。空で前の報告書を消さない
+  const generated = await summaryPromise;
+  const summary: SessionSummary | null =
+    generated && generated.overview.trim()
+      ? { ...generated, source: "ai" }
+      : null;
+
   await ref.set(
-    { debrief, updatedAt: new Date().toISOString() },
+    {
+      debrief,
+      ...(summary ? { summary } : {}),
+      updatedAt: new Date().toISOString(),
+    },
     { merge: true },
   );
 
-  return NextResponse.json({ debrief });
+  return NextResponse.json({ debrief, summary });
 }

@@ -107,6 +107,11 @@ export interface SessionSummary {
   improvements: string[];
   actionItems: ActionItem[];
   generatedAt: string;
+  /**
+   * 誰が書いたか。講師が保存した報告書は、文字起こしからの AI 下書きで上書きしない。
+   * 無いもの（旧データ）は AI 扱い。
+   */
+  source?: "ai" | "teacher";
 }
 
 export interface ActionItem {

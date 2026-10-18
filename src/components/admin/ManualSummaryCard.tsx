@@ -25,9 +25,9 @@ function toLines(text: string): string[] {
 }
 
 /**
- * 指導報告書(SessionSummary)を手入力・編集するカード。
- * 録音が無い/失敗した回でも、コーチがサマリーを残せるようにする
- * （AI生成はこれとは別に「録音して授業終了」で自動下書きされる）。
+ * 指導報告書(SessionSummary)のカード。生徒に共有するのはこれ。
+ * 録音した回は文字起こしから AI が下書きし（extract-reflection）、講師が直して保存する。
+ * 録音が無い回は手で書く。保存した報告書は source: "teacher" になり、AI の下書きで上書きされない。
  * 保存は PATCH /api/sessions/[id] の summary フィールドへ。
  */
 export function ManualSummaryCard({ sessionId, initial, onSaved }: Props) {
@@ -56,6 +56,7 @@ export function ManualSummaryCard({ sessionId, initial, onSaved }: Props) {
           completed: false,
         })),
         generatedAt: new Date().toISOString(),
+        source: "teacher",
       };
       // status は送らない（送るとサーバ側でAI自動生成が上書きするため）
       const res = await authFetch(`/api/sessions/${sessionId}`, {
@@ -78,14 +79,10 @@ export function ManualSummaryCard({ sessionId, initial, onSaved }: Props) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <FileText className="size-4" />
-          指導報告書（手入力）
+          指導報告書
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-xs text-muted-foreground">
-          録音が無い・失敗した回でも、ここに要約を手入力できます。保存すると報告書として残り、生徒への共有や次回の授業計画に使えます。
-        </p>
-
         <div className="space-y-1.5">
           <label className="text-sm font-medium">概要</label>
           <Textarea
@@ -102,7 +99,6 @@ export function ManualSummaryCard({ sessionId, initial, onSaved }: Props) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">扱った話題</label>
-            <p className="text-[10px] text-muted-foreground">1行1件</p>
             <Textarea
               value={topics}
               onChange={(e) => setTopics(e.target.value)}
@@ -112,7 +108,6 @@ export function ManualSummaryCard({ sessionId, initial, onSaved }: Props) {
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">生徒へのアクション</label>
-            <p className="text-[10px] text-muted-foreground">1行1件（生徒の宿題として登録）</p>
             <Textarea
               value={actions}
               onChange={(e) => setActions(e.target.value)}
@@ -122,7 +117,6 @@ export function ManualSummaryCard({ sessionId, initial, onSaved }: Props) {
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">良かった点</label>
-            <p className="text-[10px] text-muted-foreground">1行1件</p>
             <Textarea
               value={strengths}
               onChange={(e) => setStrengths(e.target.value)}
@@ -132,7 +126,6 @@ export function ManualSummaryCard({ sessionId, initial, onSaved }: Props) {
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">改善点</label>
-            <p className="text-[10px] text-muted-foreground">1行1件</p>
             <Textarea
               value={improvements}
               onChange={(e) => setImprovements(e.target.value)}

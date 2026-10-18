@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { CallRoom } from "@/components/call/CallRoom";
+import { CallLessonRecorder } from "@/components/call/CallLessonRecorder";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CallView } from "@/lib/types/call";
@@ -63,13 +64,20 @@ export default function CallPage({
     );
   }
 
+  const isHost = call.hostUid === user?.uid;
+  const isStudent = call.participants.some(
+    (p) => p.uid === user?.uid && p.role === "student"
+  );
+
   return (
     <div className="relative h-dvh bg-black">
-      <CallRoom
-        call={call}
-        isHost={call.hostUid === user?.uid}
-        viewerUid={user?.uid}
-      />
+      <CallRoom call={call} isHost={isHost} viewerUid={user?.uid} />
+      {call.sessionId && (isHost || isStudent) && (
+        <CallLessonRecorder
+          sessionId={call.sessionId}
+          role={isHost ? "teacher" : "student"}
+        />
+      )}
     </div>
   );
 }

@@ -24,6 +24,11 @@ interface Props {
   sessionId: string;
   session: Session;
   onSessionUpdate: (s: Session) => void;
+  /**
+   * 「授業を開始」を出すか。オンラインの回はセッション画面では出さず、通話画面で録る
+   * （両方で録れると二重に録音される）。取り込みと完了表示はどちらでも出す。
+   */
+  allowStart?: boolean;
 }
 
 type PostFlowStep =
@@ -104,9 +109,15 @@ function Waveform({ level }: { level: number }) {
   );
 }
 
-export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Props) {
+export function SessionLifecycleBar({
+  sessionId,
+  session,
+  onSessionUpdate,
+  allowStart = true,
+}: Props) {
   const recorder = useSessionRecorder({
-    acquireOnMount: true,
+    // 開始できない画面ではマイクの許可を求めない
+    acquireOnMount: allowStart,
     audioBitsPerSecond: RECORDING_BITS_PER_SECOND,
   });
   const [postFlow, setPostFlow] = useState<PostFlowStep>("idle");
@@ -345,11 +356,16 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
           { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
         );
         if (!ex.ok) throw new Error("振り返りの下書きに失敗しました");
-        const exData = (await ex.json()) as { debrief: Session["debrief"] };
-        if (exData.debrief) {
-          next = { ...next, debrief: exData.debrief };
-          onSessionUpdate(next);
-        }
+        const exData = (await ex.json()) as {
+          debrief: Session["debrief"];
+          summary?: Session["summary"] | null;
+        };
+        next = {
+          ...next,
+          ...(exData.debrief ? { debrief: exData.debrief } : {}),
+          ...(exData.summary ? { summary: exData.summary } : {}),
+        };
+        onSessionUpdate(next);
       }
     } catch (err) {
       console.error(err);
@@ -434,10 +450,10 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
 
   const renderScheduled = () => (
     <div className="flex flex-col gap-3">
-      {renderMicBar()}
+      {allowStart && renderMicBar()}
       <div className="flex items-center justify-between gap-3">
         <div className="text-sm text-muted-foreground">
-          準備ができたら授業を開始してください
+          {allowStart && "準備ができたら授業を開始してください"}
         </div>
         <div className="flex items-center gap-2">
           <input
@@ -461,15 +477,17 @@ export function SessionLifecycleBar({ sessionId, session, onSessionUpdate }: Pro
             <Upload className="size-4" />
             録音ファイルを取り込む
           </Button>
-          <Button
-            onClick={handleStart}
-            disabled={recorder.state !== "ready"}
-            size="lg"
-            className="cursor-pointer gap-2 bg-teal-500 hover:bg-teal-600 text-white"
-          >
-            <Play className="size-5" />
-            授業を開始
-          </Button>
+          {allowStart && (
+            <Button
+              onClick={handleStart}
+              disabled={recorder.state !== "ready"}
+              size="lg"
+              className="cursor-pointer gap-2 bg-teal-500 hover:bg-teal-600 text-white"
+            >
+              <Play className="size-5" />
+              授業を開始
+            </Button>
+          )}
         </div>
       </div>
     </div>
