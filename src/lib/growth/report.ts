@@ -466,8 +466,6 @@ export function generateGrowthReport(params: {
   activitySummary?: GrowthReport["activitySummary"];
   /** 出願書類の状況。ルート側で構築 */
   documentSummary?: GrowthReport["documentSummary"];
-  /** 期間内のドリルの回数。ルート側で構築 */
-  practiceSummary?: GrowthReport["practiceSummary"];
 }): GrowthReport {
   const { start, end } = getPeriodRange(params.period);
 
@@ -526,7 +524,6 @@ export function generateGrowthReport(params: {
     sessionDigest: params.sessionDigest,
     activitySummary: params.activitySummary,
     documentSummary: params.documentSummary,
-    practiceSummary: params.practiceSummary,
   };
 }
 

@@ -32,7 +32,6 @@ import {
   Users,
   Activity,
   FileCheck2,
-  ListChecks,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -426,8 +425,7 @@ export function ReportDetailCard({
       {(report.sessionSummary ||
         report.sessionDigest ||
         report.activitySummary ||
-        report.documentSummary ||
-        report.practiceSummary) && (
+        report.documentSummary) && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2 print:gap-2">
           {/* 授業の回数・テーマ・所見と回ごとの記録は同じ授業の話なので1枚にまとめる */}
           {((report.sessionSummary && report.sessionSummary.totalCount > 0) ||
@@ -443,41 +441,8 @@ export function ReportDetailCard({
           {report.documentSummary && report.documentSummary.total > 0 && (
             <DocumentSummarySection summary={report.documentSummary} />
           )}
-          {report.practiceSummary && (
-            <PracticeSummarySection summary={report.practiceSummary} />
-          )}
         </div>
       )}
-    </div>
-  );
-}
-
-/** 期間内のドリルの回数。0回のものは出さない */
-function PracticeSummarySection({
-  summary,
-}: {
-  summary: NonNullable<GrowthReport["practiceSummary"]>;
-}) {
-  const rows = [
-    { label: "ちょこ添削", count: summary.chokoReviews },
-    { label: "論理ドリル", count: summary.logicDrills },
-    { label: "要約ドリル", count: summary.summaryDrills },
-    { label: "文のドリル", count: summary.sentenceDrills },
-  ].filter((r) => r.count > 0);
-  return (
-    <div className="rounded-lg border border-teal-200 bg-teal-50/40 p-3 dark:border-teal-900 dark:bg-teal-950/20 print:break-inside-avoid print:border-gray-300 print:bg-white print:p-2">
-      <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-teal-800 dark:text-teal-300">
-        <ListChecks className="size-4" />
-        ドリル
-      </h4>
-      <ul className="space-y-1 text-xs leading-relaxed">
-        {rows.map((r) => (
-          <li key={r.label} className="flex items-center justify-between gap-2">
-            <span>{r.label}</span>
-            <span className="font-medium tabular-nums">{r.count} 回</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

@@ -78,7 +78,6 @@ export async function GET(
       sessionDigest: data.sessionDigest,
       activitySummary: data.activitySummary,
       documentSummary: data.documentSummary,
-      practiceSummary: data.practiceSummary,
       practiceQuestions: data.practiceQuestions,
       teacherComment: data.teacherComment,
       editedBy: data.editedBy,

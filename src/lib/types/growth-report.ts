@@ -158,13 +158,6 @@ export interface GrowthReport {
     /** 添削済みの書類ごとの満点比（%）。書きかけは入れない。古いレポートには無い */
     reviewed?: { title: string; percentage: number }[];
   };
-  /** 期間内のドリルの回数。古いレポートには無い */
-  practiceSummary?: {
-    chokoReviews: number;
-    logicDrills: number;
-    summaryDrills: number;
-    sentenceDrills: number;
-  };
 
   // ---- 講師編集対応の拡張 (すべて任意、後方互換) ----
 

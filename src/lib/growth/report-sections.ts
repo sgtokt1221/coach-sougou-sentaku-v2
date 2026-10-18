@@ -12,7 +12,7 @@ import {
 } from "./report";
 
 /**
- * 成長レポートのうち、答案・面接の点以外の欄（授業・出願書類・ドリル）を組み立てる。
+ * 成長レポートのうち、答案・面接の点以外の欄（授業・出願書類）を組み立てる。
  * 個別生成（/api/admin/reports/generate）と一括生成（/batch）の両方から呼ぶ。
  * 以前は個別生成にだけ直書きされていて、一括生成のレポートには授業も書類も載らなかった。
  */
@@ -227,48 +227,4 @@ export async function loadDocumentSummary(
     upcomingDeadlines,
     ...(reviewed.length > 0 ? { reviewed } : {}),
   };
-}
-
-/** Timestamp と ISO 文字列の両方を読む（コレクションで日付の型が違う。CLAUDE.md 6.5） */
-function toMillis(v: unknown): number | null {
-  if (!v) return null;
-  const ts = (v as { toMillis?: () => number }).toMillis?.();
-  if (typeof ts === "number") return ts;
-  const t = new Date(v as string).getTime();
-  return Number.isNaN(t) ? null : t;
-}
-
-/**
- * 期間内のドリルの回数。ちょこ添削は createdAt（ISO 文字列）、
- * 論理・要約・文のドリルは completedAt（Timestamp）。型が違うので JS で絞る。
- */
-export async function loadPracticeSummary(
-  db: Db,
-  studentId: string,
-  start: Date,
-  end: Date
-): Promise<GrowthReport["practiceSummary"]> {
-  const from = start.getTime();
-  const to = end.getTime();
-  const count = async (sub: string, field: string) => {
-    const snap = await db
-      .collection(`users/${studentId}/${sub}`)
-      .select(field)
-      .get();
-    return snap.docs.filter((d) => {
-      const t = toMillis(d.get(field));
-      return t !== null && t >= from && t <= to;
-    }).length;
-  };
-  const [chokoReviews, logicDrills, summaryDrills, sentenceDrills] =
-    await Promise.all([
-      count("chokoReviews", "createdAt"),
-      count("logicDrills", "completedAt"),
-      count("summaryDrills", "completedAt"),
-      count("sentenceDrills", "completedAt"),
-    ]);
-  if (chokoReviews + logicDrills + summaryDrills + sentenceDrills === 0) {
-    return undefined;
-  }
-  return { chokoReviews, logicDrills, summaryDrills, sentenceDrills };
 }

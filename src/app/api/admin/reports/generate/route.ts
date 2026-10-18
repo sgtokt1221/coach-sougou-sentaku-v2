@@ -6,7 +6,6 @@ import { generateGrowthReport, getPeriodRange } from "@/lib/growth/report";
 import {
   loadDocumentSummary,
   loadLessonSections,
-  loadPracticeSummary,
 } from "@/lib/growth/report-sections";
 import {
   collectWeaknessTags,
@@ -359,7 +358,7 @@ export async function POST(request: NextRequest) {
           : undefined;
     }
 
-    // 出願書類の状況・ドリルの回数: 失敗してもレポート本体は完成させる
+    // 出願書類の状況: 失敗してもレポート本体は完成させる
     step = "fetch_documents";
     const documentSummary = await loadDocumentSummary(adminDb, studentId).catch(
       (err) => {
@@ -367,16 +366,6 @@ export async function POST(request: NextRequest) {
         return undefined;
       }
     );
-    step = "fetch_practice";
-    const practiceSummary = await loadPracticeSummary(
-      adminDb,
-      studentId,
-      start,
-      end
-    ).catch((err) => {
-      console.warn("[reports/generate] practice fetch failed:", err);
-      return undefined;
-    });
 
     step = "map_docs";
     const toEssayData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
@@ -550,7 +539,6 @@ export async function POST(request: NextRequest) {
       sessionDigest,
       activitySummary,
       documentSummary,
-      practiceSummary,
     });
 
     // 全データ横断の AI 総合所見・推奨を生成 (失敗/キー無しならルールベース値を維持)
