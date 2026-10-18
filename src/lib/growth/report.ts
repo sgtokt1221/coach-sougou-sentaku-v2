@@ -1,6 +1,7 @@
 import { normalizedInterviewTotal } from "@/lib/types/interview";
 import type { GrowthReport, WeaknessProgress } from "@/lib/types/growth-report";
 import { normalizedEssayTotal } from "@/lib/types/essay";
+import type { SessionSummary } from "@/lib/types/session";
 
 export interface EssayData {
   id: string;
@@ -465,6 +466,8 @@ export function generateGrowthReport(params: {
   activitySummary?: GrowthReport["activitySummary"];
   /** 出願書類の状況。ルート側で構築 */
   documentSummary?: GrowthReport["documentSummary"];
+  /** 期間内のドリルの回数。ルート側で構築 */
+  practiceSummary?: GrowthReport["practiceSummary"];
 }): GrowthReport {
   const { start, end } = getPeriodRange(params.period);
 
@@ -523,27 +526,70 @@ export function generateGrowthReport(params: {
     sessionDigest: params.sessionDigest,
     activitySummary: params.activitySummary,
     documentSummary: params.documentSummary,
+    practiceSummary: params.practiceSummary,
   };
+}
+
+/** レポートが読むセッションの欄 */
+export interface ReportSessionInput {
+  status?: string;
+  scheduledAt?: string;
+  prepPlan?: { goal?: string };
+  recordingPath?: string;
+  lessonTranscript?: { fullText?: string };
+  summary?: SessionSummary;
+  debrief?: {
+    notes?: string;
+    newWeaknessAreas?: string[];
+    nextAgendaSeed?: string;
+    reflectionPoints?: string[];
+  };
+}
+
+/**
+ * その回に授業をしたか。完了にした回に加えて、録音・文字起こし・報告書・振り返りの
+ * どれかがある回も数える。録音しなかった回は予定時刻を過ぎると「終了（ended）」に
+ * 切り替わるため、完了だけを数えると実際の授業数より少なく出る。
+ */
+export function sessionWasHeld(s: ReportSessionInput): boolean {
+  if (s.status === "cancelled") return false;
+  if (s.status === "completed") return true;
+  return Boolean(
+    s.recordingPath ||
+    s.lessonTranscript?.fullText?.trim() ||
+    s.summary?.overview?.trim() ||
+    s.debrief?.notes?.trim() ||
+    (s.debrief?.reflectionPoints?.length ?? 0) > 0
+  );
+}
+
+/**
+ * レポートの材料にしてよい報告書か。source の無い報告書は、436e977 より前に
+ * 授業の完了時にメモから自動生成されたもの。メモが空でも作文していたため
+ * （「メモが存在しないため分析できません」など）、所見やテーマには使わない。
+ */
+export function isTrustedSummary(
+  s: SessionSummary | undefined
+): s is SessionSummary {
+  return s?.source === "ai" || s?.source === "teacher";
 }
 
 /** 期間内セッションから sessionSummary の生データを構築 (AI 抽出は別関数で) */
 export function buildSessionSummaryDraft(
-  sessions: Array<{
-    status?: string;
-    prepPlan?: { goal?: string };
-    debrief?: {
-      notes?: string;
-      newWeaknessAreas?: string[];
-      nextAgendaSeed?: string;
-    };
-    scheduledAt?: string;
-  }>
+  sessions: ReportSessionInput[]
 ): NonNullable<GrowthReport["sessionSummary"]> {
-  const completed = sessions.filter((s) => s.status === "completed");
+  const completed = sessions.filter(sessionWasHeld);
   const totalCount = completed.length;
 
+  // 扱ったテーマ: 台本の目標。台本を作らなかった回は報告書の「扱った話題」
   const goals = completed
-    .map((s) => s.prepPlan?.goal)
+    .flatMap((s) =>
+      s.prepPlan?.goal?.trim()
+        ? [s.prepPlan.goal]
+        : isTrustedSummary(s.summary)
+          ? (s.summary.topicsDiscussed ?? []).slice(0, 2)
+          : []
+    )
     .filter((g): g is string => typeof g === "string" && g.trim().length > 0);
   const mainTopics = Array.from(new Set(goals)).slice(0, 5);
 

@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
+import { generateGrowthReport, getPeriodRange } from "@/lib/growth/report";
 import {
-  generateGrowthReport,
-  getPeriodRange,
-  buildSessionSummaryDraft,
-} from "@/lib/growth/report";
+  loadDocumentSummary,
+  loadLessonSections,
+  loadPracticeSummary,
+} from "@/lib/growth/report-sections";
 import {
   collectWeaknessTags,
   mergeCountMaps,
 } from "@/lib/growth/weakness-aggregate";
-import { buildLessonObservationSummaryPrompt } from "@/lib/ai/prompts/lesson-summary";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 import { buildPracticeQuestionsPrompt } from "@/lib/ai/prompts/practice-questions";
 import {
@@ -306,132 +306,18 @@ export async function POST(request: NextRequest) {
       .collection(`users/${studentId}/weaknesses`)
       .get();
 
-    // sessions は scheduledAt が ISO 文字列のため、queryWithRangeFilter
-    // (Date 比較前提) ではなく文字列比較版の inline fallback を採用
+    // 授業の欄（授業回数・扱ったテーマ・講師の所見・回ごとの記録）。個別生成では所見を AI で整える
     step = "fetch_sessions";
-    let sessionsSnap: { docs: FirebaseFirestore.QueryDocumentSnapshot[] };
-    try {
-      sessionsSnap = await adminDb
-        .collection("sessions")
-        .where("studentId", "==", studentId)
-        .where("scheduledAt", ">=", start.toISOString())
-        .where("scheduledAt", "<=", end.toISOString())
-        .orderBy("scheduledAt", "desc")
-        .get();
-    } catch (indexErr) {
-      console.warn(
-        "[reports/generate] sessions index missing, fallback to JS filter:",
-        indexErr
-      );
-      const all = await adminDb
-        .collection("sessions")
-        .where("studentId", "==", studentId)
-        .get();
-      const startIso = start.toISOString();
-      const endIso = end.toISOString();
-      const filtered = all.docs.filter((d) => {
-        const at = d.data().scheduledAt as string | undefined;
-        return typeof at === "string" && at >= startIso && at <= endIso;
-      });
-      filtered.sort((a, b) =>
-        ((b.data().scheduledAt as string) ?? "").localeCompare(
-          (a.data().scheduledAt as string) ?? ""
-        )
-      );
-      sessionsSnap = { docs: filtered };
-    }
-    const sessions = sessionsSnap.docs.map((d) => d.data()) as Array<{
-      status?: string;
-      prepPlan?: { goal?: string };
-      debrief?: {
-        notes?: string;
-        newWeaknessAreas?: string[];
-        nextAgendaSeed?: string;
-      };
-      scheduledAt?: string;
-    }>;
-    const sessionSummary = buildSessionSummaryDraft(sessions);
-
-    // debrief が 2 件以上あれば AI で観察キーポイント抽出
-    step = "ai_observation";
-    const debriefNotes = sessions
-      .filter((s) => s.status === "completed" && s.debrief?.notes)
-      .map((s) => s.debrief!.notes!)
-      .filter((n) => n.trim().length > 0);
-    if (debriefNotes.length >= 2 && process.env.ANTHROPIC_API_KEY) {
-      try {
-        const Anthropic = (await import("@anthropic-ai/sdk")).default;
-        const client = new Anthropic();
-        const concatenated = debriefNotes.join("\n---\n");
-        const systemPrompt = buildLessonObservationSummaryPrompt(
-          studentData.displayName ?? "生徒",
-          concatenated
-        );
-        const resp = await client.messages.create({
-          model: AI_MODEL_SONNET,
-          max_tokens: 500,
-          system: systemPrompt,
-          messages: [
-            { role: "user", content: "JSON 配列を出力してください。" },
-          ],
-        });
-        const text =
-          resp.content[0]?.type === "text" ? resp.content[0].text : "";
-        const match = text.match(/\[[\s\S]*\]/);
-        if (match) {
-          const parsed = JSON.parse(match[0]);
-          if (Array.isArray(parsed)) {
-            sessionSummary.teacherObservations = parsed
-              .filter((s) => typeof s === "string")
-              .slice(0, 3);
-          }
-        }
-      } catch (err) {
-        console.warn("[reports/generate] observation extraction failed:", err);
+    const { sessionSummary, sessionDigest } = await loadLessonSections(
+      adminDb,
+      studentId,
+      start,
+      end,
+      {
+        studentName: studentData.displayName ?? "生徒",
+        extractObservations: true,
       }
-    }
-
-    // 面談セッションの反映 (sessionDigest): 期間内セッションを直近10件に絞って要約・アクションアイテムを構築
-    step = "build_session_digest";
-    const sessionDigestEntries = sessionsSnap.docs
-      .map((d) => {
-        const data = d.data() as {
-          scheduledAt?: string;
-          prepPlan?: { goal?: string };
-          summary?: {
-            topicsDiscussed?: string[];
-            actionItems?: Array<{ task?: string }>;
-          };
-          debrief?: { nextAgendaSeed?: string };
-        };
-        return {
-          date: data.scheduledAt ?? "",
-          goal: data.prepPlan?.goal,
-          summaryPoints: data.summary?.topicsDiscussed ?? [],
-          actionItems: (data.summary?.actionItems ?? [])
-            .map((a) => a.task)
-            .filter(
-              (t): t is string => typeof t === "string" && t.trim().length > 0
-            ),
-          nextAgenda: data.debrief?.nextAgendaSeed,
-        };
-      })
-      // 日付だけの空/未実施セッションを除外し、内容のあるものだけを含める
-      .filter(
-        (e) =>
-          !!e.goal ||
-          e.summaryPoints.length > 0 ||
-          e.actionItems.length > 0 ||
-          !!e.nextAgenda
-      )
-      .slice(0, 10);
-    const sessionDigest: GrowthReport["sessionDigest"] =
-      sessionDigestEntries.length > 0
-        ? {
-            totalCount: sessionDigestEntries.length,
-            sessions: sessionDigestEntries,
-          }
-        : undefined;
+    );
 
     // Phase 2: 生徒の個別文脈 (志望校・自己分析・MBTI・活動・資格) を取得。
     // AI キー有無に関わらず activitySummary の元データとして使うため、ここで常に呼ぶ。
@@ -473,47 +359,24 @@ export async function POST(request: NextRequest) {
           : undefined;
     }
 
-    // 出願書類の状況 (documentSummary): 失敗してもレポート本体は完成させる
+    // 出願書類の状況・ドリルの回数: 失敗してもレポート本体は完成させる
     step = "fetch_documents";
-    let documentSummary: GrowthReport["documentSummary"];
-    try {
-      const documentsSnap = await adminDb
-        .collection("documents")
-        .where("userId", "==", studentId)
-        .get();
-      const docs = documentsSnap.docs.map(
-        (d) =>
-          d.data() as {
-            status?: string;
-            title?: string;
-            deadline?: string;
-          }
-      );
-      const total = docs.length;
-      const completed = docs.filter((d) => d.status === "final").length;
-      const upcomingDeadlines = docs
-        .filter(
-          (d): d is { status?: string; title?: string; deadline: string } =>
-            d.status !== "final" &&
-            typeof d.deadline === "string" &&
-            d.deadline.length > 0
-        )
-        .sort((a, b) => a.deadline.localeCompare(b.deadline))
-        .slice(0, 3)
-        .map((d) => ({ title: d.title ?? "", deadline: d.deadline }));
-      documentSummary =
-        total > 0
-          ? {
-              total,
-              completed,
-              inProgress: total - completed,
-              upcomingDeadlines,
-            }
-          : undefined;
-    } catch (err) {
-      console.warn("[reports/generate] documents fetch failed:", err);
-      documentSummary = undefined;
-    }
+    const documentSummary = await loadDocumentSummary(adminDb, studentId).catch(
+      (err) => {
+        console.warn("[reports/generate] documents fetch failed:", err);
+        return undefined;
+      }
+    );
+    step = "fetch_practice";
+    const practiceSummary = await loadPracticeSummary(
+      adminDb,
+      studentId,
+      start,
+      end
+    ).catch((err) => {
+      console.warn("[reports/generate] practice fetch failed:", err);
+      return undefined;
+    });
 
     step = "map_docs";
     const toEssayData = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
@@ -682,12 +545,12 @@ export async function POST(request: NextRequest) {
         }),
       periodWeaknessCounts,
       previousWeaknessCounts,
-      sessionSummary:
-        sessionSummary.totalCount > 0 ? sessionSummary : undefined,
+      sessionSummary,
       practiceQuestions,
       sessionDigest,
       activitySummary,
       documentSummary,
+      practiceSummary,
     });
 
     // 全データ横断の AI 総合所見・推奨を生成 (失敗/キー無しならルールベース値を維持)

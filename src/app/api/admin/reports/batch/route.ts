@@ -5,6 +5,11 @@ import { adminDb } from "@/lib/firebase/admin";
 import { queryWithRangeFilter } from "@/lib/admin/firestore-range-query";
 import { generateGrowthReport, getPeriodRange } from "@/lib/growth/report";
 import {
+  loadDocumentSummary,
+  loadLessonSections,
+  loadPracticeSummary,
+} from "@/lib/growth/report-sections";
+import {
   collectWeaknessTags,
   mergeCountMaps,
 } from "@/lib/growth/weakness-aggregate";
@@ -254,6 +259,23 @@ export async function POST(request: NextRequest) {
           };
         };
 
+        // 授業・出願書類・ドリル。個別生成と同じ組み立て。所見は AI を呼ばず報告書の概要から
+        // 取る（全生徒を並列で回すので、類題と同じく AI の費用を抑える）
+        const [lesson, documentSummary, practiceSummary] = await Promise.all([
+          loadLessonSections(adminDb!, studentId, start, end, {
+            studentName: studentData.displayName ?? "生徒",
+            extractObservations: false,
+          }),
+          loadDocumentSummary(adminDb!, studentId).catch((err) => {
+            console.warn(`[reports/batch] documents failed ${studentId}:`, err);
+            return undefined;
+          }),
+          loadPracticeSummary(adminDb!, studentId, start, end).catch((err) => {
+            console.warn(`[reports/batch] practice failed ${studentId}:`, err);
+            return undefined;
+          }),
+        ]);
+
         // 期間別の weaknessTags 集計 (悪化/改善判定で使用)
         const periodWeaknessCounts = mergeCountMaps(
           collectWeaknessTags(periodEssaysSnap.docs, "essay"),
@@ -285,6 +307,10 @@ export async function POST(request: NextRequest) {
             }),
           periodWeaknessCounts,
           previousWeaknessCounts,
+          sessionSummary: lesson.sessionSummary,
+          sessionDigest: lesson.sessionDigest,
+          documentSummary,
+          practiceSummary,
         });
 
         // Save to Firestore (non-critical)

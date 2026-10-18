@@ -32,6 +32,7 @@ import {
   Users,
   Activity,
   FileCheck2,
+  ListChecks,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
@@ -422,12 +423,19 @@ export function ReportDetailCard({
       </div>
 
       {/* 面談・活動実績・出願書類の補助セクション (新フィールドがある場合のみ表示。旧レポートには無い) */}
-      {(report.sessionDigest ||
+      {(report.sessionSummary ||
+        report.sessionDigest ||
         report.activitySummary ||
-        report.documentSummary) && (
+        report.documentSummary ||
+        report.practiceSummary) && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 print:grid-cols-2 print:gap-2">
-          {report.sessionDigest && report.sessionDigest.totalCount > 0 && (
-            <SessionDigestSection digest={report.sessionDigest} />
+          {/* 授業の回数・テーマ・所見と回ごとの記録は同じ授業の話なので1枚にまとめる */}
+          {((report.sessionSummary && report.sessionSummary.totalCount > 0) ||
+            (report.sessionDigest && report.sessionDigest.totalCount > 0)) && (
+            <SessionDigestSection
+              summary={report.sessionSummary}
+              digest={report.sessionDigest}
+            />
           )}
           {report.activitySummary && report.activitySummary.totalCount > 0 && (
             <ActivitySummarySection summary={report.activitySummary} />
@@ -435,8 +443,41 @@ export function ReportDetailCard({
           {report.documentSummary && report.documentSummary.total > 0 && (
             <DocumentSummarySection summary={report.documentSummary} />
           )}
+          {report.practiceSummary && (
+            <PracticeSummarySection summary={report.practiceSummary} />
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** 期間内のドリルの回数。0回のものは出さない */
+function PracticeSummarySection({
+  summary,
+}: {
+  summary: NonNullable<GrowthReport["practiceSummary"]>;
+}) {
+  const rows = [
+    { label: "ちょこ添削", count: summary.chokoReviews },
+    { label: "論理ドリル", count: summary.logicDrills },
+    { label: "要約ドリル", count: summary.summaryDrills },
+    { label: "文のドリル", count: summary.sentenceDrills },
+  ].filter((r) => r.count > 0);
+  return (
+    <div className="rounded-lg border border-teal-200 bg-teal-50/40 p-3 dark:border-teal-900 dark:bg-teal-950/20 print:break-inside-avoid print:border-gray-300 print:bg-white print:p-2">
+      <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-teal-800 dark:text-teal-300">
+        <ListChecks className="size-4" />
+        ドリル
+      </h4>
+      <ul className="space-y-1 text-xs leading-relaxed">
+        {rows.map((r) => (
+          <li key={r.label} className="flex items-center justify-between gap-2">
+            <span>{r.label}</span>
+            <span className="font-medium tabular-nums">{r.count} 回</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -446,18 +487,41 @@ export function ReportDetailCard({
  * `GrowthReport.sessionDigest` がある場合のみ呼ばれる。
  */
 function SessionDigestSection({
+  summary,
   digest,
 }: {
-  digest: NonNullable<GrowthReport["sessionDigest"]>;
+  summary?: GrowthReport["sessionSummary"];
+  digest?: GrowthReport["sessionDigest"];
 }) {
+  // 回数は授業をした回（sessionSummary）。旧レポートは回ごとの記録の件数
+  const count = summary?.totalCount ?? digest?.totalCount ?? 0;
   return (
     <div className="rounded-lg border border-sky-200 bg-sky-50/40 p-3 dark:border-sky-900 dark:bg-sky-950/20 print:break-inside-avoid print:border-gray-300 print:bg-white print:p-2">
       <h4 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-sky-800 dark:text-sky-300">
         <Users className="size-4" />
-        面談 {digest.totalCount} 回
+        授業 {count} 回
       </h4>
+      {summary && summary.mainTopics.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {summary.mainTopics.map((t, i) => (
+            <span
+              key={i}
+              className="dark:bg-card rounded-full border bg-white px-2 py-0.5 text-[11px] print:border-gray-300"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+      {summary && summary.teacherObservations.length > 0 && (
+        <ul className="mb-2 list-disc space-y-1 pl-4 text-xs leading-relaxed">
+          {summary.teacherObservations.map((o, i) => (
+            <li key={i}>{o}</li>
+          ))}
+        </ul>
+      )}
       <div className="space-y-2 print:space-y-1.5">
-        {digest.sessions.map((s, i) => (
+        {(digest?.sessions ?? []).map((s, i) => (
           <div
             key={i}
             className="dark:bg-card rounded-md border bg-white p-2.5 text-xs print:break-inside-avoid print:border-gray-300 print:p-1.5"
@@ -556,6 +620,18 @@ function DocumentSummarySection({
         </ul>
       ) : (
         <p className="text-muted-foreground text-xs">直近の締切はありません</p>
+      )}
+      {summary.reviewed && summary.reviewed.length > 0 && (
+        <ul className="mt-2 space-y-1 border-t border-orange-200 pt-2 text-xs leading-relaxed dark:border-orange-900 print:border-gray-300">
+          {summary.reviewed.map((d, i) => (
+            <li key={i} className="flex items-center justify-between gap-2">
+              <span>{d.title}</span>
+              <span className="shrink-0 font-medium tabular-nums">
+                {d.percentage}%
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

@@ -144,6 +144,11 @@ export async function GET(
         recommendations: data.recommendations ?? [],
         overallAssessment: data.overallAssessment ?? "",
         sessionSummary: data.sessionSummary,
+        // 以下の欄は以前ここで落としていて、保存済みのレポートを開くと出なかった
+        sessionDigest: data.sessionDigest,
+        activitySummary: data.activitySummary,
+        documentSummary: data.documentSummary,
+        practiceSummary: data.practiceSummary,
         practiceQuestions: data.practiceQuestions,
         teacherComment: data.teacherComment,
         editedBy: data.editedBy,

@@ -75,6 +75,11 @@ export async function GET(
       overallAssessment:
         typeof data.overallAssessment === "string" ? data.overallAssessment : "",
       sessionSummary: data.sessionSummary,
+      // 以下の欄は以前ここで落としていて、保存済みのレポートを開くと出なかった
+      sessionDigest: data.sessionDigest,
+      activitySummary: data.activitySummary,
+      documentSummary: data.documentSummary,
+      practiceSummary: data.practiceSummary,
       teacherComment:
         typeof data.teacherComment === "string" ? data.teacherComment : undefined,
       practiceQuestions: Array.isArray(data.practiceQuestions)
