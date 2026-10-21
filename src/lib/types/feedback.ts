@@ -104,6 +104,8 @@ export interface FeedbackCreateRequest {
   message: string;
   attachments?: ChatAttachment[];
   reference?: ChatReference;
+  /** 付けるとこの時刻（ISO）に送る予約になる */
+  scheduledAt?: string;
 }
 
 /** スレッド表示用: AdminFeedback に送信者種別を付与したもの */
@@ -147,4 +149,28 @@ export interface BroadcastRequest {
   message: string;
   attachments?: ChatAttachment[];
   audience: BroadcastAudience;
+}
+
+/** 予約送信の状態。pending の間だけ取り消せる */
+export type ScheduledFeedbackStatus = "pending" | "sent" | "canceled";
+
+/**
+ * 予約送信（コーチ→生徒）。保存先は users/{生徒}/scheduledFeedback。
+ * 時刻になると Cloud Tasks が配信APIを叩き、同じ ID で feedback に書く。
+ */
+export interface ScheduledFeedback {
+  id: string;
+  type: FeedbackType;
+  targetId: string;
+  targetLabel: string;
+  message: string;
+  attachments?: ChatAttachment[];
+  reference?: ChatReference;
+  quote?: ChatQuote;
+  createdBy: string;
+  createdByName: string;
+  /** ISO 8601（UTC） */
+  scheduledAt: string;
+  createdAt: string;
+  status: ScheduledFeedbackStatus;
 }

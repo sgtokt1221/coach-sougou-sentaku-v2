@@ -20,6 +20,7 @@ import {
   Copy,
   SmilePlus,
   ArrowDown,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ import { appendQuote, parseMessageBlocks } from "@/lib/chat/message-blocks";
 import { useAutoGrowTextarea } from "@/hooks/useAutoGrowTextarea";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { ScheduleTimeRow } from "@/components/chat/ScheduleSend";
 
 /** 非 general タイプに付けるラベル */
 const TYPE_LABEL: Partial<Record<FeedbackType, string>> = {
@@ -93,6 +95,18 @@ interface ChatThreadProps {
    * 見出しの右端は親指が届きにくいので、スマホでは下に置く。
    */
   composerAccessory?: ReactNode;
+  /**
+   * 予約送信。渡すと送信ボタンの横に時計を出す。scheduledAt は ISO（UTC）。
+   * 失敗時は Error の message をそのまま知らせる
+   */
+  onSchedule?: (
+    text: string,
+    attachments: ChatAttachment[],
+    reference: ChatReference | undefined,
+    scheduledAt: string
+  ) => Promise<void>;
+  /** 送信待ちの予約一覧。入力欄の上に出す */
+  scheduledList?: ReactNode;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -227,6 +241,8 @@ export function ChatThread({
   reactionTarget,
   viewerUid,
   composerAccessory,
+  onSchedule,
+  scheduledList,
 }: ChatThreadProps) {
   /** 各バブルのDOM。部分引用で選択範囲がそのバブル内か判定するのに使う */
   const bubbleRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -589,6 +605,32 @@ export function ChatThread({
   const [outgoing, setOutgoing] = useState<
     { id: string; text: string; attachmentCount: number }[]
   >([]);
+
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+  const hasContent = Boolean(text.trim() || pending.length > 0 || pendingRef);
+
+  async function handleSchedule(scheduledAt: string) {
+    if (!onSchedule || !hasContent || scheduleBusy) return;
+    setScheduleBusy(true);
+    try {
+      await onSchedule(
+        text.trim(),
+        pending,
+        pendingRef ?? undefined,
+        scheduledAt
+      );
+      setText("");
+      setPending([]);
+      setPendingRef(null);
+      setScheduling(false);
+      toast.success("予約しました");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "予約に失敗しました");
+    } finally {
+      setScheduleBusy(false);
+    }
+  }
 
   async function handleSend() {
     if ((!text.trim() && pending.length === 0 && !pendingRef) || sending)
@@ -987,6 +1029,17 @@ export function ChatThread({
         >
           {/* 入力欄も会話と同じ幅に揃える（区切り線だけは画面幅いっぱいのまま） */}
           <div className="mx-auto w-full max-w-3xl">
+            {scheduledList && <div className="mb-2">{scheduledList}</div>}
+            {scheduling && onSchedule && (
+              <div className="mb-2">
+                <ScheduleTimeRow
+                  busy={scheduleBusy}
+                  disabled={!hasContent}
+                  onConfirm={handleSchedule}
+                  onClose={() => setScheduling(false)}
+                />
+              </div>
+            )}
             {pending.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-2">
                 {pending.map((att, i) => (
@@ -1108,11 +1161,25 @@ export function ChatThread({
                   }}
                 />
               )}
+              {onSchedule && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={scheduling ? "secondary" : "ghost"}
+                  // スマホの2段目では送信ボタンと一緒に右端へ寄せる
+                  className="ml-auto shrink-0 sm:ml-0"
+                  onClick={() => setScheduling((v) => !v)}
+                  aria-label="予約送信"
+                  aria-pressed={scheduling}
+                >
+                  <Clock className="size-4" />
+                </Button>
+              )}
               <Button
                 type="button"
                 size="icon"
                 // スマホの2段目では右端に寄せる（左は添付などのボタン）
-                className={`shrink-0 ${currentRole === "coach" ? "ml-auto sm:ml-0" : ""}`}
+                className={`shrink-0 ${currentRole === "coach" && !onSchedule ? "ml-auto sm:ml-0" : ""}`}
                 disabled={
                   sending ||
                   (!text.trim() && pending.length === 0 && !pendingRef)

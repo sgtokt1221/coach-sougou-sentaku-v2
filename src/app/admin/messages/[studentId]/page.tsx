@@ -8,6 +8,11 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
+import {
+  postCoachFeedback,
+  ScheduledFeedbackList,
+  useRefreshScheduledFeedback,
+} from "@/components/chat/ScheduleSend";
 import { StartCallButton } from "@/components/call/StartCallButton";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import { PageTransition } from "@/components/shared/PageTransition";
@@ -32,6 +37,7 @@ export default function AdminThreadPage() {
     "/api/admin/messages"
   );
   const readRef = useRef(false);
+  const refreshScheduled = useRefreshScheduledFeedback();
 
   const item = list?.find((s) => s.studentId === studentId);
   const studentName = item?.studentName ?? "生徒";
@@ -71,6 +77,24 @@ export default function AdminThreadPage() {
     mutate("/api/admin/messages");
   }
 
+  async function handleSchedule(
+    text: string,
+    attachments: ChatAttachment[],
+    reference: ChatReference | undefined,
+    scheduledAt: string
+  ) {
+    await postCoachFeedback(studentId, {
+      type: "general",
+      targetId: "chat",
+      targetLabel: "メッセージ",
+      message: text,
+      attachments,
+      reference,
+      scheduledAt,
+    });
+    await refreshScheduled(studentId);
+  }
+
   return (
     <PageTransition>
       <FullHeightPage>
@@ -105,6 +129,8 @@ export default function AdminThreadPage() {
             messages={messages}
             currentRole="coach"
             onSend={handleSend}
+            onSchedule={handleSchedule}
+            scheduledList={<ScheduledFeedbackList studentId={studentId} />}
             reactionTarget={{ ownerId: studentId }}
             viewerUid={user?.uid}
             loading={loading}

@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import {
-  updateConversationSummary,
   sanitizeAttachments,
   sanitizeReference,
-  sendFcmToUser,
 } from "@/lib/chat/conversation";
 import type {
   AdminFeedback,
@@ -13,7 +11,15 @@ import type {
 } from "@/lib/types/feedback";
 
 import { sanitizeQuote } from "@/lib/chat/quote";
-import { stripRichText } from "@/lib/chat/rich-text";
+import {
+  deliverCoachFeedback,
+  type CoachFeedbackPayload,
+} from "@/lib/chat/coach-feedback";
+import {
+  createScheduledFeedback,
+  validateScheduledAt,
+} from "@/lib/chat/scheduled-feedback";
+import { isCloudTasksConfigured } from "@/lib/gcp/cloud-tasks";
 /**
  * GET /api/admin/students/[id]/feedback
  * 指定生徒のフィードバック一覧を取得
@@ -112,7 +118,8 @@ export async function GET(
 
 /**
  * POST /api/admin/students/[id]/feedback
- * フィードバックを新規作成 + Push通知送信
+ * フィードバックを新規作成 + Push通知送信。
+ * scheduledAt（ISO）を付けるとその時刻に送る予約として保存する
  */
 export async function POST(
   request: NextRequest,
@@ -176,89 +183,44 @@ export async function POST(
     });
     if (orgDenied) return orgDenied;
 
-    // 管理者の表示名を取得
-    const adminDoc = await adminDb.doc(`users/${uid}`).get();
-    const adminName = adminDoc.data()?.displayName ?? "管理者";
-
-    const now = new Date();
-    const attachments = attachmentsEarly;
-    const reference = referenceEarly;
-    const quote = sanitizeQuote((body as { quote?: unknown }).quote);
-    const feedbackData = {
+    const payload: CoachFeedbackPayload = {
       type: body.type,
       targetId: body.targetId ?? "",
       targetLabel: body.targetLabel ?? "",
       message: body.message ?? "",
-      createdBy: uid,
-      createdByName: adminName,
-      createdAt: now,
-      read: false,
-      ...(adminDoc.data()?.photoURL
-        ? { createdByPhotoURL: adminDoc.data()!.photoURL as string }
-        : {}),
-      ...(attachments.length > 0 ? { attachments } : {}),
-      ...(reference ? { reference } : {}),
+      attachments: attachmentsEarly,
+      reference: referenceEarly,
       // 返信元の引用（全文/部分）
-      ...(quote ? { quote } : {}),
+      quote: sanitizeQuote((body as { quote?: unknown }).quote),
     };
 
-    const docRef = await adminDb
-      .collection(`users/${id}/feedback`)
-      .add(feedbackData);
+    // 予約送信。時刻になると Cloud Tasks が配信APIを叩く
+    if (body.scheduledAt !== undefined) {
+      if (!isCloudTasksConfigured()) {
+        return NextResponse.json(
+          { error: "予約送信はまだ使えません" },
+          { status: 503 }
+        );
+      }
+      const checked = validateScheduledAt(body.scheduledAt);
+      if ("error" in checked) {
+        return NextResponse.json({ error: checked.error }, { status: 400 });
+      }
+      const scheduled = await createScheduledFeedback(adminDb, {
+        studentId: id,
+        senderUid: uid,
+        payload,
+        scheduledAt: checked.at,
+      });
+      return NextResponse.json({ scheduled }, { status: 201 });
+    }
 
-    // インボックス用サマリ更新 (コーチ→生徒)
-    await updateConversationSummary({
+    const newFeedback = await deliverCoachFeedback(adminDb, {
       studentId: id,
-      studentName: (userData?.displayName as string) ?? "",
-      studentPhotoURL: (userData?.photoURL as string | undefined) ?? null,
-      coachId: (userData?.managedBy as string | undefined) ?? undefined,
-      organizationId:
-        (userData?.organizationId as string | undefined) ?? undefined,
-      lastMessageText:
-        body.message ||
-        reference?.label ||
-        (attachments.length > 0 ? "[添付ファイル]" : ""),
-      senderRole: "coach",
+      studentData: userData,
+      senderUid: uid,
+      payload,
     });
-
-    /**
-     * Push通知。送信経路は sendFcmToUser の1本に寄せる。
-     * ここに独自実装を持っていたため、失効トークンの掃除も種別設定の判定も
-     * 二重管理になっていた（片方だけ直しても再発する）。
-     */
-    /**
-     * 装飾記法は通知本文から外す。
-     * [[c=red;s=lg]]…[[/]] がそのまま出るうえ、本文の上限50字を記法が食って
-     * 中身が読めなくなる。
-     */
-    const preview =
-      (stripRichText(body.message ?? "").trim() ||
-        (reference ? reference.label : "") ||
-        (attachments.length > 0 ? "[添付ファイル]" : "")) ??
-      "";
-    await sendFcmToUser(
-      id,
-      {
-        title: "コーチからフィードバック",
-        body: preview,
-        url: "/student/feedback",
-      },
-      "feedback"
-    );
-
-    const newFeedback: AdminFeedback = {
-      id: docRef.id,
-      type: body.type,
-      targetId: body.targetId ?? "",
-      targetLabel: body.targetLabel ?? "",
-      message: body.message ?? "",
-      createdBy: uid,
-      createdByName: adminName,
-      createdAt: now.toISOString(),
-      read: false,
-      ...(attachments.length > 0 ? { attachments } : {}),
-      ...(reference ? { reference } : {}),
-    };
 
     return NextResponse.json(newFeedback, { status: 201 });
   } catch (error) {

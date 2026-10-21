@@ -13,7 +13,7 @@ import {
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { useDraggableDialog } from "@/hooks/useDraggableDialog";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
-import { MessageSquare, Send, Loader2 } from "lucide-react";
+import { MessageSquare, Send, Loader2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import {
@@ -27,6 +27,11 @@ import type {
 } from "@/lib/types/feedback";
 import { RichText } from "@/components/chat/RichText";
 import { RichField } from "@/components/chat/RichField";
+import {
+  postCoachFeedback,
+  ScheduledFeedbackList,
+  ScheduleTimeRow,
+} from "@/components/chat/ScheduleSend";
 
 interface InlineFeedbackButtonProps {
   studentId: string;
@@ -109,6 +114,33 @@ export function InlineFeedbackButton({
     enabled: open,
   });
 
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+
+  async function handleSchedule(scheduledAt: string) {
+    if (!message.trim()) return;
+    setScheduleBusy(true);
+    try {
+      await postCoachFeedback(studentId, {
+        type,
+        targetId,
+        targetLabel,
+        message: message.trim(),
+        ...(reference ? { reference } : {}),
+        scheduledAt,
+      });
+      setMessage("");
+      void draft.clearDraft();
+      setScheduling(false);
+      toast.success("フィードバックを予約しました");
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "予約に失敗しました");
+    } finally {
+      setScheduleBusy(false);
+    }
+  }
+
   async function handleSend() {
     if (!message.trim()) return;
     setSending(true);
@@ -188,6 +220,17 @@ export function InlineFeedbackButton({
               }}
             />
 
+            {scheduling && (
+              <ScheduleTimeRow
+                busy={scheduleBusy}
+                disabled={!message.trim()}
+                onConfirm={handleSchedule}
+                onClose={() => setScheduling(false)}
+              />
+            )}
+
+            <ScheduledFeedbackList studentId={studentId} targetId={targetId} />
+
             {/* Existing feedbacks */}
             {loadingFeedbacks ? (
               <p className="text-muted-foreground text-xs">読み込み中...</p>
@@ -233,6 +276,15 @@ export function InlineFeedbackButton({
             <span className="text-muted-foreground hidden text-[10px] sm:inline">
               {COMPOSER_SUBMIT_HINT}
             </span>
+            <Button
+              size="sm"
+              variant={scheduling ? "secondary" : "outline"}
+              onClick={() => setScheduling((v) => !v)}
+              aria-pressed={scheduling}
+            >
+              <Clock className="mr-1 size-3" />
+              予約
+            </Button>
             <Button
               size="sm"
               onClick={handleSend}

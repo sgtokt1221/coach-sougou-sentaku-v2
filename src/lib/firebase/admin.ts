@@ -1,4 +1,10 @@
-import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
+import {
+  initializeApp,
+  getApps,
+  cert,
+  applicationDefault,
+  type App,
+} from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -35,6 +41,17 @@ function getAdminApp(): App | null {
 
 const adminApp = getAdminApp();
 export const adminAuth = adminApp ? getAuth(adminApp) : null;
+
+/**
+ * Firebase 以外の GCP API（Cloud Tasks 等）を REST で呼ぶためのアクセストークン。
+ * Admin SDK と同じサービスアカウントを使う（cloud-platform スコープを含む）。
+ */
+export async function getAdminAccessToken(): Promise<string | null> {
+  if (!adminApp) return null;
+  const credential = adminApp.options.credential ?? applicationDefault();
+  const token = await credential.getAccessToken();
+  return token.access_token;
+}
 
 /**
  * Firestore を取得しつつ ignoreUndefinedProperties を有効化する。
