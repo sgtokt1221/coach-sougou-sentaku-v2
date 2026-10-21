@@ -78,3 +78,10 @@ env:
   # クライアントに露出する非機密値のため Secret ではなく平文 value で設定。
   - variable: NEXT_PUBLIC_GOOGLE_PSE_CX
     value: b3859904ace8b4d96
+  # 予約送信（チャット・FB）。予約時に Cloud Tasks へタスクを積み、
+  # 予約時刻に /api/cron/scheduled-feedback を x-cron-secret 付きで叩かせる。
+  # どちらか欠けると予約は 503 で断る（即時送信には影響しない）。
+  - variable: CRON_SECRET
+    secret: CRON_SECRET
+  - variable: CLOUD_TASKS_QUEUE
+    value: projects/coach-sougou-sentaku/locations/asia-northeast1/queues/scheduled-feedback
