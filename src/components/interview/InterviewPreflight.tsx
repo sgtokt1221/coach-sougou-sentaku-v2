@@ -15,8 +15,11 @@ import {
 } from "lucide-react";
 
 interface InterviewPreflightProps {
-  /** 面接を開始する。cameraOk はカメラが使えたか（使えたら面接中の映像分析を ON にする） */
-  onStart: (cameraOk: boolean) => void;
+  /**
+   * 面接を開始する。cameraOk はカメラが使えたか（使えたら面接中の映像分析を ON にする）。
+   * appearance は事前チェックの判定結果（面接記録に引き継ぎ、開始直後の同じ判定を省く）
+   */
+  onStart: (cameraOk: boolean, appearance?: AppearanceAnalysis) => void;
 }
 
 type CamStatus = "checking" | "ready" | "denied" | "unsupported";
@@ -201,7 +204,7 @@ export default function InterviewPreflight({
                     )}
                     直して撮り直す
                   </Button>
-                  <Button className="flex-1 gap-1" onClick={() => onStart(true)}>
+                  <Button className="flex-1 gap-1" onClick={() => onStart(true, result)}>
                     この身だしなみで始める
                     <ArrowRight className="size-4" />
                   </Button>

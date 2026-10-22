@@ -317,6 +317,8 @@ export default function InterviewSessionPage() {
     },
   });
   const appearanceCheckCount = useRef(0);
+  /** 事前チェックで身だしなみを判定済みなら、カメラ開始直後の判定は省く（同じ判定を2回しない） */
+  const skipInitialAppearanceCheckRef = useRef(false);
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   // 面接開始前の身だしなみチェック（音声面接の新規開始時のみ）。完了/スキップで false。
@@ -491,7 +493,9 @@ export default function InterviewSessionPage() {
   useEffect(() => {
     if (!videoStream) return;
     // Initial check after 3 seconds (let camera stabilize)
-    const initialTimeout = setTimeout(runAppearanceCheck, 3000);
+    const initialTimeout = skipInitialAppearanceCheckRef.current
+      ? undefined
+      : setTimeout(runAppearanceCheck, 3000);
     // Periodic check every 5 minutes
     const interval = setInterval(runAppearanceCheck, 5 * 60 * 1000);
     return () => {
@@ -901,10 +905,15 @@ export default function InterviewSessionPage() {
       {/* 面接開始前の身だしなみチェック（音声面接の新規開始時のみ） */}
       {showPreflight && (
         <InterviewPreflight
-          onStart={(cameraOk) => {
+          onStart={(cameraOk, appearance) => {
             setShowPreflight(false);
             // 事前チェックでカメラが使えたら、面接中の映像分析も最初から ON にする
             if (cameraOk) setCameraEnabled(true);
+            if (appearance) {
+              setAppearanceAnalysis(appearance);
+              appearanceCheckCount.current++;
+              skipInitialAppearanceCheckRef.current = true;
+            }
           }}
         />
       )}
