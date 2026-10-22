@@ -349,6 +349,21 @@ export interface VideoAnalysis {
   avgHeadTilt: number; // 平均首の傾き（度）
   nodCount: number; // うなずき回数
   nodRate: number; // うなずき/分
+  /**
+   * 話し始め・話し終わりに笑顔があった割合 0-100%。
+   * 回答が2回未満か表情係数が取れない端末では undefined（笑顔の点は smileRate で出す）。
+   */
+  turnSmileRate?: number;
+  /** 顔の動きから数えた生徒の回答の回数（turnSmileRate の分母は answerCount × 2） */
+  answerCount?: number;
+  /** 上半身の姿勢。肩が映っていない回は undefined */
+  posture?: {
+    uprightRate: number; // 本人の一番伸びた姿勢に近かった割合 0-100%
+    bodySway: number; // 肩の揺れ（肩幅比）。小さいほど落ち着いている
+    shoulderTilt: number; // 平均の肩の傾き（度）
+    faceTouchCount: number; // 顔や髪を触った回数
+    faceTouchRate: number; // 顔や髪を触った回数/分
+  };
   overallVideoScore: number; // 0-10
   feedback: {
     eyeContactAdvice: string;

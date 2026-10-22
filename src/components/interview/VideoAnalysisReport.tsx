@@ -25,6 +25,20 @@ function RateBar({ value, max, color }: { value: number; max: number; color: str
 
 export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportProps) {
   const scoreColor = ScoreColor(analysis.overallVideoScore);
+  // 新しい回は話し始め・話し終わりの笑顔と上半身の姿勢で見る。旧回は従来の値
+  const hasTurnSmile =
+    typeof analysis.turnSmileRate === "number" &&
+    typeof analysis.answerCount === "number";
+  const smileValue = hasTurnSmile ? analysis.turnSmileRate! : analysis.smileRate;
+  const smileOk = hasTurnSmile ? smileValue >= 25 : smileValue >= 20;
+  const turnSmileHits = hasTurnSmile
+    ? Math.round((analysis.turnSmileRate! / 100) * analysis.answerCount! * 2)
+    : 0;
+  const posture = analysis.posture;
+  const postureValue = posture ? posture.uprightRate / 100 : analysis.positionStability;
+  const postureOk = posture
+    ? posture.uprightRate >= 70 && posture.faceTouchRate < 2
+    : analysis.positionStability >= 0.7;
 
   return (
     <Card>
@@ -81,8 +95,19 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <span className="text-muted-foreground">笑顔率: </span>
-              <span className="font-medium">{analysis.smileRate}%</span>
+              {hasTurnSmile ? (
+                <>
+                  <span className="text-muted-foreground">話し始め・終わりの笑顔: </span>
+                  <span className="font-medium">
+                    {turnSmileHits}/{analysis.answerCount! * 2}回
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-muted-foreground">笑顔率: </span>
+                  <span className="font-medium">{analysis.smileRate}%</span>
+                </>
+              )}
             </div>
             <div>
               <span className="text-muted-foreground">表情変化: </span>
@@ -96,12 +121,12 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
             </div>
           </div>
           <RateBar
-            value={analysis.smileRate}
+            value={smileValue}
             max={100}
-            color={analysis.smileRate >= 20 ? "bg-amber-500" : "bg-amber-500"}
+            color="bg-amber-500"
           />
           <p className="text-xs text-muted-foreground flex items-start gap-1">
-            {analysis.smileRate >= 20 ? (
+            {smileOk ? (
               <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
               <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />
@@ -180,16 +205,39 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
             姿勢・ボディランゲージ
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>
-              <span className="text-muted-foreground">姿勢安定度: </span>
-              <span className="font-medium">
-                {analysis.positionStability >= 0.8
-                  ? "安定"
-                  : analysis.positionStability >= 0.5
-                    ? "普通"
-                    : "不安定"}
-              </span>
-            </div>
+            {posture ? (
+              <>
+                <div>
+                  <span className="text-muted-foreground">背筋が伸びていた時間: </span>
+                  <span className="font-medium">{posture.uprightRate}%</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">顔や髪を触った: </span>
+                  <span className="font-medium">{posture.faceTouchCount}回</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">体の揺れ: </span>
+                  <span className="font-medium">
+                    {posture.bodySway <= 0.05
+                      ? "少ない"
+                      : posture.bodySway <= 0.1
+                        ? "普通"
+                        : "多い"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div>
+                <span className="text-muted-foreground">姿勢安定度: </span>
+                <span className="font-medium">
+                  {analysis.positionStability >= 0.8
+                    ? "安定"
+                    : analysis.positionStability >= 0.5
+                      ? "普通"
+                      : "不安定"}
+                </span>
+              </div>
+            )}
             <div>
               <span className="text-muted-foreground">うなずき: </span>
               <span className="font-medium">
@@ -198,12 +246,12 @@ export default function VideoAnalysisReport({ analysis }: VideoAnalysisReportPro
             </div>
           </div>
           <RateBar
-            value={analysis.positionStability}
+            value={postureValue}
             max={1}
-            color={analysis.positionStability >= 0.7 ? "bg-purple-500" : "bg-amber-500"}
+            color={postureOk ? "bg-purple-500" : "bg-amber-500"}
           />
           <p className="text-xs text-muted-foreground flex items-start gap-1">
-            {analysis.positionStability >= 0.7 ? (
+            {postureOk ? (
               <CheckCircle className="size-3 mt-0.5 shrink-0 text-emerald-500" />
             ) : (
               <AlertCircle className="size-3 mt-0.5 shrink-0 text-amber-500" />

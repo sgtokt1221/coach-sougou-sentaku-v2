@@ -900,7 +900,13 @@ export default function InterviewSessionPage() {
 
       {/* 面接開始前の身だしなみチェック（音声面接の新規開始時のみ） */}
       {showPreflight && (
-        <InterviewPreflight onStart={() => setShowPreflight(false)} />
+        <InterviewPreflight
+          onStart={(cameraOk) => {
+            setShowPreflight(false);
+            // 事前チェックでカメラが使えたら、面接中の映像分析も最初から ON にする
+            if (cameraOk) setCameraEnabled(true);
+          }}
+        />
       )}
 
       {/* Header */}

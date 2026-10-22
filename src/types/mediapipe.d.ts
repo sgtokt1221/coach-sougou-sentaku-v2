@@ -31,4 +31,31 @@ declare module "@mediapipe/tasks-vision" {
       options: FaceLandmarkerOptions
     ): Promise<FaceLandmarkerInstance>;
   };
+
+  export interface PoseLandmarkerOptions {
+    baseOptions: {
+      modelAssetPath: string;
+      delegate?: "GPU" | "CPU";
+    };
+    runningMode: "VIDEO" | "IMAGE";
+    numPoses?: number;
+  }
+
+  export interface PoseLandmarkerResult {
+    landmarks: Array<
+      Array<{ x: number; y: number; z: number; visibility?: number }>
+    >;
+  }
+
+  export interface PoseLandmarkerInstance {
+    detectForVideo(video: HTMLVideoElement, timestamp: number): PoseLandmarkerResult;
+    close(): void;
+  }
+
+  export const PoseLandmarker: {
+    createFromOptions(
+      vision: unknown,
+      options: PoseLandmarkerOptions
+    ): Promise<PoseLandmarkerInstance>;
+  };
 }

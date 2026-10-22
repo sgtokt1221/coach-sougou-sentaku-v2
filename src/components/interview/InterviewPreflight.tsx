@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 
 interface InterviewPreflightProps {
-  /** 面接を開始する（カメラあり/なし問わず最終的にここを呼ぶ） */
-  onStart: () => void;
+  /** 面接を開始する。cameraOk はカメラが使えたか（使えたら面接中の映像分析を ON にする） */
+  onStart: (cameraOk: boolean) => void;
 }
 
 type CamStatus = "checking" | "ready" | "denied" | "unsupported";
@@ -163,7 +163,7 @@ export default function InterviewPreflight({
                 身だしなみチェックはスキップして、音声のみで面接を始められます。
               </p>
             </div>
-            <Button className="w-full gap-1" onClick={onStart}>
+            <Button className="w-full gap-1" onClick={() => onStart(false)}>
               カメラなしで面接を始める
               <ArrowRight className="size-4" />
             </Button>
@@ -201,7 +201,7 @@ export default function InterviewPreflight({
                     )}
                     直して撮り直す
                   </Button>
-                  <Button className="flex-1 gap-1" onClick={onStart}>
+                  <Button className="flex-1 gap-1" onClick={() => onStart(true)}>
                     この身だしなみで始める
                     <ArrowRight className="size-4" />
                   </Button>
@@ -224,7 +224,7 @@ export default function InterviewPreflight({
                 </Button>
                 <button
                   type="button"
-                  onClick={onStart}
+                  onClick={() => onStart(true)}
                   className="text-muted-foreground hover:text-foreground flex w-full items-center justify-center gap-1 text-xs"
                 >
                   <Play className="size-3" />

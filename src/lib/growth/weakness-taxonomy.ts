@@ -624,7 +624,7 @@ export const WEAKNESS_TAXONOMY: readonly TaxonomyEntry[] = [
     category: "other",
     label: "姿勢・身だしなみに改善余地",
     description: "姿勢や身だしなみに気になる点がある（動画解析）",
-    keywords: ["姿勢", "身だしなみ", "服装", "首が傾", "猫背"],
+    keywords: ["姿勢", "身だしなみ", "服装", "首が傾", "猫背", "前かがみ", "顔や髪を触"],
   },
   {
     id: "iv.body.delivery",

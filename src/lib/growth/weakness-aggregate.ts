@@ -34,7 +34,7 @@ function aggregationKey(tag: string): string {
  * 残る（src/app/api/interview/end/route.ts が足している）。
  */
 export const VIDEO_WEAKNESS_TAG =
-  /^(視線が散漫|表情が硬い|姿勢が不安定|首が傾きがち|うなずきが少ない|身だしなみ:)/;
+  /^(視線が散漫|表情が硬い|姿勢が不安定|姿勢が前かがみ|顔や髪を触る|首が傾きがち|うなずきが少ない|身だしなみ:)/;
 
 /**
  * 提出の種類。文書の項目から推測しない（宿題の提出など、面接以外でも

@@ -384,8 +384,20 @@ export async function POST(request: NextRequest) {
     // VideoAnalysis → 弱点タグ
     if (videoAnalysis) {
       if (videoAnalysis.eyeContactRate < 40) weaknessTags.push("視線が散漫");
-      if (videoAnalysis.smileRate < 10) weaknessTags.push("表情が硬い");
-      if (videoAnalysis.positionStability < 0.5)
+      // 笑顔は話し始め・話し終わりで見る（取れなかった回は面接全体の割合）
+      if (
+        typeof videoAnalysis.turnSmileRate === "number"
+          ? videoAnalysis.turnSmileRate < 25
+          : videoAnalysis.smileRate < 10
+      )
+        weaknessTags.push("表情が硬い");
+      // 上半身が映っていれば姿勢はそちらで見る。顔の位置の揺れは使わない
+      if (videoAnalysis.posture) {
+        if (videoAnalysis.posture.uprightRate < 60)
+          weaknessTags.push("姿勢が前かがみになりがち");
+        if (videoAnalysis.posture.faceTouchRate >= 2)
+          weaknessTags.push("顔や髪を触る癖");
+      } else if (videoAnalysis.positionStability < 0.5)
         weaknessTags.push("姿勢が不安定");
       if (videoAnalysis.avgHeadTilt > 10) weaknessTags.push("首が傾きがち");
       if (videoAnalysis.nodRate < 2) weaknessTags.push("うなずきが少��い");

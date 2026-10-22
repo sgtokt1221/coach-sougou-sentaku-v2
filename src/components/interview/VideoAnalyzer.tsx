@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle, type ForwardedRef } from "react";
 import type { VideoAnalysis } from "@/lib/types/interview";
-import type { FaceLandmarkerInstance } from "@mediapipe/tasks-vision";
+import type { FaceLandmarkerInstance, PoseLandmarkerInstance } from "@mediapipe/tasks-vision";
+import {
+  computeVideoAnalysis,
+  type FaceFrame,
+  type PoseFrame,
+} from "@/lib/interview/video-analysis";
 
 interface VideoAnalyzerProps {
   mediaStream: MediaStream | null;
@@ -33,191 +38,29 @@ const RIGHT_EYE_INNER = 362;
 // Iris landmarks start at 468
 const LEFT_IRIS_CENTER = 468;
 const RIGHT_IRIS_CENTER = 473;
+// Pose landmark indices
+const POSE_NOSE = 0;
+const POSE_LEFT_SHOULDER = 11;
+const POSE_RIGHT_SHOULDER = 12;
+const POSE_LEFT_WRIST = 15;
+const POSE_RIGHT_WRIST = 16;
+/** 肩・手首が映っているとみなす visibility */
+const POSE_VISIBILITY_MIN = 0.5;
+/** 手首が鼻からこの距離（肩幅比）以内なら顔や髪を触っている */
+const FACE_TOUCH_DISTANCE = 0.6;
+/** 姿勢推定は顔の何フレームに1回回すか（CPU 負荷を抑える） */
+const POSE_EVERY_N_FRAMES = 2;
 
 const EYE_CONTACT_ANGLE_THRESHOLD = 15; // degrees
 const SMILE_RATIO_THRESHOLD = 0.35;
-const NOD_AMPLITUDE_THRESHOLD = 0.015; // normalized Y movement
 const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const ANALYSIS_FPS = isMobile ? 5 : 10;
 const FRAME_INTERVAL = 1000 / ANALYSIS_FPS;
-
-interface FrameData {
-  timestamp: number;
-  noseY: number;
-  noseX: number;
-  isEyeContact: boolean;
-  isSmiling: boolean;
-  headTiltDeg: number;
-  // blendshapes 由来の表情係数 (0-1)。非対応端末では全て 0。
-  smile: number;     // mouthSmile L/R 平均
-  cheek: number;     // cheekSquint L/R 平均 (Duchenne 判定)
-  browDown: number;  // browDown L/R 平均 (眉間のしわ)
-  lipPress: number;  // mouthPress L/R 平均 (口の引き結び)
-  noseSneer: number; // noseSneer L/R 平均
-  browUp: number;    // browInnerUp + browOuterUp L/R 平均 (眉の動き)
-  jawOpen: number;   // jawOpen (発話)
-  blink: number;     // eyeBlink L/R 平均
-}
-
-/** blink 立ち上がり判定の閾値 */
-const BLINK_THRESHOLD = 0.5;
 
 function dist2d(
   x1: number, y1: number, x2: number, y2: number
 ): number {
   return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-}
-
-function generateVideoFeedback(
-  eyeContactRate: number,
-  smileRate: number,
-  positionStability: number,
-  nodRate: number,
-  avgHeadTilt: number
-): VideoAnalysis["feedback"] {
-  let eyeContactAdvice: string;
-  if (eyeContactRate >= 70) {
-    eyeContactAdvice = "アイコンタクトが十分に維持できています。面接官に信頼感を与える話し方です。";
-  } else if (eyeContactRate >= 40) {
-    eyeContactAdvice = "アイコンタクトがやや不足気味です。カメラ（面接官）をもう少し見るように意識しましょう。";
-  } else {
-    eyeContactAdvice = "視線がカメラから外れがちです。面接では面接官の目を見て話すことが大切です。";
-  }
-
-  let expressionAdvice: string;
-  if (smileRate >= 30) {
-    expressionAdvice = "適度な笑顔で好印象です。親しみやすい雰囲気が伝わります。";
-  } else if (smileRate >= 10) {
-    expressionAdvice = "もう少し笑顔を意識すると、より親しみやすい印象になります。";
-  } else {
-    expressionAdvice = "表情が硬い印象です。自然な笑顔を心がけると面接官への印象が良くなります。";
-  }
-
-  let postureAdvice: string;
-  const parts: string[] = [];
-  if (positionStability >= 0.8) {
-    parts.push("姿勢が安定していて落ち着いた印象です");
-  } else if (positionStability >= 0.5) {
-    parts.push("やや体が動いている印象です。落ち着いた姿勢を意識しましょう");
-  } else {
-    parts.push("体の動きが大きいです。面接中は姿勢を安定させましょう");
-  }
-  if (avgHeadTilt > 10) {
-    parts.push("首が傾きがちです。まっすぐ正面を向くように意識しましょう");
-  }
-  postureAdvice = parts.join("。") + "。";
-
-  let overallBodyLanguageAdvice: string;
-  if (eyeContactRate >= 60 && smileRate >= 20 && positionStability >= 0.7) {
-    overallBodyLanguageAdvice = "非言語コミュニケーションは全体的に良好です。自信を持って本番に臨みましょう。";
-  } else {
-    const tips: string[] = [];
-    if (eyeContactRate < 60) tips.push("アイコンタクト");
-    if (smileRate < 20) tips.push("笑顔");
-    if (positionStability < 0.7) tips.push("姿勢の安定");
-    overallBodyLanguageAdvice = `${tips.join("・")}を改善すると、面接の印象が大きく向上します。`;
-  }
-
-  return { eyeContactAdvice, expressionAdvice, postureAdvice, overallBodyLanguageAdvice };
-}
-
-function scale10(x: number): number {
-  return Math.round(Math.max(0, Math.min(10, x)) * 10) / 10;
-}
-
-/** 傾向ベースの穏当なアドバイス (断定を避ける) */
-function generateAffectFeedback(
-  warmth: number,
-  tension: number,
-  composure: number,
-  engagement: number,
-): NonNullable<VideoAnalysis["affect"]>["feedback"] {
-  const warmthAdvice =
-    warmth >= 6
-      ? "やわらかい表情で、親しみやすい印象が出ています。"
-      : warmth >= 3
-        ? "もう少し口角を上げると、明るい印象になりやすいです。"
-        : "表情がやや硬めの傾向です。自然な笑顔を少し意識してみましょう。";
-  const tensionAdvice =
-    tension >= 6
-      ? "やや緊張が表情に出ている傾向です。深呼吸や間の取り方で和らげられます。"
-      : tension >= 3
-        ? "適度な緊張感です。落ち着いて話せています。"
-        : "リラックスして臨めている印象です。";
-  const composureAdvice =
-    composure >= 6
-      ? "落ち着いた佇まいで安定して見えます。"
-      : composure >= 3
-        ? "おおむね落ち着いていますが、間を意識するとより安定します。"
-        : "やや余裕がなく見える傾向です。ゆっくり話すと落ち着いて見えます。";
-  const engagementAdvice =
-    engagement >= 6
-      ? "表情に動きがあり、熱意が伝わりやすい話し方です。"
-      : engagement >= 3
-        ? "もう少し表情に変化をつけると、熱意がより伝わります。"
-        : "表情の変化が少なめの傾向です。大事な箇所で表情を添えてみましょう。";
-  return { warmthAdvice, tensionAdvice, composureAdvice, engagementAdvice };
-}
-
-/**
- * blendshapes 由来の「面接向け感情指標」を算出 (印象の傾向, 0-10)。
- * blendshapes が実質取得できていなければ undefined を返す (後方互換 degrade)。
- */
-function buildAffect(
-  frames: FrameData[],
-  durationMinutes: number,
-  positionStability: number,
-): VideoAnalysis["affect"] {
-  const n = frames.length;
-  if (n === 0) return undefined;
-  // 全フレーム実質ゼロ = blendshapes 非対応とみなす
-  const hasData = frames.some(
-    (f) => f.smile > 0 || f.browUp > 0 || f.jawOpen > 0 || f.blink > 0,
-  );
-  if (!hasData) return undefined;
-
-  const mean = (sel: (f: FrameData) => number) =>
-    frames.reduce((a, f) => a + sel(f), 0) / n;
-  const smile = mean((f) => f.smile);
-  const cheek = mean((f) => f.cheek);
-  const browDown = mean((f) => f.browDown);
-  const lipPress = mean((f) => f.lipPress);
-  const noseSneer = mean((f) => f.noseSneer);
-
-  // blink rate: 立ち上がり(>=閾値)回数 / 分
-  let blinks = 0;
-  let prevBlink = false;
-  for (const f of frames) {
-    const b = f.blink >= BLINK_THRESHOLD;
-    if (b && !prevBlink) blinks++;
-    prevBlink = b;
-  }
-  const blinkRate = durationMinutes > 0 ? Math.round(blinks / durationMinutes) : 0;
-
-  // warmth: 笑顔 + Duchenne(頬も上がる本物の笑顔)ボーナス
-  const duchenne = smile > 0.2 ? Math.min(1, cheek * 1.5) : 0;
-  const warmth = scale10(smile * 12 + duchenne * 2);
-
-  // tension: 眉間/口の引き結び/鼻のこわばり + まばたき過多
-  const blinkTension = blinkRate > 25 ? Math.min(2, ((blinkRate - 25) / 15) * 2) : 0;
-  const tension = scale10((browDown * 0.5 + lipPress * 0.35 + noseSneer * 0.15) * 18 + blinkTension);
-
-  // engagement: 眉/口の動きの大きさ(時間変動) + 笑顔の有無
-  const browUpStd = stdDev(frames.map((f) => f.browUp));
-  const jawStd = stdDev(frames.map((f) => f.jawOpen));
-  const engagement = scale10(browUpStd * 30 + jawStd * 20 + (smile > 0.15 ? 2 : 0));
-
-  // composure: 低 tension + 姿勢安定
-  const composure = scale10((10 - tension) * 0.6 + positionStability * 10 * 0.4);
-
-  return {
-    warmth,
-    tension,
-    composure,
-    engagement,
-    blinkRate,
-    feedback: generateAffectFeedback(warmth, tension, composure, engagement),
-  };
 }
 
 function VideoAnalyzerInner(
@@ -229,9 +72,12 @@ function VideoAnalyzerInner(
   const faceLandmarkerRef = useRef<FaceLandmarkerInstance | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
-  const frameDataRef = useRef<FrameData[]>([]);
-  const eyeContactStreakRef = useRef<number[]>([]);
-  const currentStreakRef = useRef<number>(0);
+  const frameDataRef = useRef<FaceFrame[]>([]);
+  const poseLandmarkerRef = useRef<PoseLandmarkerInstance | null>(null);
+  const poseFrameDataRef = useRef<PoseFrame[]>([]);
+  /** 姿勢推定を回したフレーム数（肩が映らなかった分も含む。映っていた割合の分母） */
+  const poseSampleCountRef = useRef(0);
+  const frameCounterRef = useRef(0);
   const wasRecordingRef = useRef(false);
   const blendshapeNamesLoggedRef = useRef(false);
   const initializingRef = useRef(false);
@@ -256,6 +102,8 @@ function VideoAnalyzerInner(
       faceLandmarkerRef.current.close();
     }
     faceLandmarkerRef.current = null;
+    poseLandmarkerRef.current?.close();
+    poseLandmarkerRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -263,8 +111,9 @@ function VideoAnalyzerInner(
 
     if (isRecording && mediaStream) {
       frameDataRef.current = [];
-      eyeContactStreakRef.current = [];
-      currentStreakRef.current = 0;
+      poseFrameDataRef.current = [];
+      poseSampleCountRef.current = 0;
+      frameCounterRef.current = 0;
       lastFrameTimeRef.current = 0;
       gazeLossStartRef.current = null;
       lastGazeAlertAtRef.current = 0;
@@ -289,7 +138,7 @@ function VideoAnalyzerInner(
       // Initialize FaceLandmarker
       if (!faceLandmarkerRef.current && !initializingRef.current) {
         initializingRef.current = true;
-        import("@mediapipe/tasks-vision").then(async ({ FaceLandmarker, FilesetResolver }) => {
+        import("@mediapipe/tasks-vision").then(async ({ FaceLandmarker, PoseLandmarker, FilesetResolver }) => {
           try {
             const vision = await FilesetResolver.forVisionTasks(
               "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
@@ -321,6 +170,21 @@ function VideoAnalyzerInner(
               });
             }
             faceLandmarkerRef.current = faceLandmarker;
+            // 上半身の姿勢。失敗しても顔の分析は続ける（姿勢は評価なしになる）
+            const poseOptions = (delegate: "GPU" | "CPU") => ({
+              baseOptions: {
+                modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+                delegate,
+              },
+              runningMode: "VIDEO" as const,
+              numPoses: 1,
+            });
+            try {
+              poseLandmarkerRef.current = await PoseLandmarker.createFromOptions(vision, poseOptions("GPU"))
+                .catch(() => PoseLandmarker.createFromOptions(vision, poseOptions("CPU")));
+            } catch {
+              poseLandmarkerRef.current = null;
+            }
             initializingRef.current = false;
             startAnalysis();
           } catch {
@@ -370,6 +234,19 @@ function VideoAnalyzerInner(
             ).faceBlendshapes?.[0]?.categories;
             processLandmarks(landmarks, now, blendshapes);
           }
+          frameCounterRef.current++;
+          const pl = poseLandmarkerRef.current;
+          if (pl && frameCounterRef.current % POSE_EVERY_N_FRAMES === 0) {
+            try {
+              const pose = pl.detectForVideo(video, ts);
+              poseSampleCountRef.current++;
+              const lm = pose?.landmarks?.[0];
+              if (lm) processPose(lm, now, video.videoWidth / video.videoHeight);
+            } catch {
+              // 姿勢だけ落ちても顔の分析は止めない
+              poseLandmarkerRef.current = null;
+            }
+          }
           errorCountRef.current = 0;
         } catch {
           errorCountRef.current++;
@@ -383,6 +260,40 @@ function VideoAnalyzerInner(
       }
 
       animFrameRef.current = requestAnimationFrame(analyze);
+    }
+
+    function processPose(
+      lm: Array<{ x: number; y: number; z: number; visibility?: number }>,
+      timestamp: number,
+      aspect: number,
+    ) {
+      const visible = (i: number) => (lm[i]?.visibility ?? 0) >= POSE_VISIBILITY_MIN;
+      if (!visible(POSE_LEFT_SHOULDER) || !visible(POSE_RIGHT_SHOULDER)) return;
+      // x に縦横比を掛け、x と y を同じ尺度にする
+      const pt = (i: number) => ({ x: lm[i].x * aspect, y: lm[i].y });
+      const ls = pt(POSE_LEFT_SHOULDER);
+      const rs = pt(POSE_RIGHT_SHOULDER);
+      const nose = pt(POSE_NOSE);
+      const shoulderWidth = dist2d(ls.x, ls.y, rs.x, rs.y);
+      if (shoulderWidth <= 0) return;
+      const midX = (ls.x + rs.x) / 2;
+      const midY = (ls.y + rs.y) / 2;
+      const tilt = Math.abs(Math.atan2(rs.y - ls.y, rs.x - ls.x) * (180 / Math.PI));
+      const wristNearFace = [POSE_LEFT_WRIST, POSE_RIGHT_WRIST].some((i) => {
+        if (!visible(i)) return false;
+        const w = pt(i);
+        return dist2d(w.x, w.y, nose.x, nose.y) < shoulderWidth * FACE_TOUCH_DISTANCE;
+      });
+      poseFrameDataRef.current.push({
+        timestamp,
+        shoulderWidth,
+        shoulderMidX: midX,
+        shoulderMidY: midY,
+        neckRatio: (midY - nose.y) / shoulderWidth,
+        // atan2 は左右どちら向きでも 0 か 180 付近になるので、水平からのずれにする
+        shoulderTiltDeg: Math.min(tilt, 180 - tilt),
+        wristNearFace,
+      });
     }
 
     function processLandmarks(
@@ -452,16 +363,10 @@ function VideoAnalyzerInner(
       const headTiltRad = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
       const headTiltDeg = Math.abs(headTiltRad * (180 / Math.PI));
 
-      // Track eye contact streaks
       if (isEyeContact) {
-        currentStreakRef.current += FRAME_INTERVAL / 1000;
         // 目線が戻ったので視線外れ計測をリセット
         gazeLossStartRef.current = null;
       } else {
-        if (currentStreakRef.current > 0) {
-          eyeContactStreakRef.current.push(currentStreakRef.current);
-          currentStreakRef.current = 0;
-        }
         // リアルタイム視線警告: 視線外れが閾値を超えたらクールダウン付きで発火
         if (gazeLossStartRef.current === null) {
           gazeLossStartRef.current = timestamp;
@@ -507,108 +412,17 @@ function VideoAnalyzerInner(
     };
   }, [isRecording, mediaStream, cleanup]);
 
-  // 蓄積フレームから解析結果を算出する純関数 (ref を破壊しない＝flush と stop-effect の
+  // 蓄積フレームから解析結果を算出する (ref を破壊しない＝flush と stop-effect の
   // 二重呼びでも結果が変わらない。cleanup もしない)。フレーム不足は null。
-  const computeAnalysis = useCallback((): VideoAnalysis | null => {
-    const frames = frameDataRef.current;
-    if (frames.length < 5) return null;
-
-    const totalFrames = frames.length;
-    const durationMs = frames[totalFrames - 1].timestamp - frames[0].timestamp;
-    const durationMinutes = durationMs / 60000;
-
-    // Eye contact rate
-    const eyeContactFrames = frames.filter((f) => f.isEyeContact).length;
-    const eyeContactRate = (eyeContactFrames / totalFrames) * 100;
-
-    // Finalize current streak (ローカルで合算。ref は変更しない)
-    const streaks =
-      currentStreakRef.current > 0
-        ? [...eyeContactStreakRef.current, currentStreakRef.current]
-        : eyeContactStreakRef.current;
-    const eyeContactDuration =
-      streaks.length > 0 ? streaks.reduce((a, b) => a + b, 0) / streaks.length : 0;
-
-    // Smile rate
-    const smileFrames = frames.filter((f) => f.isSmiling).length;
-    const smileRate = (smileFrames / totalFrames) * 100;
-
-    // Expression variation (how often smile state changes)
-    let expressionChanges = 0;
-    for (let i = 1; i < totalFrames; i++) {
-      if (frames[i].isSmiling !== frames[i - 1].isSmiling) expressionChanges++;
-    }
-    const expressionVariation = Math.min(1, expressionChanges / (totalFrames * 0.1));
-
-    // Position stability (inverse of nose position standard deviation)
-    const noseXValues = frames.map((f) => f.noseX);
-    const noseYValues = frames.map((f) => f.noseY);
-    const stdDevX = stdDev(noseXValues);
-    const stdDevY = stdDev(noseYValues);
-    const movementMagnitude = Math.sqrt(stdDevX ** 2 + stdDevY ** 2);
-    const positionStability = Math.max(0, Math.min(1, 1 - movementMagnitude * 10));
-
-    // Average head tilt
-    const avgHeadTilt = frames.reduce((sum, f) => sum + f.headTiltDeg, 0) / totalFrames;
-
-    // Nod detection (peak detection on nose Y)
-    let nodCount = 0;
-    const smoothWindow = 3;
-    const smoothedY: number[] = [];
-    for (let i = 0; i < totalFrames; i++) {
-      const start = Math.max(0, i - smoothWindow);
-      const end = Math.min(totalFrames, i + smoothWindow + 1);
-      let sum = 0;
-      for (let j = start; j < end; j++) sum += frames[j].noseY;
-      smoothedY.push(sum / (end - start));
-    }
-    for (let i = 2; i < smoothedY.length - 2; i++) {
-      if (
-        smoothedY[i] > smoothedY[i - 1] &&
-        smoothedY[i] > smoothedY[i - 2] &&
-        smoothedY[i] > smoothedY[i + 1] &&
-        smoothedY[i] > smoothedY[i + 2]
-      ) {
-        const localMin = Math.min(smoothedY[i - 2], smoothedY[i + 2]);
-        if (smoothedY[i] - localMin > NOD_AMPLITUDE_THRESHOLD) nodCount++;
-      }
-    }
-    const nodRate = durationMinutes > 0 ? nodCount / durationMinutes : 0;
-
-    // Score calculation
-    const eyeContactScore = eyeContactRate >= 70 ? 9 : eyeContactRate >= 40 ? 6 : 3;
-    const smileScore = smileRate >= 30 ? 9 : smileRate >= 10 ? 6 : 3;
-    const stabilityScore = positionStability >= 0.8 ? 9 : positionStability >= 0.5 ? 6 : 3;
-    const nodScore = nodRate >= 3 && nodRate <= 15 ? 9 : nodRate >= 1 ? 6 : 3;
-
-    const overallVideoScore = Math.round(
-      (eyeContactScore * 0.35 + smileScore * 0.2 + stabilityScore * 0.25 + nodScore * 0.2) * 10
-    ) / 10;
-
-    const feedback = generateVideoFeedback(
-      eyeContactRate,
-      smileRate,
-      positionStability,
-      nodRate,
-      avgHeadTilt
-    );
-
-    const affect = buildAffect(frames, durationMinutes, positionStability);
-
-    return {
-      eyeContactRate: Math.round(eyeContactRate * 10) / 10,
-      eyeContactDuration: Math.round(eyeContactDuration * 10) / 10,
-      smileRate: Math.round(smileRate * 10) / 10,
-      expressionVariation: Math.round(expressionVariation * 100) / 100,
-      positionStability: Math.round(positionStability * 100) / 100,
-      avgHeadTilt: Math.round(avgHeadTilt * 10) / 10,
-      nodCount,
-      nodRate: Math.round(nodRate * 10) / 10,
-      overallVideoScore: Math.min(10, Math.max(0, overallVideoScore)),
-      feedback,
-      ...(affect ? { affect } : {}),
-    };
-  }, []);
+  const computeAnalysis = useCallback(
+    (): VideoAnalysis | null =>
+      computeVideoAnalysis(
+        frameDataRef.current,
+        poseFrameDataRef.current,
+        poseSampleCountRef.current,
+      ),
+    [],
+  );
 
   // 親が終了時に flush() を呼んで確定値を同期取得できるようにする (state 反映待ちのレース回避)
   useImperativeHandle(ref, () => ({ flush: () => computeAnalysis() }), [computeAnalysis]);
@@ -636,13 +450,6 @@ function VideoAnalyzerInner(
   }, [cleanup]);
 
   return null;
-}
-
-function stdDev(values: number[]): number {
-  if (values.length === 0) return 0;
-  const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
-  return Math.sqrt(variance);
 }
 
 const VideoAnalyzer = forwardRef(VideoAnalyzerInner);
