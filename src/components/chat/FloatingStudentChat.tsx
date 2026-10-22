@@ -7,6 +7,11 @@ import { MessageSquare, X } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useFeedbackThread } from "@/lib/hooks/useFeedbackThread";
 import { ChatThread } from "@/components/chat/ChatThread";
+import {
+  postCoachFeedback,
+  ScheduledFeedbackList,
+  useRefreshScheduledFeedback,
+} from "@/components/chat/ScheduleSend";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/avatar";
 import type {
@@ -59,6 +64,8 @@ export function FloatingStudentChat({
     ? `/api/teacher/students/${studentId}/feedback/read`
     : `/api/admin/students/${studentId}/feedback/read`;
 
+  const refreshScheduled = useRefreshScheduledFeedback();
+
   const [open, setOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const markedRef = useRef(false);
@@ -107,6 +114,25 @@ export function FloatingStudentChat({
       }),
     });
     if (!res.ok) throw new Error("send failed");
+  }
+
+  /** 予約送信。予約は管理者↔生徒のスレッドだけ（講師スレッドには無い） */
+  async function handleSchedule(
+    text: string,
+    attachments: ChatAttachment[],
+    reference: ChatReference | undefined,
+    scheduledAt: string,
+  ) {
+    await postCoachFeedback(studentId, {
+      type: "general",
+      targetId: "chat",
+      targetLabel: "メッセージ",
+      message: text,
+      attachments,
+      reference,
+      scheduledAt,
+    });
+    await refreshScheduled(studentId);
   }
 
   if (!mounted) return null;
@@ -179,6 +205,12 @@ export function FloatingStudentChat({
                 messages={messages}
                 currentRole="coach"
                 onSend={handleSend}
+                onSchedule={isTeacher ? undefined : handleSchedule}
+                scheduledList={
+                  isTeacher ? undefined : (
+                    <ScheduledFeedbackList studentId={studentId} />
+                  )
+                }
                 loading={loading}
                 otherName={studentName}
                 otherPhotoURL={studentPhotoURL}

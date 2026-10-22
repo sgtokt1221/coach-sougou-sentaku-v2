@@ -8,7 +8,11 @@ import {
   enqueueHttpTask,
   taskNameFor,
 } from "@/lib/gcp/cloud-tasks";
-import type { ScheduledFeedback } from "@/lib/types/feedback";
+import { applyDocumentReview } from "@/lib/documents/apply-review";
+import type {
+  ScheduledDocumentReview,
+  ScheduledFeedback,
+} from "@/lib/types/feedback";
 
 /**
  * 予約送信（コーチ→生徒）。
@@ -63,6 +67,7 @@ function toScheduled(
     attachments: d.attachments ?? undefined,
     reference: d.reference ?? undefined,
     quote: d.quote ?? undefined,
+    documentReview: d.documentReview ?? undefined,
     createdBy: d.createdBy ?? "",
     createdByName: d.createdByName ?? "",
     scheduledAt: d.scheduledAt?.toDate?.()?.toISOString() ?? "",
@@ -78,12 +83,14 @@ export async function createScheduledFeedback(
     senderUid: string;
     payload: CoachFeedbackPayload;
     scheduledAt: Date;
+    documentReview?: ScheduledDocumentReview;
   }
 ): Promise<ScheduledFeedback> {
   const sender = await db.doc(`users/${opts.senderUid}`).get();
   const ref = scheduledCol(db, opts.studentId).doc();
   const data = {
     ...opts.payload,
+    ...(opts.documentReview ? { documentReview: opts.documentReview } : {}),
     createdBy: opts.senderUid,
     createdByName: sender.data()?.displayName ?? "管理者",
     scheduledAt: opts.scheduledAt,
@@ -171,6 +178,21 @@ export async function deliverScheduledFeedback(
 
   const studentDoc = await db.doc(`users/${studentId}`).get();
   try {
+    // 書類の承認/差し戻しも予約していれば、コメントと同じ時刻に状態を変える。
+    // 時刻は予約時刻で固定し、再試行で履歴が二重に積まれないようにする
+    const review = claimed.documentReview as
+      | ScheduledDocumentReview
+      | undefined;
+    if (review) {
+      await applyDocumentReview(db, {
+        studentId,
+        docId: review.documentId,
+        state: review.state,
+        callerUid: claimed.createdBy,
+        comment: claimed.message ?? "",
+        at: claimed.scheduledAt.toDate().toISOString(),
+      });
+    }
     await deliverCoachFeedback(db, {
       studentId,
       studentData: studentDoc.data(),

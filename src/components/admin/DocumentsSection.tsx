@@ -32,6 +32,7 @@ import {
   ChevronDown,
   Target,
   Sparkles,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,6 +58,14 @@ import { RedPenText } from "@/components/essay/RedPenText";
 import { appendQuote } from "@/lib/chat/message-blocks";
 import { formatVersionDate } from "@/lib/ui/format-version-date";
 import { markSubmissionViewed } from "@/lib/api/client";
+import {
+  defaultScheduleValue,
+  formatScheduledAt,
+  postCoachFeedback,
+  ScheduledFeedbackList,
+  ScheduleTimeInput,
+  useRefreshScheduledFeedback,
+} from "@/components/chat/ScheduleSend";
 import {
   useUnviewedSubmissions,
   useUnviewedSubmissionsMutate,
@@ -241,6 +250,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   const [reviewBusy, setReviewBusy] = useState<
     "approved" | "revision_requested" | "cleared" | null
   >(null);
+  /** 予約にすると、コメントと承認/差し戻しの両方がその時刻に反映される */
+  const [reviewScheduling, setReviewScheduling] = useState(false);
+  const [reviewScheduleAt, setReviewScheduleAt] = useState(defaultScheduleValue);
+  const refreshScheduled = useRefreshScheduledFeedback();
   const [aiCheckBusy, setAiCheckBusy] = useState(false);
   const [aiReviewBusy, setAiReviewBusy] = useState(false);
   /** 版の履歴の開閉。既定は畳んでおく（本文が長いと詳細が読みにくくなる） */
@@ -361,21 +374,40 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
       const targetLabel = detailDoc.title
         ? `${detailDoc.title}（${detailDoc.type}）`
         : `${detailDoc.universityName} ${detailDoc.type}`;
+      const feedbackBody = {
+        type: "document",
+        targetId: detailDoc.id,
+        targetLabel,
+        message,
+        reference: {
+          kind: "document",
+          label: targetLabel,
+          href: `/student/documents/${detailDoc.id}`,
+        },
+      };
+      // 予約: コメントと状態の変更をまとめて、予約時刻にサーバーが反映する
+      if (reviewScheduling && state !== "cleared") {
+        const scheduledAt = new Date(reviewScheduleAt).toISOString();
+        await postCoachFeedback(studentId, {
+          ...feedbackBody,
+          scheduledAt,
+          documentReview: { documentId: detailDoc.id, state },
+        });
+        await refreshScheduled(studentId);
+        setReviewMsg("");
+        void reviewDraft.clearDraft();
+        setReviewScheduling(false);
+        setReviewOpen(false);
+        toast.success(
+          `${state === "approved" ? "承認" : "差し戻し"}を${formatScheduledAt(scheduledAt)}に予約しました`,
+        );
+        return;
+      }
       // 1) コメントを送信（チャット＋通知）
       await authFetch(`/api/admin/students/${studentId}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "document",
-          targetId: detailDoc.id,
-          targetLabel,
-          message,
-          reference: {
-            kind: "document",
-            label: targetLabel,
-            href: `/student/documents/${detailDoc.id}`,
-          },
-        }),
+        body: JSON.stringify(feedbackBody),
       });
       // 2) レビュー状態を更新
       const res = await authFetch(
@@ -406,8 +438,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
             ? "レビュー状態を取り消しました"
             : "差し戻しました",
       );
-    } catch {
-      toast.error("処理に失敗しました");
+    } catch (e) {
+      toast.error(
+        reviewScheduling && e instanceof Error ? e.message : "処理に失敗しました",
+      );
     } finally {
       setReviewBusy(null);
     }
@@ -1076,7 +1110,16 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     placeholder="コメント（差し戻しは必須・承認は任意）。生徒のチャットに届きます。"
                     className="min-h-[10rem] resize-y text-sm"
                   />
-                  <div className="flex gap-2">
+                  {reviewScheduling && (
+                    <div className="bg-muted/50 flex items-center gap-2 rounded-md border px-2 py-1.5">
+                      <Clock className="text-muted-foreground size-4 shrink-0" />
+                      <ScheduleTimeInput
+                        value={reviewScheduleAt}
+                        onChange={setReviewScheduleAt}
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       className="gap-1"
@@ -1088,7 +1131,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                       ) : (
                         <CheckCircle2 className="size-3.5" />
                       )}
-                      承認
+                      {reviewScheduling ? "承認を予約" : "承認"}
                     </Button>
                     <Button
                       size="sm"
@@ -1102,9 +1145,9 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                       ) : (
                         <RotateCcw className="size-3.5" />
                       )}
-                      差し戻し
+                      {reviewScheduling ? "差し戻しを予約" : "差し戻し"}
                     </Button>
-                    {detailDoc.review?.state && (
+                    {detailDoc.review?.state && !reviewScheduling && (
                       <Button
                         size="sm"
                         variant="ghost"
@@ -1120,7 +1163,23 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                         取り消し
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant={reviewScheduling ? "secondary" : "ghost"}
+                      className="ml-auto gap-1"
+                      aria-pressed={reviewScheduling}
+                      disabled={reviewBusy !== null}
+                      onClick={() => setReviewScheduling((v) => !v)}
+                    >
+                      <Clock className="size-3.5" />
+                      予約
+                    </Button>
                   </div>
+
+                  <ScheduledFeedbackList
+                    studentId={studentId}
+                    targetId={detailDoc.id}
+                  />
 
                   {/* 操作履歴。review は最新状態しか持たないので、
                       いつ誰がどのコメントで承認/差し戻したかはここでしか追えない */}

@@ -106,6 +106,8 @@ export interface FeedbackCreateRequest {
   reference?: ChatReference;
   /** 付けるとこの時刻（ISO）に送る予約になる */
   scheduledAt?: string;
+  /** 予約と一緒に、その時刻に書類のレビュー状態も変える */
+  documentReview?: ScheduledDocumentReview;
 }
 
 /** スレッド表示用: AdminFeedback に送信者種別を付与したもの */
@@ -151,6 +153,12 @@ export interface BroadcastRequest {
   audience: BroadcastAudience;
 }
 
+/** 予約時刻に一緒に反映する書類のレビュー（承認/差し戻し） */
+export interface ScheduledDocumentReview {
+  documentId: string;
+  state: "approved" | "revision_requested";
+}
+
 /** 予約送信の状態。pending の間だけ取り消せる */
 export type ScheduledFeedbackStatus = "pending" | "sent" | "canceled";
 
@@ -167,6 +175,7 @@ export interface ScheduledFeedback {
   attachments?: ChatAttachment[];
   reference?: ChatReference;
   quote?: ChatQuote;
+  documentReview?: ScheduledDocumentReview;
   createdBy: string;
   createdByName: string;
   /** ISO 8601（UTC） */

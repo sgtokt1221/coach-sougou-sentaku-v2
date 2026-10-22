@@ -176,7 +176,7 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - Web Push の OS 通知は前面・背面とも SW の `push` で出す。アプリを操作中でも出し、省くのは行き先の画面を操作中（`WindowClient.focused` かつ URL のパスが一致）のときだけ。ページ側はトーストを出さず SWR の再検証だけ（操作中をトーストに任せていたら、スマホで「使っている間は通知が来ない」になった。iOS は表示しない push が続くと購読を取り消すこともある）。判定は `scripts/verify-push-sw.ts`。通知の `tag` は送信ごとに一意にする（同じ tag は OS が上書きし、3通来ても1通しか見えない）
 - **FCMトークンは端末（ブラウザ）を指す。利用者ではない。** 同じ端末で別アカウントにログインすると同じトークンが両方の uid に登録され、A宛の通知がいまBが使っている端末に出る（本番で1トークンが生徒3人に跨っていた。送信ログは成功のままなので気づけない）。登録時に持ち主台帳 `fcmTokenOwners/{sha256(token)}` で前の持ち主の登録を消し、ログアウト時は必ず登録解除と `deleteToken()` を行う（サインアウトの**前**。後ではIDトークンが取れない）。点検は `scripts/audit-fcm-tokens.ts`。
 - SWR のキャッシュは `SwrCacheProvider` の独自 provider が持つ。`import { mutate } from "swr"` の mutate はそこへ届かず、読み直しが黙って起きない。`useSWRConfig().mutate` か `useAuthSWR` の戻り値の mutate を使う。
-- コーチ→生徒の1通（チャット・FB）を届ける処理は `deliverCoachFeedback`（`src/lib/chat/coach-feedback.ts`）だけにする。予約送信（`users/*/scheduledFeedback`）は Cloud Tasks が予約時刻に `/api/cron/scheduled-feedback` を叩いて同じ関数で届ける。`CLOUD_TASKS_QUEUE` と `CRON_SECRET` が無ければ予約は 503 で断る。
+- コーチ→生徒の1通（チャット・FB）を届ける処理は `deliverCoachFeedback`（`src/lib/chat/coach-feedback.ts`）だけにする。予約送信（`users/*/scheduledFeedback`）は Cloud Tasks が予約時刻に `/api/cron/scheduled-feedback` を叩いて同じ関数で届ける。`CLOUD_TASKS_QUEUE` と `CRON_SECRET` が無ければ予約は 503 で断る。書類の承認/差し戻しを予約するときは `documentReview` を付け、状態の変更も配信時に `applyDocumentReview` で行う（先に状態だけ変えると、コメントより前に生徒へ見える）。
 - **背面の PWA はページ側の判定が動かない**。ウィンドウは残ったままページだけ凍結され、FCM は「見えている」と判断して転送するため、ページに任せるとどこにも出ない。操作中かどうかは `WindowClient.focused` で見る（`visibilityState` は凍結中も visible のことがあり当てにならない）
 
 ## 8. Current State / Known Issues

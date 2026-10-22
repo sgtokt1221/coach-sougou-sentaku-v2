@@ -206,11 +206,37 @@ export async function POST(
       if ("error" in checked) {
         return NextResponse.json({ error: checked.error }, { status: 400 });
       }
+      // 書類レビュー（承認/差し戻し）を一緒に予約する場合は、その生徒の書類か確かめる
+      const review = body.documentReview;
+      if (review !== undefined) {
+        const docSnap =
+          typeof review?.documentId === "string" && review.documentId
+            ? await adminDb.doc(`documents/${review.documentId}`).get()
+            : null;
+        if (
+          !["approved", "revision_requested"].includes(review?.state) ||
+          !docSnap?.exists ||
+          docSnap.data()?.userId !== id
+        ) {
+          return NextResponse.json(
+            { error: "予約するレビューが不正です" },
+            { status: 400 }
+          );
+        }
+      }
       const scheduled = await createScheduledFeedback(adminDb, {
         studentId: id,
         senderUid: uid,
         payload,
         scheduledAt: checked.at,
+        ...(review
+          ? {
+              documentReview: {
+                documentId: review.documentId,
+                state: review.state,
+              },
+            }
+          : {}),
       });
       return NextResponse.json({ scheduled }, { status: 201 });
     }

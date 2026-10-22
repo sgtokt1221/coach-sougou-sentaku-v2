@@ -18,7 +18,7 @@ function toLocalInputValue(d: Date): string {
 }
 
 /** 初期値は30分以上先の、次のちょうどの時刻 */
-function defaultScheduleValue(): string {
+export function defaultScheduleValue(): string {
   const d = new Date(Date.now() + 30 * 60 * 1000);
   d.setMinutes(0, 0, 0);
   d.setHours(d.getHours() + 1);
@@ -33,6 +33,28 @@ export function formatScheduledAt(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** 予約時刻の入力欄（datetime-local）。今から30日先まで */
+export function ScheduleTimeInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const now = new Date();
+  const max = new Date(now.getTime() + 30 * 86400_000);
+  return (
+    <Input
+      type="datetime-local"
+      value={value}
+      min={toLocalInputValue(now)}
+      max={toLocalInputValue(max)}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-8 w-auto min-w-0 flex-1 text-base sm:text-sm"
+    />
+  );
 }
 
 /**
@@ -52,19 +74,10 @@ export function ScheduleTimeRow({
   onClose: () => void;
 }) {
   const [value, setValue] = useState(defaultScheduleValue);
-  const now = new Date();
-  const max = new Date(now.getTime() + 30 * 86400_000);
   return (
     <div className="bg-muted/50 flex flex-wrap items-center gap-2 rounded-md border px-2 py-1.5">
       <Clock className="text-muted-foreground size-4 shrink-0" />
-      <Input
-        type="datetime-local"
-        value={value}
-        min={toLocalInputValue(now)}
-        max={toLocalInputValue(max)}
-        onChange={(e) => setValue(e.target.value)}
-        className="h-8 w-auto min-w-0 flex-1 text-base sm:text-sm"
-      />
+      <ScheduleTimeInput value={value} onChange={setValue} />
       <Button
         type="button"
         size="sm"
@@ -173,6 +186,11 @@ export function ScheduledFeedbackList({
           <span className="text-primary shrink-0 font-medium">
             {formatScheduledAt(s.scheduledAt)}
           </span>
+          {s.documentReview && (
+            <span className="shrink-0 font-medium">
+              {s.documentReview.state === "approved" ? "承認" : "差し戻し"}
+            </span>
+          )}
           <span className="text-muted-foreground min-w-0 flex-1 truncate">
             {stripRichText(s.message).trim() ||
               s.reference?.label ||

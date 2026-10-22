@@ -8,12 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
-import { FieldValue } from "firebase-admin/firestore";
-import type {
-  DocumentReview,
-  DocumentReviewHistoryEntry,
-  DocumentReviewState,
-} from "@/lib/types/document";
+import { applyDocumentReview } from "@/lib/documents/apply-review";
+import type { DocumentReviewState } from "@/lib/types/document";
 
 const REVIEW_STATES: DocumentReviewState[] = ["approved", "revision_requested"];
 /** 承認/差し戻しの取り消し。review を消して未レビューへ戻す */
@@ -62,61 +58,17 @@ export async function POST(
     });
     if (denied) return denied;
 
-    // 書類はグローバル。userId が対象生徒と一致することを確認。
-    const ref = adminDb.doc(`documents/${docId}`);
-    const snap = await ref.get();
-    if (!snap.exists || snap.data()?.userId !== studentId) {
+    const result = await applyDocumentReview(adminDb, {
+      studentId,
+      docId,
+      state,
+      callerUid,
+      comment: body.comment,
+    });
+    if (!result) {
       return NextResponse.json({ error: "書類が見つかりません" }, { status: 404 });
     }
-
-    // 承認者の表示名
-    let byName = "コーチ";
-    try {
-      const me = await adminDb.doc(`users/${callerUid}`).get();
-      byName = (me.data()?.displayName as string | undefined)?.trim() || byName;
-    } catch {
-      /* noop */
-    }
-
-    const at = new Date().toISOString();
-    // 何をしたかは履歴に必ず残す。review は最新状態しか持たないため、
-    // 取り消すと「誰がいつ承認していたか」が消えてしまう。
-    const entry: DocumentReviewHistoryEntry = {
-      action: state,
-      by: callerUid,
-      byName,
-      at,
-      ...(body.comment?.trim() ? { comment: body.comment.trim() } : {}),
-    };
-
-    if (state === CLEAR) {
-      await ref.set(
-        {
-          review: FieldValue.delete(),
-          reviewHistory: FieldValue.arrayUnion(entry),
-          updatedAt: at,
-        },
-        { merge: true },
-      );
-      return NextResponse.json({ cleared: true, entry });
-    }
-
-    const review: DocumentReview = {
-      state: state as DocumentReviewState,
-      by: callerUid,
-      byName,
-      at,
-    };
-    await ref.set(
-      {
-        review,
-        reviewHistory: FieldValue.arrayUnion(entry),
-        updatedAt: at,
-      },
-      { merge: true },
-    );
-
-    return NextResponse.json(review);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Document review error:", error);
     return NextResponse.json(
