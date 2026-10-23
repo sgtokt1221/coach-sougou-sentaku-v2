@@ -283,7 +283,13 @@ export const AI_PROMPT_VERSIONS = {
     //      - 同じ弱点が3回以上続く生徒には、原則を言い直さず、書く前・書いた後の小さな手順を示す
     // v35（2026-10-12）: 今回の課題を2文（いちばんの課題・指針）にし、長所は goodPoints として
     //      結果画面の別カード（今回の長所）に出す。v33・v34 の3文目までの答案は、画面で1文目を外す
-    promptVersion: "essay-review-v35",
+    // v36（2026-10-24）: 1文ずつの点検（sentence-check-judge.ts）が正しい文を崩れた文に数えていた。
+    //      本体のプロンプトは変えていない。本番の答案で3文をねじれとし（理由に「許容範囲だが」と
+    //      自分で書いたものを含む）、表現力が4点に抑えられ、弱点DBにも積まれた。主語と述語を
+    //      抜き出させ、書いた後で isError を判定させる自己検証を足した（矛盾の incompatible と同じ形）。
+    //      scripts/eval-sentence-check.ts（reps=3）: N6 のねじれ3/3 は維持、S0 の誤検出0のまま、
+    //      誤りでない本番の3文を挙げた数 2.67 → 0.67
+    promptVersion: "essay-review-v36",
     schemaVersion: "essay-review-output-v5",
   },
   interviewScore: {

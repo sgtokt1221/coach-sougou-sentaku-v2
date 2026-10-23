@@ -240,7 +240,12 @@ export function mergeNaturalness(
       // 既存の赤ペンが文の一部だけを引用しているときは、文全体の直しに広げる
       hit.original = it.original;
       hit.suggestion = it.rewrite;
-      hit.reason = `${hit.reason} ${it.problem}`.trim();
+      // 誤りの説明は直し先が変わっても生きるのでつなげる。言い回しの赤ペンは前の理由が
+      // 別の言い換え語を名指ししており、「『回答』が適切」の理由に「提案」の直しが付いた（2026-10-23）
+      hit.reason =
+        hit.type === "grammar" || hit.type === "typo"
+          ? `${hit.reason} ${it.problem}`.trim()
+          : it.problem;
       continue;
     }
     added.push({

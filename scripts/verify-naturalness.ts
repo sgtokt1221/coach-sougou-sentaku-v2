@@ -100,6 +100,36 @@ const hintsOf = (text: string, writer: "essay" | "document" = "essay") =>
   assert.equal(mergeNaturalness(merged, null, text, 1).length, 1);
 }
 
+// 言い回しの赤ペンを置き換えるときは、理由も自然さ側に差し替える（つなげると
+// 前の理由が名指しした言い換え語と、直し先の語が食い違う）
+{
+  const text = "AIの考えを参考にする。";
+  const [merged] = mergeNaturalness(
+    [
+      {
+        location: "",
+        original: "AIの考えを参考にする。",
+        suggestion: "AIの回答を参考にする。",
+        type: "expression",
+        reason: "「考え」より「回答」のほうが適切です。",
+      },
+    ],
+    [
+      {
+        original: "AIの考えを参考にする。",
+        location: "第1段落 1文目",
+        kind: "wording",
+        problem: "「AIの考え」は不自然。「提案」とする。",
+        rewrite: "AIの提案を参考にする。",
+      },
+    ],
+    text,
+    16
+  );
+  assert.equal(merged.suggestion, "AIの提案を参考にする。");
+  assert.equal(merged.reason, "「AIの考え」は不自然。「提案」とする。");
+}
+
 // 既存の直しが文を分けているのに、自然さ側が分けていなければ差し替えない
 {
   const text = "AはBであり、CはDであるので、EはFだ。";

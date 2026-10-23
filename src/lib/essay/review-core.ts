@@ -531,7 +531,8 @@ ${input.ocrText}
     ),
     priorityTarget: detectPriorityTarget(
       parsed.feedback.priorityImprovement,
-      languageCorrections
+      languageCorrections,
+      [...parsed.feedback.goodPoints, ...parsed.feedback.improvements]
     ),
     apAlignmentAssessable: hasAdmissionPolicy,
     scoreMaximum,
@@ -728,11 +729,16 @@ function isRewrite(suggestion: string, original: string): boolean {
  */
 export function detectPriorityTarget(
   priorityImprovement: string,
-  corrections: { original: string }[]
+  corrections: { original: string }[],
+  /** 良いところと改善点の文。ここにも出てくる引用は、赤ペンを指す根拠にしない */
+  otherFeedback: string[] = []
 ): "improvement" | "language" {
   const quotes = priorityImprovement.match(/「([^」]{6,})」/g) ?? [];
   for (const raw of quotes) {
     const quote = raw.slice(1, -1);
+    // 「今回は『◯◯』を理由の中心に据えて」と良いところを引くと、その文がたまたま
+    // 赤ペンの対象でも課題が赤ペン扱いになり、印が良い文の上に赤で付いた（2026-10-23）
+    if (otherFeedback.some((t) => t.includes(quote))) continue;
     if (corrections.some((c) => c.original.includes(quote))) return "language";
   }
   return "improvement";

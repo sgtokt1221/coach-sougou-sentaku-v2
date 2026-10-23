@@ -41,6 +41,17 @@ assert.equal(
   "improvement",
 );
 
+// 良いところ・改善点にも出てくる引用は赤ペンを指す根拠にしない
+// （良い文を「今回は『◯◯』を中心に」と引いたら、その文が赤ペンの対象でもあった）
+assert.equal(
+  detectPriorityTarget(
+    "今回は「オンライン授業が行われることによって」を理由の中心に据えて書き直そう。",
+    corrections,
+    ["「オンライン授業が行われることによって」は、この設問ならではの具体例です。"],
+  ),
+  "improvement",
+);
+
 // 赤ペンが無い答案でも落ちない
 assert.equal(detectPriorityTarget("構成を直しましょう。", []), "improvement");
 
