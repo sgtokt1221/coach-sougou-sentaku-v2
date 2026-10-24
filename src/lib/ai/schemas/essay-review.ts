@@ -4,14 +4,6 @@ const boundedText = z.string().max(2000);
 const shortText = z.string().max(500);
 
 export const EssayReviewOutputSchema = z.object({
-  scores: z.object({
-    structure: z.number().int().min(0).max(10),
-    logic: z.number().int().min(0).max(10),
-    expression: z.number().int().min(0).max(10),
-    apAlignment: z.number().int().min(0).max(10),
-    responsiveness: z.number().int().min(0).max(10),
-    reasoningMaturity: z.number().int().min(0).max(10),
-  }),
   feedback: z.object({
     // 件数の上限はスキーマでは緩めに取り、表示件数はサーバー側で絞る。
     // 上限を厳しくすると「助言を出しすぎた」だけで構造化出力の検証に失敗し、
@@ -149,6 +141,16 @@ export const EssayReviewOutputSchema = z.object({
      * 構造化出力はスキーマの順に生成されるので、最後に置かないと総合できない
      */
     priorityImprovement: boundedText,
+  }),
+  // 点は最後に書かせる（v37）。先に点を出すと、後から書く設問の判定・欠点の拾い出しが
+  // 点に合わせた後付けになる（今回の課題を最後に置いた v29 と同じ理由）
+  scores: z.object({
+    structure: z.number().int().min(0).max(10),
+    logic: z.number().int().min(0).max(10),
+    expression: z.number().int().min(0).max(10),
+    apAlignment: z.number().int().min(0).max(10),
+    responsiveness: z.number().int().min(0).max(10),
+    reasoningMaturity: z.number().int().min(0).max(10),
   }),
 });
 

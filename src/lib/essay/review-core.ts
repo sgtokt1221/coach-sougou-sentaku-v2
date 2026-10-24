@@ -76,6 +76,11 @@ export interface EssayReviewCoreInput {
     essayText: string;
     /** 前回の「今回の課題」。これが直ったかを previousFocusCheck で判定する */
     focus: string;
+    /**
+     * 前回の軸ごとの点。渡さないと、前回の欠点を直しても同じ点のまま据え置かれ、
+     * 書き直しの伸びが点に出ない（v37）
+     */
+    scores?: Partial<Record<EssayScoreAxis, number>>;
   };
 }
 
@@ -340,18 +345,19 @@ ${input.ocrText}
   const contentCap = Math.min(baseContentCap, sourceCaps.content);
   /**
    * 字数。プロンプトだけで指示していたため、モデルが従わないと素通りしていた。
-   *   30%未満: 論として成立していない → 内容の4軸（構成・論理・回答力・成熟度）を3点以下。
-   *            主題の判定だけに任せると、白紙同然の答案が「主題どおり」と判定された回に
-   *            回答力4点になっていた（v27 の検証 N1）
-   *   80%未満: 論を展開しきれていない → 構成・論理を6点以下
+   *   50%未満: 論として成立していない → 内容の4軸（構成・論理・回答力・成熟度）を3点以下。
+   *            v36 までは30%で区切っており、800字に323字（40%）の答案が27点と、
+   *            8割書いた答案より高くなっていた。主題の判定だけに任せると、白紙同然の
+   *            答案が「主題どおり」と判定された回に回答力4点になっていた（v27 の検証 N1）
+   *   70%未満: 構成・論理を5点以下 / 80%未満: 構成・論理を6点以下
    *   100%超: 制限字数の超過。本番では採点対象外や大幅減点になることが多い → 構成4点以下
    * 口頭試問型は小問ごとに字数があり、合計の字数で判定できないので外す。
    */
   const lengthApplies = input.questionType !== "oral_exam";
-  const blankCap = lengthApplies && fillRate != null && fillRate < 30 ? 3 : 10;
+  const blankCap = lengthApplies && fillRate != null && fillRate < 50 ? 3 : 10;
   const shortCap = Math.min(
     blankCap,
-    lengthApplies && fillRate != null && fillRate < 80 ? 6 : 10
+    !lengthApplies || fillRate == null ? 10 : fillRate < 70 ? 5 : fillRate < 80 ? 6 : 10
   );
   const overCap = lengthApplies && fillRate != null && fillRate > 100 ? 4 : 10;
   const structureCap = Math.min(contentCap, shortCap, overCap);
@@ -601,6 +607,21 @@ export function sentenceCheckFields(
       source,
     },
   };
+}
+
+/**
+ * 前回の答案の軸ごとの点（previousAttempt.scores に渡す）。今の5軸だけを取り出す。
+ * 旧軸（独自性）で採点された答案は軸が揃わないので渡さない
+ */
+export function previousAxisScores(
+  raw: object | null | undefined
+): Partial<Record<EssayScoreAxis, number>> | undefined {
+  const scores = raw as Record<string, unknown> | null | undefined;
+  if (!scores || typeof scores.responsiveness !== "number") return undefined;
+  const axes: EssayScoreAxis[] = ["structure", "logic", "expression", "responsiveness", "reasoningMaturity"];
+  return Object.fromEntries(
+    axes.filter((k) => typeof scores[k] === "number").map((k) => [k, scores[k] as number])
+  );
 }
 
 /** 赤ペンに並べる上限。本体の5件に、1文ずつの点検の崩れと自然さの点検を足す */

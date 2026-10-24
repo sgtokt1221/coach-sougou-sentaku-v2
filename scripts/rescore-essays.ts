@@ -36,8 +36,10 @@ config({ path: ".env.local" });
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "../src/lib/firebase/admin";
 import {
+  previousAxisScores,
   reviewEssayCore,
   sentenceCheckFields,
+  type EssayReviewCoreInput,
 } from "../src/lib/essay/review-core";
 import { isPartialEssay } from "../src/lib/essay/derive-weakness-issues";
 import { prepareAdmissionPolicy } from "../src/lib/ai/admission-policy";
@@ -177,7 +179,7 @@ async function rescoreSince(since: string) {
     if (!weaknessCache.has(e.userId))
       weaknessCache.set(e.userId, await weaknessListOf(e.userId));
     // 書き直しなら前回の答案と課題。親も採点し直した場合は新しい課題を使う
-    let previousAttempt: { essayText: string; focus: string } | undefined;
+    let previousAttempt: EssayReviewCoreInput["previousAttempt"];
     if (e.parentEssayId) {
       const parent = done.get(e.parentEssayId);
       const pdata = parent
@@ -188,7 +190,9 @@ async function rescoreSince(since: string) {
         : (pdata?.ocrText as string | undefined);
       const pFeedback = parent ? parent.feedback : pdata?.feedback;
       const focus = pFeedback ? pickFocus(pFeedback)?.text : null;
-      if (pText && focus) previousAttempt = { essayText: pText, focus };
+      const pScores = previousAxisScores(parent ? parent.scores : pdata?.scores);
+      if (pText && focus)
+        previousAttempt = { essayText: pText, focus, ...(pScores ? { scores: pScores } : {}) };
     }
     try {
       const out = await reviewEssayCore({

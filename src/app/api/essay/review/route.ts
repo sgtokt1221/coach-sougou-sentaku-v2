@@ -28,6 +28,7 @@ import { computeRetryComparison } from "@/lib/essay/retry-comparison";
 import {
   reviewEssayCore,
   feedbackWithDerivedIssues,
+  previousAxisScores,
   sentenceCheckFields,
   EssayReviewParseError,
 } from "@/lib/essay/review-core";
@@ -331,6 +332,7 @@ export async function POST(request: NextRequest) {
               previousAttempt: {
                 essayText: parentSnapshot.ocrText,
                 focus: parentSnapshot.focus,
+                scores: previousAxisScores(parentSnapshot.scores),
               },
             }
           : {}),
