@@ -404,6 +404,13 @@ export interface EssayFeedback {
   knowledgeInsights?: KnowledgeInsights;
   /** 口頭試問型の小問ごとの判定（oral_exam で判定が取れたときのみ） */
   oralExamInsights?: OralExamInsights;
+  /**
+   * ブラッシュアップ版（口頭試問型は「問N」の見出し付きの模範解答）。
+   * 本人が結果画面で「作る」を押したときに /api/essay/[id]/brushup が作って保存する
+   */
+  brushedUpText?: string;
+  /** ブラッシュアップ版で原文に無い語が増えたもの（記録用。消さずに残す） */
+  brushedUpAddedFacts?: string[];
 }
 
 /**

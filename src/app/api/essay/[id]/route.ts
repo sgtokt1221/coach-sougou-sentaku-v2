@@ -137,6 +137,8 @@ export async function GET(
         repeatedIssues: feedback.repeatedIssues ?? [],
         // 書き直しのとき、前回の課題が直ったか（v28〜）
         previousFocusCheck: feedback.previousFocusCheck ?? null,
+        // ブラッシュアップ版（作ったものだけ。無ければ結果画面に「作る」を出す）
+        brushedUpText: feedback.brushedUpText ?? null,
         reportInsights: feedback.reportInsights ?? null,
         // 口頭試問型の知識判定。ここに足さないと、保存はされているのに
         // 画面から消える（許可リスト漏れは沈黙失敗になる）

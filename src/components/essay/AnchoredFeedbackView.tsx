@@ -468,7 +468,7 @@ export function AnchoredFeedbackView({
                 ) : (
                   <p className="text-sm font-semibold">あなたの答案</p>
                 )}
-                {!source && <FeedbackLegend />}
+                {!source && <FeedbackLegend groups={markedGroups(model)} />}
               </div>
               {!source && anchorsPending && (
                 <p className="text-muted-foreground text-xs">
@@ -604,11 +604,24 @@ function SegmentText({
   );
 }
 
-/** 印の色の凡例 */
-export function FeedbackLegend() {
+/** 本文の印にあるまとまり（凡例に出すもの） */
+export function markedGroups(
+  model: AnchoredFeedbackModel
+): FeedbackAnchorGroup[] {
+  return GROUPS.map((g) => g.id).filter((id) =>
+    model.marked.some((m) => model.groupOf.get(m.key) === id)
+  );
+}
+
+/** 印の色の凡例。groups を渡すと、そのまとまりだけ出す（印に無い色を並べない） */
+export function FeedbackLegend({
+  groups,
+}: {
+  groups?: FeedbackAnchorGroup[];
+} = {}) {
   return (
     <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
-      {GROUPS.map((g) => (
+      {GROUPS.filter((g) => !groups || groups.includes(g.id)).map((g) => (
         <span key={g.id} className="inline-flex items-center gap-1">
           <span className={`size-2 rounded-full ${DOT_STYLE[g.id]}`} />
           {g.label}

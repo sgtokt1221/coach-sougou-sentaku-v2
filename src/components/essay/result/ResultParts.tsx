@@ -11,13 +11,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { RankBadge } from "@/components/shared/RankBadge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { CountUp, PopIn, Reveal } from "@/components/motion/Reveal";
 import { VERDICT_STYLE } from "@/components/essay/OralExamQuestionsCard";
 import { useAnchoredFeedback } from "@/components/essay/AnchoredFeedbackView";
@@ -52,6 +45,7 @@ export function ResultHero({
   chips,
   oral,
   footnote,
+  radar = true,
 }: {
   rank: ScoreRank;
   total: number;
@@ -69,8 +63,9 @@ export function ResultHero({
   }[];
   /** AP合致度など、合計に入らない参考の1行 */
   footnote?: ReactNode;
+  /** レーダーを出すか。ダイジェストでは出さず、詳細の「軸ごとの点」に出す */
+  radar?: boolean;
 }) {
-  const reduce = useReducedMotion();
   return (
     <div className="bg-card grid gap-3 rounded-2xl p-5 shadow-sm">
       <div className="flex items-center gap-5">
@@ -101,55 +96,7 @@ export function ResultHero({
         </div>
       </div>
 
-      <div className="h-[230px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={axes} outerRadius="72%">
-            <PolarGrid gridType="polygon" stroke="#e2e8f0" />
-            <PolarAngleAxis
-              dataKey="short"
-              // 頂点に軸名と点（0-10）を並べる
-              tick={(raw) => {
-                const p = raw as unknown as {
-                  x: number;
-                  y: number;
-                  textAnchor: "start" | "middle" | "end";
-                  payload: { value: string; index: number };
-                };
-                return (
-                  <text
-                    x={p.x}
-                    y={p.y}
-                    textAnchor={p.textAnchor}
-                    dominantBaseline="central"
-                    className="fill-slate-700 text-[13px] dark:fill-slate-200"
-                  >
-                    {p.payload.value}
-                    <tspan
-                      dx={4}
-                      className="fill-slate-400 font-semibold tabular-nums"
-                    >
-                      {axes[p.payload.index]?.value}
-                    </tspan>
-                  </text>
-                );
-              }}
-            />
-            <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
-            <Radar
-              dataKey="value"
-              stroke="#2563eb"
-              fill="#0ea5e9"
-              fillOpacity={0.22}
-              strokeWidth={2}
-              dot={{ r: 3, fill: "#2563eb", strokeWidth: 0 }}
-              isAnimationActive={!reduce}
-              animationBegin={350}
-              animationDuration={1100}
-              animationEasing="ease-out"
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-      </div>
+      {radar && <AxisRadar axes={axes} />}
 
       {(chips.length > 0 || footnote) && (
         <Reveal delay={1.1} y={6} className="flex flex-wrap items-center gap-2">
@@ -198,6 +145,62 @@ export function ResultHero({
   );
 }
 
+/** 軸ごとの点のレーダー。頂点に軸名と点（0-10）を並べる */
+export function AxisRadar({ axes }: { axes: RadarAxis[] }) {
+  const reduce = useReducedMotion();
+  return (
+    <div className="h-[230px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart data={axes} outerRadius="72%">
+          <PolarGrid gridType="polygon" stroke="#e2e8f0" />
+          <PolarAngleAxis
+            dataKey="short"
+            // 頂点に軸名と点（0-10）を並べる
+            tick={(raw) => {
+              const p = raw as unknown as {
+                x: number;
+                y: number;
+                textAnchor: "start" | "middle" | "end";
+                payload: { value: string; index: number };
+              };
+              return (
+                <text
+                  x={p.x}
+                  y={p.y}
+                  textAnchor={p.textAnchor}
+                  dominantBaseline="central"
+                  className="fill-slate-700 text-[13px] dark:fill-slate-200"
+                >
+                  {p.payload.value}
+                  <tspan
+                    dx={4}
+                    className="fill-slate-400 font-semibold tabular-nums"
+                  >
+                    {axes[p.payload.index]?.value}
+                  </tspan>
+                </text>
+              );
+            }}
+          />
+          <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+          <Radar
+            dataKey="value"
+            stroke="#2563eb"
+            fill="#0ea5e9"
+            fillOpacity={0.22}
+            strokeWidth={2}
+            dot={{ r: 3, fill: "#2563eb", strokeWidth: 0 }}
+            isAnimationActive={!reduce}
+            animationBegin={350}
+            animationDuration={1100}
+            animationEasing="ease-out"
+          />
+        </RadarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 /**
  * 今回の課題。1つだけ、答案のどの文に出ているかを引いて見せる。
  * 引用は答案の印の範囲から取る（AIの文面を答案に見せかけて作らない）。
@@ -228,7 +231,6 @@ export function FocusCard({
   oralExam?: OralExamQuestionSet | null;
 }) {
   const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
-  const fixes = useFixItems({ focus, text, feedback, anchors, oralExam });
   const quotes: string[] = [];
   for (const m of model.marked) {
     if (!focus.keys.includes(m.key)) continue;
@@ -239,37 +241,12 @@ export function FocusCard({
   }
   return (
     <div className="grid gap-2 rounded-2xl bg-amber-50 p-5 dark:bg-amber-950/30">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
-          今回の課題
-        </p>
-        {fixes.length > 0 && (
-          <Dialog>
-            <DialogTrigger
-              render={
-                <button
-                  type="button"
-                  className="flex min-h-9 items-center gap-1 rounded-full bg-rose-600 px-3 text-xs font-bold text-white hover:bg-rose-700"
-                >
-                  詳細
-                  <span className="rounded-full bg-white/25 px-1.5 tabular-nums">
-                    {fixes.length}
-                  </span>
-                </button>
-              }
-            />
-            <DialogContent className="gap-3 bg-rose-50 sm:max-w-lg dark:bg-rose-950">
-              <DialogHeader>
-                <DialogTitle className="text-rose-800 dark:text-rose-200">
-                  直すこと
-                </DialogTitle>
-              </DialogHeader>
-              <FixList items={fixes} />
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-      <p className="text-base leading-relaxed whitespace-pre-line">{focus.text}</p>
+      <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+        今回の課題
+      </p>
+      <p className="text-base leading-relaxed whitespace-pre-line">
+        {focus.text}
+      </p>
       {quotes.map((q) => (
         <p
           key={q}
@@ -339,24 +316,39 @@ const UNANCHORED_LABEL: Record<string, string> = {
   knowledge: "知識の誤り",
 };
 
-type FixItem = { label?: string; text: string };
+export type FixItem = {
+  label?: string;
+  text: string;
+  /** 答案の文（読みにくい文・誤字）。直し案は出さない */
+  quote?: string;
+};
+
+/** 赤ペンのうち「直すこと」に出すもの。言い回しの好み（expression 等）は出さない */
+const CORRECTION_LABEL: Partial<Record<string, string>> = {
+  grammar: "読みにくい文",
+  typo: "誤字",
+};
 
 /**
- * 今回の課題の内訳（直すこと）。改善点と、本文に印を付けられなかった指摘。
- * 文の直し（赤ペン）は答案の印で読むのでここには出さない。
+ * 直すこと。改善点・本文に印を付けられなかった指摘と、崩れた文・誤字。
+ * 赤ペン（消し線と書き換え）は分かりにくいので出さず、崩れた文は答案の文と理由だけ出す
+ * （2026-10-25。表現の点を下げた理由が画面から消えないように残す）。
+ * feedback は画面用（赤ペンを外したもの）、corrections は保存されている赤ペン。
  */
-function useFixItems({
+export function useFixItems({
   focus,
   text,
   feedback,
   anchors,
   oralExam,
+  corrections = [],
 }: {
   focus: EssayFocus | null;
   text: string;
   feedback: Partial<EssayFeedback>;
   anchors: FeedbackAnchors | null;
   oralExam?: OralExamQuestionSet | null;
+  corrections?: { original: string; type: string; reason: string }[];
 }): FixItem[] {
   const model = useAnchoredFeedback({ text, feedback, anchors, oralExam });
   const skip = new Set(focus?.keys ?? []);
@@ -377,10 +369,14 @@ function useFixItems({
     }
     items.push({ label: UNANCHORED_LABEL[item.kind], text: item.text });
   }
+  for (const c of corrections) {
+    const label = CORRECTION_LABEL[c.type];
+    if (label) items.push({ label, text: c.reason, quote: c.original });
+  }
   return items;
 }
 
-function FixList({ items }: { items: FixItem[] }) {
+export function FixList({ items }: { items: FixItem[] }) {
   return (
     <ol className="grid gap-2">
       {items.map((item, i) => (
@@ -395,6 +391,11 @@ function FixList({ items }: { items: FixItem[] }) {
             {item.label && (
               <span className="mr-1.5 rounded bg-rose-100 px-1.5 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-900/50 dark:text-rose-200">
                 {item.label}
+              </span>
+            )}
+            {item.quote && (
+              <span className="bg-muted/60 my-1 block rounded-lg px-2.5 py-1.5 text-sm">
+                {item.quote}
               </span>
             )}
             {item.text}

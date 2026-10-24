@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, RotateCcw, MessageSquare } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
+  MessageSquare,
+} from "lucide-react";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import type {
   EssayInlineComment,
@@ -15,8 +21,6 @@ import type {
   PreviousFocusCheck,
   EssayFeedback as SharedEssayFeedback,
 } from "@/lib/types/essay";
-import { ESSAY_SCORE_WEIGHTS } from "@/lib/types/essay";
-import { RetryComparisonCard } from "@/components/essay/RetryComparison";
 import type {
   GrowthEvent,
   QuantitativeAnalysis,
@@ -25,23 +29,16 @@ import type {
   TaskFulfillment,
   ClaimCheck,
 } from "@/lib/types/essay";
-import { getRankFromPercentage, getScorePercentage } from "@/lib/score-rank";
-import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
 import {
-  FocusCard,
-  NextTimeCard,
-  PreviousFocusCard,
-  StrengthCard,
-  ResultHero,
-} from "@/components/essay/result/ResultParts";
+  BrushupSection,
+  EssayDetail,
+  EssayDigest,
+} from "@/components/essay/result/EssayResultSections";
 import { Reveal } from "@/components/motion/Reveal";
 import { ResultLoading } from "@/components/motion/ResultLoading";
 import { motion } from "framer-motion";
-import { essayResultKind, pickFocus } from "@/lib/essay/result-focus";
-import { AnchoredFeedbackView } from "@/components/essay/AnchoredFeedbackView";
+import { essayResultKind } from "@/lib/essay/result-focus";
 import { useEssayFeedbackAnchors } from "@/hooks/useEssayFeedbackAnchors";
-import { sourceEngagementLabel } from "@/lib/essay/source-engagement";
-import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 
 interface EssayScores {
   structure: number;
@@ -106,6 +103,8 @@ interface EssayFeedback {
   oralExamInsights?: OralExamInsights | null;
   apAlignmentAssessable?: boolean;
   scoreMaximum?: number;
+  /** ブラッシュアップ版（作ったものだけ） */
+  brushedUpText?: string | null;
 }
 
 interface EssayResult {
@@ -146,6 +145,9 @@ export default function EssayResultPage() {
   const [result, setResult] = useState<EssayResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** 詳細を開いたか。既定はダイジェストだけ（点と課題を先に読ませる） */
+  const [detailOpen, setDetailOpen] = useState(false);
+  const detailRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -239,77 +241,10 @@ export default function EssayResultPage() {
     );
   }
 
-  /**
-   * 合計はサーバーが計算した値を使う。画面で足し直すと、軸構成が変わった
-   * ときにサーバーとずれる（v7 で AP が合計外になり、議論の成熟度が入った）。
-   */
-  const totalScore = result.scores.total;
-  const scoreMaximum = result.feedback.scoreMaximum ?? 50;
-  /** 次のランクまでの差と、その差を埋めるのに一番効く軸 */
-  const nextStep = buildNextStepHint(result.scores, scoreMaximum);
-  const apAlignmentAssessable = result.feedback.apAlignmentAssessable !== false;
-
-  const percentage = getScorePercentage(totalScore, scoreMaximum);
-  const rank = getRankFromPercentage(percentage);
-
-  /** 口頭試問型（小問集合）。答案は問ごとに並べ、ランクの下に問ごとの判定を出す */
   const oralSet = result.oralExam ?? null;
-
-  // 合計に入る5軸。旧データに無い軸は描かない（0 として凹ませない）
-  // weight は合計50点の中での配点。軸の点は0-10で保存し、表示だけ配点へ換算する
-  // 軸の並びと旧データ（独自性）の扱いは essayScoreAxisRows に集約している
-  const radarData = essayScoreAxisRows(result.scores).map((row) => ({
-    subject: row.label,
-    short: row.short,
-    value: row.value,
-    weight: row.weight,
-  }));
-
-  /**
-   * 合計外の参考値。レーダーには載せない。
-   * APは合計に1点も入らないため、五角形に混ぜると合計を構成する軸と
-   * 同じ重みに見えてしまう（実際の合計への寄与は0）。数値は下の一覧に残す。
-   */
-  const referenceScores =
-    apAlignmentAssessable && typeof result.scores.apAlignment === "number"
-      ? [{ subject: "AP合致度", value: result.scores.apAlignment }]
-      : [];
-
-  const resultFeedback = result.feedback as Partial<SharedEssayFeedback>;
-  /**
-   * 答案の印に使う講評。v27 までの答案は良かったところ・改善点が多いので v28 と
-   * 同じ量（1件・3件）に切る。弱点は記録用なので印にしない（改善点と同じ箇所に重なる）
-   */
-  const feedbackForView: Partial<SharedEssayFeedback> = {
-    ...resultFeedback,
-    goodPoints: (resultFeedback.goodPoints ?? []).slice(0, 1),
-    improvements: (resultFeedback.improvements ?? []).slice(0, 3),
-    repeatedIssues: [],
-  };
+  const oralExam = result.questionType === "oral_exam" ? oralSet : null;
+  const feedback = result.feedback as Partial<SharedEssayFeedback>;
   const kind = essayResultKind(result.questionType, result.sourceText);
-  const focus = pickFocus(resultFeedback);
-  const engagement = result.feedback.reportInsights?.engagementLevel;
-  const criticalKnowledge = (
-    result.feedback.knowledgeInsights?.errors ?? []
-  ).filter((e) => e.severity === "critical").length;
-  const heroChips: { label: string; tone: "good" | "warn" | "bad" }[] = [];
-  if (engagement) {
-    heroChips.push({
-      label: sourceEngagementLabel(engagement),
-      tone:
-        engagement === "grounded"
-          ? "good"
-          : engagement === "shallow"
-            ? "warn"
-            : "bad",
-    });
-  }
-  if (criticalKnowledge > 0) {
-    heroChips.push({
-      label: `重大な知識の誤り ${criticalKnowledge}件`,
-      tone: "bad",
-    });
-  }
   const canRetry = result.status === undefined || result.status === "reviewed";
 
   /** 答案と切り替えて読む出題資料 */
@@ -328,194 +263,150 @@ export default function EssayResultPage() {
     });
   }
 
+  const retryButton = canRetry && (
+    <motion.button
+      type="button"
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => router.push(`/student/essay/new?retryFrom=${id}`)}
+      className="bg-primary text-primary-foreground flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm"
+    >
+      <RotateCcw className="size-4" />
+      書き直す
+    </motion.button>
+  );
+
+  const toggleDetail = () => {
+    const opening = !detailOpen;
+    setDetailOpen(opening);
+    if (opening) {
+      // 開いた詳細の頭へ送る（ボタンの下に開くので、そのままだと画面の外になる）
+      requestAnimationFrame(() =>
+        detailRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        })
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 pb-20 lg:pb-8">
-      <div className="mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-8">
-        {/* Header with elevated card design */}
-        <div className="mb-8">
-          <div className="mb-4 flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground transition-all hover:bg-white/60 hover:shadow-sm"
-              onClick={() => router.back()}
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-semibold tracking-tight text-slate-900 lg:text-2xl">
-                  小論文 添削結果
-                </h1>
-                {result.attemptNumber !== undefined &&
-                  result.attemptNumber >= 2 && (
-                    <Badge className="border-indigo-200 bg-indigo-100 text-indigo-800 hover:bg-indigo-100">
-                      第{result.attemptNumber}回チャレンジ
-                    </Badge>
-                  )}
-              </div>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {result.universityName} {result.facultyName}
-                {oralSet ? (
+      <div className="mx-auto max-w-3xl px-4 py-6 lg:px-6 lg:py-8">
+        <div className="mb-6 flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground transition-all hover:bg-white/60 hover:shadow-sm"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="size-4" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold tracking-tight text-slate-900 lg:text-2xl">
+                小論文 添削結果
+              </h1>
+              {result.attemptNumber !== undefined &&
+                result.attemptNumber >= 2 && (
+                  <Badge className="border-indigo-200 bg-indigo-100 text-indigo-800 hover:bg-indigo-100">
+                    第{result.attemptNumber}回チャレンジ
+                  </Badge>
+                )}
+            </div>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {result.universityName} {result.facultyName}
+              {oralSet ? (
+                <>
+                  <span className="mx-2 text-slate-300">•</span>
+                  <span className="font-medium text-slate-600">
+                    口頭試問型：{oralSet.theme}
+                  </span>
+                </>
+              ) : (
+                result.topic && (
                   <>
                     <span className="mx-2 text-slate-300">•</span>
                     <span className="font-medium text-slate-600">
-                      口頭試問型：{oralSet.theme}
+                      {result.topic}
                     </span>
                   </>
-                ) : (
-                  result.topic && (
-                    <>
-                      <span className="mx-2 text-slate-300">•</span>
-                      <span className="font-medium text-slate-600">
-                        {result.topic}
-                      </span>
-                    </>
-                  )
-                )}
-              </p>
-            </div>
+                )
+              )}
+            </p>
           </div>
         </div>
 
-        {/*
-          左（スマホでは上）に、ランク・レーダー・今回の課題（詳細で直すこと）・次回からの注意点。
-          右に答案・直すこと・書き直しへの導線。PC では左を止めておき、
-          課題を見ながら答案の印を追えるようにする。
-        */}
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
-          <div className="grid gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto">
-            <Reveal>
-              <ResultHero
-                rank={rank}
-                total={totalScore}
-                max={scoreMaximum}
-                axes={radarData.map((r) => ({
-                  short: r.short,
-                  value: r.value,
-                }))}
-                next={
-                  nextStep
-                    ? {
-                        rank: nextStep.gap.nextRank,
-                        needed: nextStep.gap.needed,
-                        headroom: headroomAxisLabel(nextStep.headroom.axis),
-                      }
-                    : null
-                }
-                chips={heroChips}
-                oral={
-                  oralSet
-                    ? oralSet.subQuestions.flatMap((q) => {
-                        const v =
-                          result.feedback.oralExamInsights?.subQuestions.find(
-                            (x) => x.no === q.no
-                          );
-                        return v
-                          ? [{ no: q.no, prompt: q.prompt, verdict: v.verdict }]
-                          : [];
-                      })
-                    : undefined
-                }
-                footnote={
-                  !apAlignmentAssessable ? (
-                    <span className="text-muted-foreground text-sm">
-                      AP未取得のため4軸で評価
-                    </span>
-                  ) : referenceScores.length > 0 ? (
-                    <span className="text-muted-foreground text-sm">
-                      AP合致度（参考）{referenceScores[0].value}/10
-                    </span>
-                  ) : undefined
+        <div className="grid gap-4">
+          <Reveal>
+            <EssayDigest
+              scores={result.scores}
+              feedback={feedback}
+              text={result.ocrText ?? ""}
+              anchors={feedbackAnchors}
+              oralExam={oralExam}
+              retryComparison={result.retryComparison}
+            />
+          </Reveal>
+
+          {/* 講師・管理者からのコメントは人が書いたものなので畳まない */}
+          {(result.inlineComments?.length ?? 0) > 0 && (
+            <Card className="border-teal-200 bg-teal-50/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base text-teal-800">
+                  <MessageSquare className="size-5" />
+                  講師・管理者からのコメント
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CommentableEssayText
+                  text={result.ocrText ?? ""}
+                  comments={result.inlineComments ?? []}
+                  mode="view"
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          <Reveal delay={0.5} className="grid gap-3">
+            {retryButton}
+            <Button
+              variant="outline"
+              onClick={toggleDetail}
+              aria-expanded={detailOpen}
+              className="min-h-12 w-full rounded-2xl text-base font-bold"
+            >
+              {detailOpen ? (
+                <ChevronUp className="size-4" />
+              ) : (
+                <ChevronDown className="size-4" />
+              )}
+              {detailOpen ? "詳細を閉じる" : "詳しく見る"}
+            </Button>
+          </Reveal>
+
+          {detailOpen && (
+            <div ref={detailRef} className="grid scroll-mt-4 gap-6 pt-2">
+              <EssayDetail
+                scores={result.scores}
+                feedback={feedback}
+                text={result.ocrText ?? ""}
+                anchors={feedbackAnchors}
+                anchorsPending={anchorsPending}
+                oralExam={oralExam}
+                sources={sources}
+                brushup={
+                  <BrushupSection
+                    essayId={result.id}
+                    initialText={result.feedback.brushedUpText}
+                    oralExam={oralExam}
+                    canGenerate={canRetry}
+                  />
                 }
               />
-            </Reveal>
-            {result.retryComparison && (
-              <Reveal delay={0.35}>
-                <RetryComparisonCard comparison={result.retryComparison} />
-              </Reveal>
-            )}
-            {result.feedback.previousFocusCheck && (
-              <Reveal delay={0.4}>
-                <PreviousFocusCard check={result.feedback.previousFocusCheck} />
-              </Reveal>
-            )}
-            {feedbackForView.goodPoints?.[0] && (
-              <Reveal delay={0.42}>
-                <StrengthCard text={feedbackForView.goodPoints[0]} />
-              </Reveal>
-            )}
-            {focus && (
-              <Reveal delay={0.45}>
-                <FocusCard
-                  focus={focus}
-                  text={result.ocrText ?? ""}
-                  feedback={feedbackForView}
-                  anchors={feedbackAnchors}
-                  oralExam={
-                    result.questionType === "oral_exam" ? result.oralExam : null
-                  }
-                />
-              </Reveal>
-            )}
-            <Reveal delay={0.55}>
-              <NextTimeCard issues={result.feedback.repeatedIssues} />
-            </Reveal>
-          </div>
-
-          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
-            {/* 講師・管理者からのインラインコメント */}
-            {(result.inlineComments?.length ?? 0) > 0 && (
-              <Card className="border-teal-200 bg-teal-50/30">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base text-teal-800">
-                    <MessageSquare className="size-5" />
-                    講師・管理者からのコメント
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CommentableEssayText
-                    text={result.ocrText ?? ""}
-                    comments={result.inlineComments ?? []}
-                    mode="view"
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            <Reveal delay={0.6}>
-              <section id="feedback-section" className="scroll-mt-24">
-                <AnchoredFeedbackView
-                  text={result.ocrText ?? ""}
-                  feedback={feedbackForView}
-                  anchors={feedbackAnchors}
-                  anchorsPending={anchorsPending}
-                  oralExam={
-                    result.questionType === "oral_exam" ? result.oralExam : null
-                  }
-                  hideGlobal
-                  sources={sources}
-                />
-              </section>
-            </Reveal>
-
-            {canRetry && (
-              <Reveal delay={0.7}>
-                <motion.button
-                  type="button"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    router.push(`/student/essay/new?retryFrom=${id}`)
-                  }
-                  className="bg-primary text-primary-foreground flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-base font-bold shadow-sm"
-                >
-                  <RotateCcw className="size-4" />
-                  書き直す
-                </motion.button>
-              </Reveal>
-            )}
-          </div>
+              {retryButton}
+            </div>
+          )}
         </div>
       </div>
     </div>
