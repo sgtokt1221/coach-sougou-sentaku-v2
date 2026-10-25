@@ -121,3 +121,38 @@ export function essayScoreAxisRows(
   push("knowledgeAccuracy", scores.knowledgeAccuracy);
   return rows;
 }
+
+export interface EssayAxisChange extends EssayScoreAxisRow {
+  /** 今回の点（配点換算） */
+  after: number;
+  /** 前回の点（今回の配点で換算）。前回に同じ軸が無ければ null */
+  before: number | null;
+  /** 前回の点（0-10）。チャートの重ねに使う */
+  beforeRaw: number | null;
+  delta: number | null;
+}
+
+/**
+ * 今回の全軸を、前回の同じ軸と並べる。
+ * 前回の点も今回の配点で換算する（旧採点は成熟度の配点が10点で、同じ点でも差に見える）。
+ * 前回が旧採点で同じ軸が無いときは before を null にして行は残す
+ * （行ごと消すと、どの軸が上がったのか分からなくなる）。
+ */
+export function essayAxisChanges(
+  current: Partial<EssayScores> | null | undefined,
+  previous?: Partial<EssayScores> | null
+): EssayAxisChange[] {
+  const prevRows = previous ? essayScoreAxisRows(previous) : [];
+  return essayScoreAxisRows(current).map((row) => {
+    const prev = prevRows.find((r) => r.key === row.key);
+    const after = Math.round(row.value * row.weight) / 10;
+    const before = prev ? Math.round(prev.value * row.weight) / 10 : null;
+    return {
+      ...row,
+      after,
+      before,
+      beforeRaw: prev?.value ?? null,
+      delta: before === null ? null : Math.round((after - before) * 10) / 10,
+    };
+  });
+}

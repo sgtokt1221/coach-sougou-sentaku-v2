@@ -1,6 +1,5 @@
 "use client";
 
-import { type ReactNode } from "react";
 import { useReducedMotion } from "framer-motion";
 import {
   PolarAngleAxis,
@@ -29,12 +28,19 @@ import type {
 export interface RadarAxis {
   short: string;
   value: number;
+  /** 前回の点（0-10）。あれば点線で重ねる */
+  previous?: number | null;
+  /** 伸びしろの軸（満点との差が一番大きい）。ラベルを黄色の太字にする */
+  highlight?: boolean;
+  /** 前回から上がった・下がった軸 */
+  trend?: "up" | "down" | null;
 }
 
 /**
- * 結果画面の先頭。ランクバッジ・点・レーダー・次のランクまで。
- * ランクとレーダーがあることで「採点された」と一目で分かるので、どのタイプでも先頭に置く。
- * バッジがばねで現れ、点が数え上がり、レーダーが中心から広がる順に出す。
+ * 結果画面の先頭。ランク・点・次のランクまで・チャート。
+ * チャートは最初の画面に必ず置く（2026-10-25。形で強い軸・弱い軸が一目で分かる）。
+ * 書き直しは前回の合計と、前回の形を点線で重ねる。
+ * スマホは点の下、PC は右にチャートを出す。
  */
 export function ResultHero({
   rank,
@@ -43,104 +49,109 @@ export function ResultHero({
   axes,
   next,
   chips,
-  oral,
-  footnote,
-  radar = true,
+  change,
 }: {
   rank: ScoreRank;
   total: number;
   max: number;
   axes: RadarAxis[];
-  /** 「Bまであと7点」と伸びしろの軸 */
-  next: { rank: string; needed: number; headroom: string } | null;
+  /** 「Bまであと7点」 */
+  next: { rank: string; needed: number } | null;
   /** タイプごとの札（課題文の扱い・重大な知識の誤りなど） */
   chips: { label: string; tone: "good" | "warn" | "bad" }[];
-  /** 口頭試問型の問ごとの判定 */
-  oral?: {
-    no: number;
-    prompt: string;
-    verdict: keyof typeof VERDICT_STYLE;
-  }[];
-  /** AP合致度など、合計に入らない参考の1行 */
-  footnote?: ReactNode;
-  /** レーダーを出すか。ダイジェストでは出さず、詳細の「軸ごとの点」に出す */
-  radar?: boolean;
+  /** 書き直しの前回と今回の合計 */
+  change?: { before: number; after: number } | null;
 }) {
+  const delta = change
+    ? Math.round((change.after - change.before) * 10) / 10
+    : 0;
   return (
-    <div className="bg-card grid gap-3 rounded-2xl p-5 shadow-sm">
-      <div className="flex items-center gap-5">
-        <PopIn delay={0.05}>
-          <RankBadge rank={rank} size="md" />
-        </PopIn>
-        <div className="grid gap-1">
-          <p className="font-bold text-slate-900 tabular-nums dark:text-slate-50">
-            <CountUp value={total} delay={0.2} className="text-4xl" />
-            <span className="text-muted-foreground ml-1 text-lg font-medium">
-              / {max}
-            </span>
-          </p>
-          {next && (
-            <Reveal delay={0.9} y={6}>
-              <p className="text-sm">
-                {next.rank}まであと
-                <span className="text-primary mx-1 text-lg font-bold tabular-nums">
-                  {next.needed}
-                </span>
-                点
-              </p>
-              <p className="text-muted-foreground text-sm">
-                伸びしろ：{next.headroom}
-              </p>
-            </Reveal>
-          )}
+    <div className="bg-card grid gap-3 rounded-2xl p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center lg:gap-6 lg:px-8">
+      <div className="grid gap-3">
+        <div className="flex items-center gap-5">
+          <PopIn delay={0.05}>
+            <RankBadge rank={rank} size="md" />
+          </PopIn>
+          <div className="grid gap-1">
+            <p className="font-bold text-slate-900 tabular-nums dark:text-slate-50">
+              <CountUp value={total} delay={0.2} className="text-4xl" />
+              <span className="text-muted-foreground ml-1 text-lg font-medium">
+                / {max}
+              </span>
+            </p>
+            {next && (
+              <Reveal delay={0.9} y={6}>
+                <p className="text-sm">
+                  {next.rank}まであと
+                  <span className="text-primary mx-1 text-lg font-bold tabular-nums">
+                    {next.needed}
+                  </span>
+                  点
+                </p>
+              </Reveal>
+            )}
+          </div>
         </div>
-      </div>
 
-      {radar && <AxisRadar axes={axes} />}
-
-      {(chips.length > 0 || footnote) && (
-        <Reveal delay={1.1} y={6} className="flex flex-wrap items-center gap-2">
-          {chips.map((c) => (
+        {change && (
+          <div className="bg-muted/60 flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-sm lg:justify-start">
+            <span>
+              前回 <span className="tabular-nums">{change.before}</span> → 今回{" "}
+              <span className="tabular-nums">{change.after}</span>
+            </span>
             <span
-              key={c.label}
-              className={`rounded-full px-3 py-0.5 text-sm font-semibold ${
-                c.tone === "good"
+              className={`rounded-md px-2 py-0.5 text-xs font-bold tabular-nums ${
+                delta > 0
                   ? "bg-emerald-100 text-emerald-800"
-                  : c.tone === "warn"
-                    ? "bg-amber-100 text-amber-900"
-                    : "bg-rose-100 text-rose-800"
+                  : delta < 0
+                    ? "bg-rose-100 text-rose-800"
+                    : "bg-slate-200 text-slate-600"
               }`}
             >
-              {c.label}
+              {delta > 0 ? `+${delta}` : delta < 0 ? delta : "±0"}
             </span>
-          ))}
-          {footnote}
-        </Reveal>
-      )}
+          </div>
+        )}
 
-      {oral && oral.length > 0 && (
-        <div className="grid gap-1.5">
-          {oral.map((q, i) => {
-            const style = VERDICT_STYLE[q.verdict];
-            return (
-              <Reveal
-                key={q.no}
-                delay={1.15 + i * 0.08}
-                y={6}
-                className="bg-muted/50 grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-3 py-2 text-sm"
+        {chips.length > 0 && (
+          <Reveal
+            delay={1.1}
+            y={6}
+            className="flex flex-wrap items-center gap-2"
+          >
+            {chips.map((c) => (
+              <span
+                key={c.label}
+                className={`rounded-full px-3 py-0.5 text-sm font-semibold ${
+                  c.tone === "good"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : c.tone === "warn"
+                      ? "bg-amber-100 text-amber-900"
+                      : "bg-rose-100 text-rose-800"
+                }`}
               >
-                <span className="text-primary font-bold">問{q.no}</span>
-                <span className="line-clamp-1">{q.prompt}</span>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${style.className}`}
-                >
-                  {style.label}
-                </span>
-              </Reveal>
-            );
-          })}
-        </div>
-      )}
+                {c.label}
+              </span>
+            ))}
+          </Reveal>
+        )}
+      </div>
+
+      <div className="grid gap-1">
+        <AxisRadar axes={axes} />
+        {axes.some((a) => typeof a.previous === "number") && (
+          <div className="text-muted-foreground flex justify-center gap-4 text-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="w-4 border-t-2 border-dashed border-slate-400" />
+              前回
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-4 rounded-sm bg-sky-500/50" />
+              今回
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -148,6 +159,7 @@ export function ResultHero({
 /** 軸ごとの点のレーダー。頂点に軸名と点（0-10）を並べる */
 export function AxisRadar({ axes }: { axes: RadarAxis[] }) {
   const reduce = useReducedMotion();
+  const hasPrevious = axes.some((a) => typeof a.previous === "number");
   return (
     <div className="h-[230px]">
       <ResponsiveContainer width="100%" height="100%">
@@ -155,7 +167,7 @@ export function AxisRadar({ axes }: { axes: RadarAxis[] }) {
           <PolarGrid gridType="polygon" stroke="#e2e8f0" />
           <PolarAngleAxis
             dataKey="short"
-            // 頂点に軸名と点（0-10）を並べる
+            // 頂点に軸名と点（0-10）を並べる。伸びしろの軸は黄、上下した軸は矢印
             tick={(raw) => {
               const p = raw as unknown as {
                 x: number;
@@ -163,26 +175,49 @@ export function AxisRadar({ axes }: { axes: RadarAxis[] }) {
                 textAnchor: "start" | "middle" | "end";
                 payload: { value: string; index: number };
               };
+              const axis = axes[p.payload.index];
+              const tone =
+                axis?.trend === "up"
+                  ? "fill-emerald-700 font-bold"
+                  : axis?.trend === "down"
+                    ? "fill-rose-700 font-bold"
+                    : axis?.highlight
+                      ? "fill-amber-700 font-bold"
+                      : "fill-slate-700 dark:fill-slate-200";
+              const arrow =
+                axis?.trend === "up" ? "↑" : axis?.trend === "down" ? "↓" : "";
               return (
                 <text
                   x={p.x}
                   y={p.y}
                   textAnchor={p.textAnchor}
                   dominantBaseline="central"
-                  className="fill-slate-700 text-[13px] dark:fill-slate-200"
+                  className={`text-[13px] ${tone}`}
                 >
                   {p.payload.value}
+                  {arrow}
                   <tspan
                     dx={4}
                     className="fill-slate-400 font-semibold tabular-nums"
                   >
-                    {axes[p.payload.index]?.value}
+                    {axis?.value}
                   </tspan>
                 </text>
               );
             }}
           />
           <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
+          {hasPrevious && (
+            <Radar
+              dataKey="previous"
+              stroke="#94a3b8"
+              strokeDasharray="4 3"
+              strokeWidth={1.5}
+              fill="none"
+              fillOpacity={0}
+              isAnimationActive={false}
+            />
+          )}
           <Radar
             dataKey="value"
             stroke="#2563eb"
@@ -201,16 +236,68 @@ export function AxisRadar({ axes }: { axes: RadarAxis[] }) {
   );
 }
 
+/** 口頭試問型の問ごとの判定。どの問が弱いかをダイジェストで見せる */
+export function OralVerdictCard({
+  items,
+}: {
+  items: {
+    no: number;
+    prompt: string;
+    verdict: keyof typeof VERDICT_STYLE;
+    comment?: string;
+  }[];
+}) {
+  return (
+    <div className="bg-card grid content-start gap-2 rounded-2xl p-5">
+      <p className="text-sm font-bold">問ごとの判定</p>
+      {items.map((q) => {
+        const style = VERDICT_STYLE[q.verdict];
+        return (
+          <div
+            key={q.no}
+            className="bg-muted/50 grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-1 rounded-xl px-3 py-2.5"
+          >
+            <p className="text-muted-foreground line-clamp-2 text-xs">
+              <span className="text-primary mr-1.5 font-bold">問{q.no}</span>
+              {q.prompt}
+            </p>
+            <span
+              className={`row-span-2 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${style.className}`}
+            >
+              {style.label}
+            </span>
+            {q.comment && (
+              <p className="text-sm leading-relaxed">{q.comment}</p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
- * 今回の課題。1つだけ、答案のどの文に出ているかを引いて見せる。
+ * 次に直すこと。1つだけ、答案のどの文に出ているかを引いて見せる。
  * 引用は答案の印の範囲から取る（AIの文面を答案に見せかけて作らない）。
  */
-/** 今回の長所。答案でいちばん伸ばしがいのある一文（goodPoints の1件目） */
+/** 次に直すこと（本文の印を持たない結果用。面接など） */
+export function NextFixCard({ text }: { text: string }) {
+  return (
+    <div className="grid content-start gap-2 rounded-2xl bg-amber-50 p-5 dark:bg-amber-950/30">
+      <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+        次に直すこと
+      </p>
+      <p className="text-base leading-relaxed whitespace-pre-line">{text}</p>
+    </div>
+  );
+}
+
+/** 良かった所。答案でいちばん伸ばしがいのある一文（goodPoints の1件目） */
 export function StrengthCard({ text }: { text: string }) {
   return (
-    <div className="grid gap-2 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/30">
+    <div className="grid content-start gap-2 rounded-2xl bg-emerald-50 p-5 dark:bg-emerald-950/30">
       <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-        今回の長所
+        良かった所
       </p>
       <p className="text-base leading-relaxed">{text}</p>
     </div>
@@ -223,7 +310,9 @@ export function FocusCard({
   feedback,
   anchors,
   oralExam,
+  title = "次に直すこと",
 }: {
+  title?: string;
   focus: EssayFocus;
   text: string;
   feedback: Partial<EssayFeedback>;
@@ -240,9 +329,9 @@ export function FocusCard({
     }
   }
   return (
-    <div className="grid gap-2 rounded-2xl bg-amber-50 p-5 dark:bg-amber-950/30">
+    <div className="grid content-start gap-2 rounded-2xl bg-amber-50 p-5 dark:bg-amber-950/30">
       <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
-        今回の課題
+        {title}
       </p>
       <p className="text-base leading-relaxed whitespace-pre-line">
         {focus.text}
@@ -422,7 +511,7 @@ const PREVIOUS_STATUS: Record<
 export function PreviousFocusCard({ check }: { check: PreviousFocusCheck }) {
   const status = PREVIOUS_STATUS[check.status];
   return (
-    <div className="bg-card grid gap-2 rounded-2xl p-5">
+    <div className="bg-card grid content-start gap-2 rounded-2xl p-5">
       <p className="flex items-center gap-2 text-sm font-bold">
         前回の課題
         <span

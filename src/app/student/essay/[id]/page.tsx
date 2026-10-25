@@ -290,9 +290,27 @@ export default function EssayResultPage() {
     }
   };
 
+  const actions = (
+    <div className={`grid gap-3 ${canRetry ? "grid-cols-2" : ""}`}>
+      {retryButton}
+      <Button
+        variant="outline"
+        onClick={toggleDetail}
+        aria-expanded={detailOpen}
+        className="h-12 w-full rounded-2xl text-base font-bold"
+      >
+        {detailOpen ? (
+          <ChevronUp className="size-4" />
+        ) : (
+          <ChevronDown className="size-4" />
+        )}
+        {detailOpen ? "詳細を閉じる" : "詳しく見る"}
+      </Button>
+    </div>
+  );
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50/30 pb-20 lg:pb-8">
-      <div className="mx-auto max-w-3xl px-4 py-6 lg:px-6 lg:py-8">
+      <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6 lg:py-8">
         <div className="mb-6 flex items-center gap-3">
           <Button
             variant="ghost"
@@ -346,6 +364,7 @@ export default function EssayResultPage() {
               anchors={feedbackAnchors}
               oralExam={oralExam}
               retryComparison={result.retryComparison}
+              actions={actions}
             />
           </Reveal>
 
@@ -368,23 +387,6 @@ export default function EssayResultPage() {
             </Card>
           )}
 
-          <Reveal delay={0.5} className="grid gap-3">
-            {retryButton}
-            <Button
-              variant="outline"
-              onClick={toggleDetail}
-              aria-expanded={detailOpen}
-              className="min-h-12 w-full rounded-2xl text-base font-bold"
-            >
-              {detailOpen ? (
-                <ChevronUp className="size-4" />
-              ) : (
-                <ChevronDown className="size-4" />
-              )}
-              {detailOpen ? "詳細を閉じる" : "詳しく見る"}
-            </Button>
-          </Reveal>
-
           {detailOpen && (
             <div ref={detailRef} className="grid scroll-mt-4 gap-6 pt-2">
               <EssayDetail
@@ -395,6 +397,7 @@ export default function EssayResultPage() {
                 anchorsPending={anchorsPending}
                 oralExam={oralExam}
                 sources={sources}
+                retryComparison={result.retryComparison}
                 brushup={
                   <BrushupSection
                     essayId={result.id}
