@@ -12,17 +12,31 @@ import {
   Minus,
 } from "lucide-react";
 import type { RetryComparison } from "@/lib/types/essay";
+import { essayScoreAxisRows } from "@/lib/essay/score-axes";
+import { axisPoints } from "@/lib/score-rank";
 
-const SCORE_LABELS: Array<{
-  key: keyof RetryComparison["scoreDelta"];
-  label: string;
-}> = [
-  { key: "structure", label: "構成" },
-  { key: "logic", label: "論理性" },
-  { key: "expression", label: "表現力" },
-  { key: "apAlignment", label: "AP合致度" },
-  { key: "responsiveness", label: "回答力" },
-];
+/**
+ * 今回の答案の全軸を、前回の同じ軸と並べる（今回の配点で換算。差を足すと合計の差になる）。
+ * 前回が旧採点で同じ軸が無いときは前回を null にして行は残す
+ * （行ごと消すと、どの軸が上がったのかが分からなくなる）。
+ */
+function axisChanges(comparison: RetryComparison) {
+  const parentRows = essayScoreAxisRows(comparison.parentScores);
+  return essayScoreAxisRows(comparison.currentScores).map((row) => {
+    const prev = parentRows.find((r) => r.key === row.key);
+    const after = axisPoints(row.value, row.weight);
+    // 前回が旧採点だと配点が違う（成熟度は旧10点）。今回の配点で換算して比べる
+    const before = prev ? axisPoints(prev.value, row.weight) : null;
+    return {
+      key: row.key,
+      label: row.label,
+      weight: row.weight,
+      before,
+      after,
+      delta: before === null ? null : Math.round((after - before) * 10) / 10,
+    };
+  });
+}
 
 function DeltaBadge({
   delta,
@@ -56,6 +70,48 @@ function DeltaBadge({
   );
 }
 
+function AxisChangeRow({
+  label,
+  note,
+  before,
+  after,
+  max,
+  delta,
+}: {
+  label: string;
+  note?: string;
+  before: number | null;
+  after: number;
+  max: number;
+  delta: number | null;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 text-sm">
+      <span className="text-slate-700">
+        {label}
+        {note && (
+          <span className="text-muted-foreground ml-1 text-[10px]">{note}</span>
+        )}
+      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-slate-500 tabular-nums">{before ?? "—"}</span>
+        <ArrowRight className="size-3 text-slate-400" />
+        <span className="min-w-[2rem] text-right font-semibold text-slate-900 tabular-nums">
+          {after}
+          <span className="text-muted-foreground text-[10px] font-normal">
+            /{max}
+          </span>
+        </span>
+        {delta === null ? (
+          <span className="min-w-[3.25rem]" />
+        ) : (
+          <DeltaBadge delta={delta} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface RetryComparisonProps {
   comparison: RetryComparison;
   parentEssayLink?: boolean;
@@ -66,6 +122,10 @@ export function RetryComparisonCard({
   parentEssayLink = true,
 }: RetryComparisonProps) {
   const totalDelta = comparison.scoreDelta.total;
+  const axes = axisChanges(comparison);
+  const totalMax = axes.reduce((sum, a) => sum + a.weight, 0);
+  const ap = comparison.currentScores.apAlignment;
+  const apBefore = comparison.parentScores.apAlignment;
   const totalAccent =
     totalDelta > 0
       ? "from-emerald-50 via-emerald-50 to-teal-50 border-emerald-200"
@@ -102,7 +162,7 @@ export function RetryComparisonCard({
               <div className="text-2xl font-bold text-slate-700 tabular-nums">
                 {comparison.parentScores.total}
                 <span className="text-muted-foreground text-sm font-normal">
-                  /50
+                  /{totalMax}
                 </span>
               </div>
             </div>
@@ -112,7 +172,7 @@ export function RetryComparisonCard({
               <div className="text-2xl font-bold text-slate-900 tabular-nums">
                 {comparison.currentScores.total}
                 <span className="text-muted-foreground text-sm font-normal">
-                  /50
+                  /{totalMax}
                 </span>
               </div>
             </div>
@@ -126,38 +186,26 @@ export function RetryComparisonCard({
             項目別スコア
           </p>
           <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-            {SCORE_LABELS.map(({ key, label }) => {
-              const before =
-                comparison.parentScores[
-                  key as keyof typeof comparison.parentScores
-                ];
-              const after =
-                comparison.currentScores[
-                  key as keyof typeof comparison.currentScores
-                ];
-              const delta = comparison.scoreDelta[key];
-              // 片方が旧採点（回答力なし）なら、比べようがないので行ごと出さない
-              if (typeof before !== "number" || typeof after !== "number")
-                return null;
-              return (
-                <div
-                  key={key}
-                  className="flex items-center justify-between gap-2 text-sm"
-                >
-                  <span className="text-slate-700">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500 tabular-nums">
-                      {before}
-                    </span>
-                    <ArrowRight className="size-3 text-slate-400" />
-                    <span className="min-w-[1.5rem] text-right font-semibold text-slate-900 tabular-nums">
-                      {after}
-                    </span>
-                    <DeltaBadge delta={delta} />
-                  </div>
-                </div>
-              );
-            })}
+            {axes.map((a) => (
+              <AxisChangeRow
+                key={a.key}
+                label={a.label}
+                before={a.before}
+                after={a.after}
+                max={a.weight}
+                delta={a.delta}
+              />
+            ))}
+            {typeof ap === "number" && (
+              <AxisChangeRow
+                label="AP合致度"
+                note="合計外"
+                before={typeof apBefore === "number" ? apBefore : null}
+                after={ap}
+                max={10}
+                delta={typeof apBefore === "number" ? ap - apBefore : null}
+              />
+            )}
           </div>
         </div>
 
