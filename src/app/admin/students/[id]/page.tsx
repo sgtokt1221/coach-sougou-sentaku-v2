@@ -49,7 +49,6 @@ import {
   Mic,
   MicOff,
   ChevronDown,
-  ChevronUp,
   Clock,
   Activity,
   Calendar,
@@ -79,7 +78,7 @@ import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import {
   AnchoredEssayBody,
   FeedbackLegend,
-  markedGroups,
+  GlobalFeedbackList,
   SelectedSpanFeedback,
   useAnchoredFeedback,
 } from "@/components/essay/AnchoredFeedbackView";
@@ -108,12 +107,7 @@ import type { EnglishCert } from "@/lib/types/user";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
 import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
-import {
-  BrushupSection,
-  EssayDetail,
-  EssayDigest,
-  essayFeedbackForView,
-} from "@/components/essay/result/EssayResultSections";
+import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 import { computeAxisAverages } from "@/lib/admin/axis-averages";
@@ -625,22 +619,12 @@ function AdminStudentDetailPageInner() {
     essayDetail?.questionContext?.questionType === "oral_exam"
       ? (essayDetail.questionContext.oralExam ?? null)
       : null;
-  // 赤ペンは出さない（生徒の結果画面と同じ。essayFeedbackForView）
-  const essayFeedbackView = useMemo(
-    () =>
-      essayFeedbackForView(
-        (essayDetail?.feedback ?? {}) as Partial<EssayFeedback>
-      ),
-    [essayDetail?.feedback]
-  );
   const essayFeedbackModel = useAnchoredFeedback({
     text: essayDetail?.ocrText ?? "",
-    feedback: essayFeedbackView,
+    feedback: (essayDetail?.feedback ?? {}) as Partial<EssayFeedback>,
     anchors: essayAnchors,
     oralExam: essayOralExam,
   });
-  /** ダイジェストの下の詳細を開いたか */
-  const [essayExpanded, setEssayExpanded] = useState(false);
   const [essayMarkSelected, setEssayMarkSelected] = useState<string[] | null>(
     null
   );
@@ -654,7 +638,6 @@ function AdminStudentDetailPageInner() {
     );
     setEssayLoading(true);
     setEssayDetail(null);
-    setEssayExpanded(false);
     setEssayMarkSelected(null);
     setEssayTextMode("ai");
     try {
@@ -1751,144 +1734,282 @@ function AdminStudentDetailPageInner() {
                 <Skeleton className="h-20 w-full" />
               </div>
             ) : essayDetail ? (
-              <div className="grid gap-5 py-2">
-                {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
-                <EssayQuestionContext
-                  topic={essayDetail.topic}
-                  topicEstimated={essayDetail.topicEstimated}
-                  context={essayDetail.questionContext}
-                />
-                {/* 生徒の結果画面と同じダイジェスト → 詳細。面談で指している箇所が食い違わない */}
-                {essayDetail.scores && essayDetail.feedback && (
-                  <EssayDigest
-                    scores={essayDetail.scores}
-                    feedback={essayDetail.feedback as Partial<EssayFeedback>}
-                    text={essayDetail.ocrText ?? ""}
-                    anchors={essayAnchors}
-                    oralExam={essayOralExam}
+              <div className="py-2 lg:grid lg:grid-cols-5 lg:gap-6">
+                {/* 左: 生徒の原文。講師が読みながら右の講評を追えるよう、
+                  本文側だけを長く取り内部スクロールを付けない。 */}
+                <div className="space-y-2 lg:col-span-2">
+                  <SegmentControl
+                    fullWidth
+                    size="sm"
+                    value={essayTextMode}
+                    onChange={(v) => setEssayTextMode(v as "ai" | "comment")}
+                    options={[
+                      {
+                        id: "ai",
+                        label: "AIの指摘",
+                        count: essayFeedbackModel.marked.length,
+                      },
+                      {
+                        id: "comment",
+                        label: "コメントを付ける",
+                        count: essayDetail.inlineComments?.length ?? 0,
+                      },
+                    ]}
                   />
-                )}
-                <Button
-                  variant="outline"
-                  onClick={() => setEssayExpanded((v) => !v)}
-                  aria-expanded={essayExpanded}
-                  className="min-h-11 w-full font-bold"
-                >
-                  {essayExpanded ? (
-                    <ChevronUp className="size-4" />
+                  {essayTextMode === "ai" ? (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-muted-foreground text-xs">
+                          印を押すと、その箇所への指摘が右に出ます（生徒と同じ見え方）
+                        </p>
+                        <FeedbackLegend />
+                      </div>
+                      {essayAnchorsPending && (
+                        <p className="text-muted-foreground text-xs">
+                          指摘を本文に配置しています…
+                        </p>
+                      )}
+                      <AnchoredEssayBody
+                        model={essayFeedbackModel}
+                        text={essayDetail.ocrText ?? ""}
+                        feedback={
+                          (essayDetail.feedback ?? {}) as Partial<EssayFeedback>
+                        }
+                        oralExam={essayOralExam}
+                        selected={essayMarkSelected}
+                        onSelect={setEssayMarkSelected}
+                      />
+                    </div>
                   ) : (
-                    <ChevronDown className="size-4" />
-                  )}
-                  {essayExpanded ? "詳細を閉じる" : "詳しく見る"}
-                </Button>
-                {essayExpanded &&
-                  essayDetail.scores &&
-                  essayDetail.feedback && (
-                    <EssayDetail
-                      scores={essayDetail.scores}
-                      feedback={essayDetail.feedback as Partial<EssayFeedback>}
-                      text={essayDetail.ocrText ?? ""}
-                      anchors={essayAnchors}
-                      anchorsPending={essayAnchorsPending}
-                      oralExam={essayOralExam}
-                      essaySlot={
-                        <div className="space-y-3">
-                          <SegmentControl
-                            fullWidth
-                            size="sm"
-                            value={essayTextMode}
-                            onChange={(v) =>
-                              setEssayTextMode(v as "ai" | "comment")
-                            }
-                            options={[
-                              {
-                                id: "ai",
-                                label: "AIの指摘",
-                                count: essayFeedbackModel.marked.length,
-                              },
-                              {
-                                id: "comment",
-                                label: "コメントを付ける",
-                                count: essayDetail.inlineComments?.length ?? 0,
-                              },
-                            ]}
+                    <>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 className="text-foreground text-sm font-semibold">
+                          元テキスト（ドラッグでコメント可）
+                        </h3>
+                        {essayDetail.feedback?.quantitativeAnalysis && (
+                          <EssayWordCount
+                            analysis={essayDetail.feedback.quantitativeAnalysis}
                           />
-                          {essayTextMode === "ai" ? (
-                            <div className="space-y-3">
-                              <FeedbackLegend
-                                groups={markedGroups(essayFeedbackModel)}
-                              />
-                              {essayAnchorsPending && (
-                                <p className="text-muted-foreground text-xs">
-                                  指摘を本文に配置しています…
-                                </p>
-                              )}
-                              <AnchoredEssayBody
-                                model={essayFeedbackModel}
-                                text={essayDetail.ocrText ?? ""}
-                                feedback={essayFeedbackView}
-                                oralExam={essayOralExam}
-                                selected={essayMarkSelected}
-                                onSelect={setEssayMarkSelected}
-                              />
-                              <SelectedSpanFeedback
-                                model={essayFeedbackModel}
-                                feedback={essayFeedbackView}
-                                selected={essayMarkSelected}
-                                onClose={() => setEssayMarkSelected(null)}
-                                sheetOnly
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              {essayDetail.feedback?.quantitativeAnalysis && (
-                                <EssayWordCount
-                                  analysis={
-                                    essayDetail.feedback.quantitativeAnalysis
-                                  }
-                                />
-                              )}
-                              <CommentableEssayText
-                                quoteOnly
-                                onQuote={(q) => {
-                                  setEssayFbText((prev) =>
-                                    appendQuote(prev, q)
-                                  );
-                                  setEssayFbOpen(true);
-                                }}
-                                text={essayDetail.ocrText}
-                                comments={essayDetail.inlineComments ?? []}
-                                mode="edit"
-                                fullHeight
-                                onAdd={(range) =>
-                                  addEssayComment(essayDetail.id, range)
-                                }
-                                onDelete={(cid) =>
-                                  deleteEssayComment(essayDetail.id, cid)
-                                }
-                                canDelete={(c) =>
-                                  userProfile?.role !== "teacher" ||
-                                  c.createdBy === user?.uid
-                                }
-                              />
-                            </>
-                          )}
-                        </div>
-                      }
-                      brushup={
-                        <BrushupSection
-                          essayId={essayDetail.id}
-                          initialText={essayDetail.feedback?.brushedUpText}
-                          oralExam={essayOralExam}
-                          canGenerate={false}
-                        />
-                      }
-                    />
+                        )}
+                      </div>
+                      <CommentableEssayText
+                        quoteOnly
+                        onQuote={(q) => {
+                          setEssayFbText((prev) => appendQuote(prev, q));
+                          setEssayFbOpen(true);
+                        }}
+                        text={essayDetail.ocrText}
+                        comments={essayDetail.inlineComments ?? []}
+                        mode="edit"
+                        fullHeight
+                        onAdd={(range) =>
+                          addEssayComment(essayDetail.id, range)
+                        }
+                        onDelete={(cid) =>
+                          deleteEssayComment(essayDetail.id, cid)
+                        }
+                        canDelete={(c) =>
+                          userProfile?.role !== "teacher" ||
+                          c.createdBy === user?.uid
+                        }
+                      />
+                    </>
                   )}
-                {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
+                </div>
+
+                {/* 右: 出題・スコア・講評 */}
+                <div className="mt-6 space-y-6 lg:col-span-3 lg:mt-0">
+                  {/* 本文の印を押したときの指摘。右の欄は長いので、上に固定して見失わないようにする */}
+                  <div className="lg:sticky lg:top-14 lg:z-10">
+                    <SelectedSpanFeedback
+                      model={essayFeedbackModel}
+                      feedback={
+                        (essayDetail.feedback ?? {}) as Partial<EssayFeedback>
+                      }
+                      selected={essayMarkSelected}
+                      onClose={() => setEssayMarkSelected(null)}
+                    />
+                  </div>
+                  {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
+                  <EssayQuestionContext
+                    topic={essayDetail.topic}
+                    topicEstimated={essayDetail.topicEstimated}
+                    context={essayDetail.questionContext}
+                  />
+
+                  {/* Score bars + レーダー。5軸の偏りは棒だけだと掴みにくいので図も出す */}
+                  {essayDetail.scores && (
+                    <div className="space-y-3">
+                      <h3 className="text-foreground text-sm font-semibold">
+                        AIスコア
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
+                        {/* APは合計に入らないので軸に混ぜない。数値は下の一覧に残す */}
+                        <SkillRadarChart
+                          scores={essayDetail.scores}
+                          height={220}
+                        />
+                        <div className="grid gap-2">
+                          {[
+                            {
+                              key: "structure",
+                              label: "構成",
+                              weight: ESSAY_SCORE_WEIGHTS.structure,
+                            },
+                            {
+                              key: "logic",
+                              label: "論理性",
+                              weight: ESSAY_SCORE_WEIGHTS.logic,
+                            },
+                            {
+                              key: "expression",
+                              label: "表現力",
+                              weight: ESSAY_SCORE_WEIGHTS.expression,
+                            },
+                            {
+                              key: "responsiveness",
+                              label: "回答力",
+                              weight: ESSAY_SCORE_WEIGHTS.responsiveness,
+                            },
+                            {
+                              key: "reasoningMaturity",
+                              label: "議論の成熟度",
+                              weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
+                            },
+                          ].map((item) => {
+                            const val = essayDetail.scores![
+                              item.key as keyof typeof essayDetail.scores
+                            ] as number;
+                            // 議論の成熟度は旧データには無い
+                            if (typeof val !== "number") return null;
+                            return (
+                              <div
+                                key={item.key}
+                                className="flex items-center gap-3"
+                              >
+                                <span className="text-muted-foreground w-28 text-xs">
+                                  {item.label}
+                                </span>
+                                <div className="flex-1">
+                                  <Progress value={val * 10} className="h-2" />
+                                </div>
+                                <span className="w-12 text-right text-xs font-medium tabular-nums">
+                                  {axisPoints(val, item.weight).toFixed(1)}/
+                                  {item.weight}
+                                </span>
+                              </div>
+                            );
+                          })}
+                          {/* 口頭試問型の専門知識。合計に入る（満点60） */}
+                          {typeof essayDetail.scores.knowledgeAccuracy ===
+                            "number" && (
+                            <div className="flex items-center gap-3 border-t pt-2">
+                              <span className="text-muted-foreground w-28 text-xs">
+                                専門知識の正確性
+                              </span>
+                              <div className="flex-1">
+                                <Progress
+                                  value={
+                                    essayDetail.scores.knowledgeAccuracy * 10
+                                  }
+                                  className="h-2"
+                                />
+                              </div>
+                              <span className="w-12 text-right text-xs font-medium tabular-nums">
+                                {essayDetail.scores.knowledgeAccuracy}/10
+                              </span>
+                            </div>
+                          )}
+                          {/* 合計外の参考値。レーダーには含めない */}
+                          {essayDetail.feedback?.apAlignmentAssessable !==
+                            false &&
+                            typeof essayDetail.scores.apAlignment ===
+                              "number" && (
+                              <div className="flex items-center gap-3 border-t pt-2">
+                                <span className="text-muted-foreground w-28 text-xs">
+                                  AP合致度
+                                  <span className="text-muted-foreground/70 ml-1 text-[10px]">
+                                    合計外
+                                  </span>
+                                </span>
+                                <div className="flex-1">
+                                  <Progress
+                                    value={essayDetail.scores.apAlignment * 10}
+                                    className="h-2"
+                                  />
+                                </div>
+                                <span className="text-muted-foreground w-12 text-right text-xs font-medium tabular-nums">
+                                  {essayDetail.scores.apAlignment}/10
+                                </span>
+                              </div>
+                            )}
+                          <div className="mt-1 flex items-center gap-3 border-t pt-2">
+                            <span className="w-20 text-xs font-semibold">
+                              合計
+                            </span>
+                            <div className="flex-1" />
+                            {/* 添削履歴の一覧と同じランク表記。点だけだと水準を掴みにくい */}
+                            <SkillRankBadge
+                              rank={scoreToSkillRank(
+                                essayDetail.scores.total,
+                                essayDetail.feedback?.scoreMaximum ?? 50
+                              )}
+                              size="sm"
+                              animate={false}
+                            />
+                            <span
+                              className={`text-lg font-bold ${scoreColor(essayDetail.scores.total, essayDetail.feedback?.scoreMaximum ?? 50)}`}
+                            >
+                              {essayDetail.scores.total}/
+                              {essayDetail.feedback?.scoreMaximum ?? 50}
+                            </span>
+                          </div>
+
+                          {/* 面談で「次はここを狙おう」と言えるようにする。
+                              生徒画面と同じ計算を使う */}
+                          {(() => {
+                            const next = buildNextStepHint(
+                              essayDetail.scores!,
+                              essayDetail.feedback?.scoreMaximum ?? 50
+                            );
+                            if (!next) return null;
+                            return (
+                              <p className="bg-muted/60 mt-2 rounded-lg px-3 py-2 text-xs">
+                                あと
+                                <span className="mx-1 font-bold tabular-nums">
+                                  {next.gap.needed}
+                                </span>
+                                点で {next.gap.nextRank} ランク・伸びしろは
+                                <span className="mx-1 font-semibold">
+                                  {headroomAxisLabel(next.headroom.axis)}
+                                </span>
+                                （満点なら +{next.headroom.gain}点）
+                              </p>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Feedback。総合評価と、本文に結び付かない指摘。本文に結び付く指摘
+                    （赤ペン・改善点・弱点・知識の誤りなど）は左の本文の印から見る */}
+                  {essayDetail.feedback && (
+                    <>
+                      <Separator />
+                      <GlobalFeedbackList
+                        model={essayFeedbackModel}
+                        feedback={
+                          essayDetail.feedback as Partial<EssayFeedback>
+                        }
+                      />
+                    </>
+                  )}
+                  {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
                   生徒がどこで詰まったか分からないため、講評の後に置く。 */}
-                <Separator />
-                <EssayCoachConversation threads={essayDetail.coachThreads} />
+                  <Separator />
+                  <EssayCoachConversation threads={essayDetail.coachThreads} />
+                </div>
               </div>
             ) : (
               <div className="text-muted-foreground py-8 text-center text-sm">
