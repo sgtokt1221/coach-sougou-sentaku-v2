@@ -90,5 +90,13 @@
   {
     "id": "essay_1789270669658_bggwwr4",
     "stratum": "high(>=30)"
+  },
+  {
+    "id": "essay_1793101721986_xmu1qfh",
+    "stratum": "same-score-pair"
+  },
+  {
+    "id": "essay_1793179882838_akup3r4",
+    "stratum": "same-score-pair"
   }
 ]

@@ -97,6 +97,16 @@ const CONTRADICTION =
 const CONTROL =
   "つまり、バスの赤字は削るべき支出としてではなく、住民の移動を支えるための費用として見る必要がある。";
 
+/** N13 で第二の理由の段落の末に足す、補助の一般論 */
+const GENERIC_LIGHT = "地域のつながりを守ることも大切である。";
+
+/** N15 で第一の理由の段落の末に足す、もう1つの補助の一般論 */
+const GENERIC_LIGHT_2 = "誰もが安心して暮らせる社会をつくることが大切だ。";
+
+/** N14 で第一の理由の段落と差し替える、中心の理由が一般論になった段落（S0[1] とほぼ同じ長さ） */
+const GENERIC_HEAVY =
+  "第一の理由は、路線バスが地域の人々にとって欠かせない大切な存在だからだ。バスがあることで、住民は安心して毎日の生活を送ることができる。生活に必要なものを守ることは、行政の大切な役割である。住民の暮らしを守るためには、多少の費用がかかってもバスを残すべきだ。";
+
 const join = (paras: string[]) => paras.join("\n");
 
 export function withTwists(text: string): string {
@@ -393,5 +403,47 @@ export const SYNTHETIC_CASES: SyntheticCase[] = [
       { type: "axesMax", axes: ["logic"], value: 5 },
       { type: "axisBelow", axis: "logic", caseId: "S0-base" },
     ],
+  },
+  {
+    // 欠点の重さ（v38）。同じ「根拠が一般論」でも、補助の一文にあるだけなら中心の理由が
+    // 一般論になった答案より論理を下げすぎない。v37 は欠点の数で決めたので両方同じ点になった
+    id: "N13-generic-light",
+    label: "補助の一文だけ一般論",
+    input: {
+      topic: TOPIC_S,
+      wordLimit: 800,
+      ocrText: join([S0[0], S0[1], `${S0[2]}${GENERIC_LIGHT}`, S0[3], S0[4]]),
+    },
+    expect: [],
+  },
+  {
+    id: "N14-generic-heavy",
+    label: "第一の理由の中心が一般論",
+    input: {
+      topic: TOPIC_S,
+      wordLimit: 800,
+      ocrText: join([S0[0], GENERIC_HEAVY, ...S0.slice(2)]),
+    },
+    expect: [
+      { type: "axisBelow", axis: "logic", caseId: "N13-generic-light" },
+      // 数で決めると、軽い欠点2つの N15 の方が低くなる
+      { type: "axisBelow", axis: "logic", caseId: "N15-generic-light2" },
+    ],
+  },
+  {
+    id: "N15-generic-light2",
+    label: "補助の一文の一般論が2か所",
+    input: {
+      topic: TOPIC_S,
+      wordLimit: 800,
+      ocrText: join([
+        S0[0],
+        `${S0[1]}${GENERIC_LIGHT_2}`,
+        `${S0[2]}${GENERIC_LIGHT}`,
+        S0[3],
+        S0[4],
+      ]),
+    },
+    expect: [],
   },
 ];
