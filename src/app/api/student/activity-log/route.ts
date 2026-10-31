@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ALLOWED_TYPES = ["topicInput", "interviewDrill", "selfAnalysis"] as const;
+// 自己分析はサーバーの保存時に記録する（古い画面から届いても二重に数えない）
+const ALLOWED_TYPES = ["topicInput", "interviewDrill"] as const;
 type ActivityLogType = typeof ALLOWED_TYPES[number];
 
 export async function POST(request: NextRequest) {

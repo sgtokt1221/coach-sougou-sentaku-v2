@@ -172,7 +172,7 @@ import { ActivityHeatmap } from "@/components/admin/ActivityHeatmap";
 import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
 import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
 import { StudentEssayDraftsSection } from "@/components/admin/StudentEssayDraftsSection";
-import { buildActivityHeatmapData } from "@/lib/utils/activity-heatmap";
+import type { ActivityHeatmapData } from "@/lib/utils/activity-heatmap";
 import { useAuthSWR } from "@/lib/api/swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { EssayCoachConversation } from "@/components/admin/EssayCoachConversation";
@@ -532,18 +532,9 @@ function AdminStudentDetailPageInner() {
     "total"
   );
 
-  // ヒートマップ用データ取得
-  const { data: interviewsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/interviews`
-  );
-  const { data: summaryDrillsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/summary-drills`
-  );
-  const { data: logicDrillsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/logic-drills`
-  );
-  const { data: chocoReviewsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/choco-reviews`
+  // 活動状況（直近30日）。日ごとの集計はサーバーがコレクションを直接読んで行う
+  const { data: activityHeatmapData } = useAuthSWR<ActivityHeatmapData[]>(
+    `/api/admin/students/${id}/activity-heatmap`
   );
   // 未確認バッジの再取得用（提出物を開いたら件数を減らす）
   const mutateUnviewed = useUnviewedSubmissionsMutate();
@@ -565,36 +556,6 @@ function AdminStudentDetailPageInner() {
     // openEssayDetail は再生成されるため依存に入れない（1回だけ開く）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenEssayId]);
-  const { data: activityLogsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/activity-logs`
-  );
-  const { data: documentsData } = useAuthSWR<any[]>(
-    `/api/admin/students/${id}/documents`
-  );
-
-  // 活動ヒートマップ用データ生成
-  const activityHeatmapData = useMemo(() => {
-    if (!detail) return [];
-
-    return buildActivityHeatmapData({
-      essays: detail.essays,
-      interviews: interviewsData,
-      summaryDrills: summaryDrillsData,
-      logicDrills: logicDrillsData,
-      chocoReviews: chocoReviewsData,
-      activityLogs: activityLogsData,
-      documents: documentsData,
-    });
-  }, [
-    detail,
-    interviewsData,
-    summaryDrillsData,
-    logicDrillsData,
-    chocoReviewsData,
-    activityLogsData,
-    documentsData,
-  ]);
-
   // 弱点Top5データ
   const topWeaknesses = useMemo(() => {
     if (!detail?.weaknesses) return [];
@@ -1058,7 +1019,7 @@ function AdminStudentDetailPageInner() {
       {/* Activity Heatmap & Top Weaknesses */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <ActivityHeatmap data={activityHeatmapData} />
+          <ActivityHeatmap data={activityHeatmapData ?? []} />
         </div>
         <div className="lg:col-span-1">
           <WeaknessTopChart weaknesses={topWeaknesses} />

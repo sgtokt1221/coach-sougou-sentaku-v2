@@ -169,6 +169,20 @@ export async function POST(request: NextRequest) {
 
       await ref.set(update, { merge: true });
 
+      // ステップが新しく進んだ時だけ、管理者の「活動状況」に出す記録を残す。
+      // 以前は画面側が応答後に投げっぱなしで送っており、落ちても誰も気づかなかった。
+      if ((update.completedSteps as number) > existingCompleted) {
+        try {
+          await adminDb.collection(`users/${resolvedId}/activityLogs`).add({
+            type: "selfAnalysis",
+            createdAt: FieldValue.serverTimestamp(),
+            metadata: { step: update.completedSteps },
+          });
+        } catch (err) {
+          console.warn("[self-analysis] 活動ログの記録に失敗:", err);
+        }
+      }
+
       // 承認済みセクションを生徒が書き換えたら、その承認を取り消す（未承認へ戻す）。
       // update に載った（= 非空で送られた）ステップのうち、既存と内容が変わったものだけが対象。
       // 初回入力（existing に無い）は承認自体が無いので対象外。

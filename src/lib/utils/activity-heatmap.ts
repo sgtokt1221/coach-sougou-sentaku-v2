@@ -1,111 +1,124 @@
 /**
- * 活動ヒートマップ用ユーティリティ関数
+ * 管理者の「活動状況（直近30日）」の集計。
+ *
+ * 以前は生徒詳細ページが別目的の一覧API 7本を取り寄せて画面側で数えていたため、
+ * 一覧の形が変わるたびに黙って数え漏れていた（面接は一覧が status/startedAt を
+ * 返さなくなっていて常に0件、書類は最後に保存した日にしか数えない、等）。
+ * いまは /api/admin/students/[id]/activity-heatmap がコレクションを直接読み、
+ * ここで日本時間の日ごとに数える。
  */
 
-/**
- * 直近30日の日付文字列配列を生成 (MM/DD形式)
- */
-export function buildLast30Days(): string[] {
-  const days: string[] = [];
-  const now = new Date();
+export const HEATMAP_DAYS = 30;
 
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(now.getDate() - i);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    days.push(`${month}/${day}`);
-  }
-
-  return days;
-}
-
-/**
- * ISO日付文字列をMM/DD形式に変換
- */
-export function formatDateForHeatmap(value: string | Date): string {
-  const date = value instanceof Date ? value : new Date(value);
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return `${month}/${day}`;
-}
-
-/**
- * 日付別にアイテムをカウント
- * @param items - 日付を持つアイテム配列
- * @param dateKey - 日付フィールド名
- * @param targetDate - 対象日付 (MM/DD形式)
- */
-export function countByDay<T extends Record<string, any>>(
-  items: T[],
-  dateKey: keyof T,
-  targetDate: string
-): number {
-  return items.filter(item => {
-    const itemDate = item[dateKey];
-    if (!itemDate) return false;
-
-    try {
-      const formatted = formatDateForHeatmap(itemDate);
-      return formatted === targetDate;
-    } catch {
-      return false;
-    }
-  }).length;
-}
-
-/**
- * 複数データソースから活動ヒートマップ用データを生成
- */
 export interface ActivityHeatmapData {
-  date: string;
+  date: string; // M/D（日本時間）
   essay: number;
   interview: number;
-  drill: number;          // 要約ドリル
-  logicDrill: number;     // 論理ドリル
-  choco: number;          // ちょこ添削
-  topicInput: number;     // ネタインプット
+  drill: number; // 要約ドリル
+  logicDrill: number; // 論理ドリル
+  choco: number; // ちょこ添削
+  topicInput: number; // ネタインプット
   interviewDrill: number; // 面接ドリル
-  selfAnalysis: number;   // 自己分析（ステップ完了）
-  document: number;       // 提出書類（その日に更新された書類数）
+  selfAnalysis: number; // 自己分析（ステップ完了）
+  document: number; // 提出書類（その日に書いた・添削した書類の数）
+  activity: number; // 活動実績（その日に登録・更新した件数）
 }
 
-export interface ActivityLog {
-  type: "topicInput" | "interviewDrill" | "selfAnalysis";
-  createdAt: string;
+export type ActivityHeatmapKey = Exclude<keyof ActivityHeatmapData, "date">;
+
+export const ACTIVITY_HEATMAP_KEYS: ActivityHeatmapKey[] = [
+  "essay",
+  "interview",
+  "drill",
+  "logicDrill",
+  "choco",
+  "topicInput",
+  "interviewDrill",
+  "selfAnalysis",
+  "document",
+  "activity",
+];
+
+export interface HeatmapEvent {
+  key: ActivityHeatmapKey;
+  /** Timestamp / Date / ISO文字列 / ミリ秒のどれでもよい */
+  at: unknown;
+  /**
+   * 同じ日に同じ group は1回だけ数える。
+   * 書類を1日に何度保存しても「その日に書いた書類1件」にするため。
+   */
+  group?: string;
 }
 
-export interface ActivityDataSources {
-  essays?: Array<{ submittedAt: string }>;
-  interviews?: Array<{ startedAt?: string; createdAt?: string; status?: string }>;
-  summaryDrills?: Array<{ completedAt?: string; createdAt?: string }>;
-  logicDrills?: Array<{ completedAt?: string; createdAt?: string }>;
-  chocoReviews?: Array<{ createdAt?: string }>;
-  activityLogs?: ActivityLog[];
-  // 提出書類。更新日時(updatedAt)をその日の活動としてカウント。
-  documents?: Array<{ updatedAt?: string; createdAt?: string }>;
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function toMillis(v: unknown): number | null {
+  if (v == null) return null;
+  const withToDate = v as { toDate?: () => Date };
+  if (typeof withToDate.toDate === "function") return withToDate.toDate().getTime();
+  if (v instanceof Date) return v.getTime();
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const t = new Date(v).getTime();
+    return isNaN(t) ? null : t;
+  }
+  return null;
 }
 
-export function buildActivityHeatmapData(sources: ActivityDataSources): ActivityHeatmapData[] {
-  const last30Days = buildLast30Days();
-  const topicInputLogs = (sources.activityLogs ?? []).filter(l => l.type === "topicInput");
-  const interviewDrillLogs = (sources.activityLogs ?? []).filter(l => l.type === "interviewDrill");
-  const selfAnalysisLogs = (sources.activityLogs ?? []).filter(l => l.type === "selfAnalysis");
-  // 面接は「提出 = 完了したセッション」のみカウント。startedAt と createdAt のダブルカウントを廃止。
-  const completedInterviews = (sources.interviews ?? []).filter(i => i.status === "completed");
+/** 日本時間の日付キー（YYYY-MM-DD）。サーバーは UTC で動くので必ずこれで区切る */
+export function jstDayKey(ms: number): string {
+  return new Date(ms + JST_OFFSET_MS).toISOString().slice(0, 10);
+}
 
-  return last30Days.map(day => ({
-    date: day,
-    essay: countByDay(sources.essays ?? [], 'submittedAt', day),
-    interview: countByDay(completedInterviews, 'startedAt', day),
-    drill: countByDay(sources.summaryDrills ?? [], 'completedAt', day) +
-           countByDay(sources.summaryDrills ?? [], 'createdAt', day),
-    logicDrill: countByDay(sources.logicDrills ?? [], 'completedAt', day) +
-                countByDay(sources.logicDrills ?? [], 'createdAt', day),
-    choco: countByDay(sources.chocoReviews ?? [], 'createdAt', day),
-    topicInput: countByDay(topicInputLogs, 'createdAt', day),
-    interviewDrill: countByDay(interviewDrillLogs, 'createdAt', day),
-    selfAnalysis: countByDay(selfAnalysisLogs, 'createdAt', day),
-    document: countByDay(sources.documents ?? [], 'updatedAt', day),
-  }));
+/** 集計の初日（日本時間 0:00）のミリ秒 */
+export function heatmapStartMs(nowMs: number): number {
+  const firstDay = jstDayKey(nowMs - (HEATMAP_DAYS - 1) * DAY_MS);
+  return Date.parse(`${firstDay}T00:00:00+09:00`);
+}
+
+function emptyDay(dayKey: string): ActivityHeatmapData {
+  const [, m, d] = dayKey.split("-").map(Number);
+  return {
+    date: `${m}/${d}`,
+    essay: 0,
+    interview: 0,
+    drill: 0,
+    logicDrill: 0,
+    choco: 0,
+    topicInput: 0,
+    interviewDrill: 0,
+    selfAnalysis: 0,
+    document: 0,
+    activity: 0,
+  };
+}
+
+export function buildActivityHeatmapData(
+  events: HeatmapEvent[],
+  nowMs: number = Date.now(),
+): ActivityHeatmapData[] {
+  const startMs = heatmapStartMs(nowMs);
+  const days = new Map<string, ActivityHeatmapData>();
+  for (let i = 0; i < HEATMAP_DAYS; i++) {
+    const key = jstDayKey(startMs + i * DAY_MS);
+    days.set(key, emptyDay(key));
+  }
+
+  const seen = new Set<string>();
+  for (const e of events) {
+    const ms = toMillis(e.at);
+    if (ms === null || ms < startMs || ms > nowMs) continue;
+    const dayKey = jstDayKey(ms);
+    const day = days.get(dayKey);
+    if (!day) continue;
+    if (e.group) {
+      const dedupe = `${e.key}|${e.group}|${dayKey}`;
+      if (seen.has(dedupe)) continue;
+      seen.add(dedupe);
+    }
+    day[e.key] += 1;
+  }
+
+  return [...days.values()];
 }

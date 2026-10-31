@@ -11,7 +11,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity } from "lucide-react";
-import type { ActivityHeatmapData } from "@/lib/utils/activity-heatmap";
+import {
+  ACTIVITY_HEATMAP_KEYS,
+  type ActivityHeatmapData,
+  type ActivityHeatmapKey,
+} from "@/lib/utils/activity-heatmap";
 
 interface ActivityHeatmapProps {
   data: ActivityHeatmapData[];
@@ -33,6 +37,7 @@ function ActivityTooltip({ active, payload, label }: any) {
     interviewDrill: "面接ドリル",
     selfAnalysis: "自己分析",
     document: "提出書類",
+    activity: "活動実績",
   };
 
   const total = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
@@ -67,31 +72,16 @@ function formatXAxisTick(value: string, index: number) {
 
 export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
   // 全期間で活動があるかチェック
-  const hasAnyActivity = data.some(day =>
-    day.essay > 0 || day.interview > 0 ||
-    day.drill > 0 || day.logicDrill > 0 || day.choco > 0 || day.topicInput > 0 || day.interviewDrill > 0 || day.selfAnalysis > 0 || day.document > 0
-  );
+  const isActiveDay = (day: ActivityHeatmapData) =>
+    ACTIVITY_HEATMAP_KEYS.some((k) => day[k] > 0);
+  const hasAnyActivity = data.some(isActiveDay);
 
   // 合計回数 (30日間)
-  const totals = data.reduce(
-    (acc, d) => ({
-      essay: acc.essay + d.essay,
-      interview: acc.interview + d.interview,
-      drill: acc.drill + d.drill,
-      logicDrill: acc.logicDrill + d.logicDrill,
-      choco: acc.choco + d.choco,
-      topicInput: acc.topicInput + d.topicInput,
-      interviewDrill: acc.interviewDrill + d.interviewDrill,
-      selfAnalysis: acc.selfAnalysis + d.selfAnalysis,
-      document: acc.document + d.document,
-    }),
-    { essay: 0, interview: 0, drill: 0, logicDrill: 0, choco: 0, topicInput: 0, interviewDrill: 0, selfAnalysis: 0, document: 0 },
-  );
+  const totals = Object.fromEntries(
+    ACTIVITY_HEATMAP_KEYS.map((k) => [k, data.reduce((s, d) => s + d[k], 0)]),
+  ) as Record<ActivityHeatmapKey, number>;
   // 直近7日にアクティブだった日の数
-  const activeDaysRecent = data.slice(-7).filter(d =>
-    d.essay > 0 || d.interview > 0 ||
-    d.drill > 0 || d.logicDrill > 0 || d.choco > 0 || d.topicInput > 0 || d.interviewDrill > 0 || d.selfAnalysis > 0 || d.document > 0
-  ).length;
+  const activeDaysRecent = data.slice(-7).filter(isActiveDay).length;
 
   // 系統別にグルーピング。系統ごとに1つの色相で統一し、内訳は濃淡で区別する。
   // color=系統のアクセント色 / tint=カード背景の淡色 / 各itemのfill=グラフ棒の濃淡
@@ -121,7 +111,10 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       title: "提出書類系",
       color: "#0891b2",
       tint: "rgba(8,145,178,0.08)",
-      items: [{ key: "document", label: "書類", value: totals.document, fill: "#0891b2" }],
+      items: [
+        { key: "document", label: "書類", value: totals.document, fill: "#0891b2" },
+        { key: "activity", label: "活動実績", value: totals.activity, fill: "#22d3ee" },
+      ],
     },
     {
       title: "自己分析系",
