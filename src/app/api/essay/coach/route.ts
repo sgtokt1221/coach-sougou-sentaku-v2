@@ -8,8 +8,13 @@ import { recordAiTrace } from "@/lib/ai/trace";
 import { stripMarkdown } from "@/lib/ai/plain-text";
 import {
   buildEssayCoachSystemPrompt,
+  type CoachContext,
   type CoachSelfAnalysis,
 } from "@/lib/ai/prompts/essay-coach";
+import { pickFocus } from "@/lib/essay/result-focus";
+import type { EssayFeedback } from "@/lib/types/essay";
+
+type CoachContextPreviousAttempt = NonNullable<CoachContext["previousAttempt"]>;
 import type {
   CoachMessage,
   CoachRequestBody,
@@ -240,9 +245,25 @@ export async function POST(request: NextRequest) {
     themeId: body.themeId,
     pastQuestionId: body.pastQuestionId,
   };
+  /**
+   * 書き直しなら、元の答案の添削で示した課題も渡す。採点側は前回の課題が直ったかを
+   * 見ているのに、コーチは知らずに別の論点を勧めていた
+   */
+  let previousAttempt: CoachContextPreviousAttempt | undefined;
+  const parentData = body.parentEssayId
+    ? (await adminDb.doc(`essays/${body.parentEssayId}`).get()).data()
+    : undefined;
+  if (parentData && parentData.userId === uid && parentData.feedback) {
+    const fb = parentData.feedback as Partial<EssayFeedback>;
+    previousAttempt = {
+      total: typeof parentData.scores?.total === "number" ? parentData.scores.total : 0,
+      maximum: typeof fb.scoreMaximum === "number" ? fb.scoreMaximum : 50,
+      focus: pickFocus(fb)?.text.slice(0, 600) ?? null,
+      improvements: (fb.improvements ?? []).slice(0, 2).map((t) => String(t).slice(0, 400)),
+    };
+  }
   if (!sourceIds.themeId && !sourceIds.pastQuestionId && body.parentEssayId) {
-    const parent = await adminDb.doc(`essays/${body.parentEssayId}`).get();
-    const p = parent.data();
+    const p = parentData;
     if (p && p.userId === uid) {
       sourceIds = {
         themeId: p.questionContext?.themeId ?? null,
@@ -385,6 +406,11 @@ export async function POST(request: NextRequest) {
     selfAnalysis,
     draft,
     wordLimit,
+    answerForm:
+      typeof body.answerForm === "string" && body.answerForm.trim()
+        ? body.answerForm.slice(0, 1000)
+        : undefined,
+    previousAttempt,
     turnCount,
     questionType,
     sourceText,

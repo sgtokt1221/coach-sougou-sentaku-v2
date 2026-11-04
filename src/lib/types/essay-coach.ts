@@ -136,6 +136,8 @@ export interface CoachRequestBody {
   draft: string;
   /** 生徒が設定した字数（提出時の添削に渡すものと同じ値） */
   wordLimit?: number;
+  /** 課題文型で選んだ答案の型（書く順番・字数の目安・見るところ）。添削にも同じ文を渡している */
+  answerForm?: string;
   universityId?: string;
   facultyId?: string;
   /** 出題形式。採点側 (EssayReviewRequest) と同じ区分を使う */

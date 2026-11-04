@@ -42,6 +42,15 @@ export interface CoachContext {
   draft: string;
   /** 設問の字数。本文の字数（draftLength）と並べて渡す */
   wordLimit?: number;
+  /** 課題文型の答案の型（書く順番と字数の目安） */
+  answerForm?: string;
+  /** 書き直し中のとき、元の答案の添削で示した課題 */
+  previousAttempt?: {
+    total: number;
+    maximum: number;
+    focus: string | null;
+    improvements: string[];
+  };
   turnCount: number;
   /** 出題形式 (english-reading / data-analysis / mixed / lecture / report など) */
   questionType?: string;
@@ -160,6 +169,8 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
     // 字数はモデルに数えさせない（日本語の字数を数え違える）
     wordLimit: ctx.wordLimit ?? null,
     draftLength: ctx.draft ? ctx.draft.length : 0,
+    answerForm: ctx.answerForm ?? null,
+    previousAttempt: ctx.previousAttempt ?? null,
     lecture: ctx.lecture ?? null,
     review: ctx.review ?? null,
     oralExam: ctx.oralExam
@@ -277,6 +288,10 @@ ${
 - reference_data.wordLimit があれば、それがこの答案の字数です。生徒に聞き返さず、
   構成案・字数配分・見本はこの字数に合わせます。本文の字数は draftLength を使い、
   数え直しません。超えていればどこを削るか、半分に満たなければどこを書き足すかを示します
+- reference_data.answerForm があれば、それがこの答案の型です。構成案・字数配分はこの順番と目安に従います
+- reference_data.previousAttempt があれば、生徒は添削を受けた答案を書き直しています。
+  助言は previousAttempt.focus（前回の課題）を直すことを軸にし、直せているかを本文で確かめます。
+  前回の課題と関係のない新しい論点へ広げません
 
 ## 背景知識を聞かれたとき
 小論文は知識が無いと書けない。 背景を聞かれたら出し惜しみせず、 正確に、 必要なだけ書く。

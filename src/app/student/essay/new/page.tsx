@@ -2692,6 +2692,7 @@ export default function EssayNewPage() {
                     retryParent?.retryContext?.wordLimit ||
                     undefined
                   }
+                  answerForm={passageFormInfo}
                   universityId={universityId || undefined}
                   facultyId={facultyId || undefined}
                   referenceMaterial={effectiveMaterial}

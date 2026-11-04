@@ -45,6 +45,8 @@ export interface EssayCoachChatProps {
   draft: string;
   /** 生徒が設定した字数。コーチが構成・見本・削る量をこれに合わせる */
   wordLimit?: number;
+  /** 課題文型の答案の型 */
+  answerForm?: string;
   universityId?: string;
   facultyId?: string;
   /** 出題形式・課題文。コーチが資料の中身に即して助言できるよう渡す */
@@ -82,6 +84,7 @@ export function EssayCoachChat({
   topic,
   draft,
   wordLimit,
+  answerForm,
   universityId,
   facultyId,
   questionType,
@@ -210,6 +213,7 @@ export function EssayCoachChat({
       topic,
       draft,
       wordLimit,
+      answerForm,
       universityId,
       facultyId,
       questionType,
