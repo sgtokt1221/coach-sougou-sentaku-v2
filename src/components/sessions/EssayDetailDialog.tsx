@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { FileText } from "lucide-react";
+import { useUnviewedSubmissionsMutate } from "@/components/admin/UnviewedSubmissions";
 import { authFetch } from "@/lib/api/client";
 import { CommentableEssayText } from "@/components/essay/CommentableEssayText";
 import {
@@ -151,6 +152,7 @@ export default function EssayDetailDialog({
   });
   const [selected, setSelected] = useState<string[] | null>(null);
   const [textMode, setTextMode] = useState<"ai" | "comment">("ai");
+  const mutateUnviewed = useUnviewedSubmissionsMutate();
 
   useEffect(() => {
     if (!open || !essayId) return;
@@ -161,13 +163,17 @@ export default function EssayDetailDialog({
     setTextMode("ai");
     authFetch(`/api/admin/students/${studentId}/essays/${essayId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => active && setData(d))
+      .then((d) => {
+        if (active) setData(d);
+        // 詳細APIが既読を付けるので、未確認バッジを読み直す
+        if (d) void mutateUnviewed();
+      })
       .catch(() => active && setData(null))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [open, essayId, studentId]);
+  }, [open, essayId, studentId, mutateUnviewed]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

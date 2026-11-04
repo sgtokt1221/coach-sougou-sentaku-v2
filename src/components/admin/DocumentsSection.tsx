@@ -57,7 +57,6 @@ import { APReference } from "@/components/coach/APReference";
 import { RedPenText } from "@/components/essay/RedPenText";
 import { appendQuote } from "@/lib/chat/message-blocks";
 import { formatVersionDate } from "@/lib/ui/format-version-date";
-import { markSubmissionViewed } from "@/lib/api/client";
 import {
   defaultScheduleValue,
   formatScheduledAt,
@@ -448,10 +447,6 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
   }
 
   async function openDetail(docId: string) {
-    // 開いた1件を自分の既読にする（未確認バッジ用）
-    void markSubmissionViewed("document", docId, studentId).then(() =>
-      mutateUnviewed(),
-    );
     setDetailOpen(true);
     setDetailLoading(true);
     setDetailDoc(null);
@@ -462,6 +457,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
       );
       if (res.ok) {
         setDetailDoc(await res.json());
+        // 詳細APIが既読を付けるので、バッジを読み直すだけ
+        void mutateUnviewed();
       }
     } catch {
       // error

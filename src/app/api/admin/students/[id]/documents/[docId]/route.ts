@@ -1,6 +1,7 @@
 import { pickDocumentScoreFields } from "@/lib/documents/score-axes";
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { recordSubmissionViewed } from "@/lib/api/viewed-submissions";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { DocumentVersion } from "@/lib/types/document";
@@ -69,6 +70,8 @@ export async function GET(
         : null;
     // 添削結果は書類直下に保存される。旧データのため版も見る
     const feedback = data.feedback ?? latestVersion?.feedback;
+
+    await recordSubmissionViewed(callerUid, "document", docId, studentId);
 
     // この書類を書いていたときの AIコーチ会話。スレッドが docId を持つので
     // 推定は不要。セクション単位なので複数ある

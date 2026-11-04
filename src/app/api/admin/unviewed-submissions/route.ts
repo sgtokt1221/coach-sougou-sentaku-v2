@@ -5,7 +5,6 @@ import { getOrgMemberAdminUids } from "@/lib/api/organization-scope";
 import {
   SUBMISSION_KINDS,
   isRecentSubmission,
-  isSubmissionKind,
   viewedDocId,
   type SubmissionKind,
 } from "@/lib/api/submission-kinds";
@@ -68,8 +67,7 @@ const EMPTY: UnviewedResult = { total: 0, byStudent: {}, byStudentKind: {}, ids:
 /**
  * 呼び出した管理者がまだ開いていない提出物を数える。
  *
- * GET と「すべて既読」の両方がこれを使う。別々に数えると、ボタンで消せない
- * 差分が残って永久に赤いままになる。
+ * 既読は詳細APIを開いたときに付く（recordSubmissionViewed）。
  */
 async function computeUnviewed(
   uid: string,
@@ -175,92 +173,5 @@ export async function GET(request: NextRequest) {
     console.error("[unviewed-submissions] failed:", error);
     // バッジは失敗しても本体機能を止めない
     return NextResponse.json(EMPTY);
-  }
-}
-
-/**
- * POST /api/admin/unviewed-submissions
- * body: { kind, id, studentId } … 1件を既読にする（提出物を開いたとき）
- * body: { all: true }           … 未確認を全部既読にする
- */
-export async function POST(request: NextRequest) {
-  const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
-  if (auth instanceof NextResponse) return auth;
-  const { uid, role } = auth;
-
-  if (!adminDb) {
-    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
-  }
-
-  const body = (await request.json().catch(() => ({}))) as {
-    kind?: string;
-    id?: string;
-    studentId?: string;
-    all?: boolean;
-  };
-
-  // 「すべて既読にする」。今数えているものと同じ集計を使うので、
-  // 押した後に必ず 0 になる
-  if (body.all) {
-    try {
-      const { ids, byStudentKind } = await computeUnviewed(uid, role);
-      const ownerOf = new Map<string, string>();
-      for (const [sid, kinds] of Object.entries(byStudentKind)) {
-        for (const kind of Object.keys(kinds) as SubmissionKind[]) {
-          for (const id of ids[kind] ?? []) ownerOf.set(`${kind}__${id}`, sid);
-        }
-      }
-      const now = new Date();
-      const entries = (Object.keys(ids) as SubmissionKind[]).flatMap((kind) =>
-        (ids[kind] ?? []).map((id) => ({ kind, id })),
-      );
-      // batch は500件まで
-      for (let i = 0; i < entries.length; i += 400) {
-        const batch = adminDb.batch();
-        for (const e of entries.slice(i, i + 400)) {
-          batch.set(
-            adminDb.doc(
-              `users/${uid}/viewedSubmissions/${viewedDocId(e.kind, e.id)}`,
-            ),
-            {
-              kind: e.kind,
-              submissionId: e.id,
-              studentId: ownerOf.get(viewedDocId(e.kind, e.id)) ?? null,
-              viewedAt: now,
-            },
-          );
-        }
-        await batch.commit();
-      }
-      return NextResponse.json({ success: true, marked: entries.length });
-    } catch (error) {
-      console.error("[unviewed-submissions] mark all failed:", error);
-      return NextResponse.json(
-        { error: "既読の記録に失敗しました" },
-        { status: 500 },
-      );
-    }
-  }
-
-  if (!isSubmissionKind(body.kind) || !body.id) {
-    return NextResponse.json({ error: "kind と id が必要です" }, { status: 400 });
-  }
-
-  try {
-    await adminDb
-      .doc(`users/${uid}/viewedSubmissions/${viewedDocId(body.kind, body.id)}`)
-      .set({
-        kind: body.kind,
-        submissionId: body.id,
-        studentId: body.studentId ?? null,
-        viewedAt: new Date(),
-      });
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[unviewed-submissions] mark failed:", error);
-    return NextResponse.json(
-      { error: "既読の記録に失敗しました" },
-      { status: 500 },
-    );
   }
 }

@@ -1,18 +1,15 @@
 /**
  * 「まだ確認していない提出物」の対象登録表（正本）。
  *
- * 対象を足すときはここだけ直せば、未確認件数の集計・バッジ・既読記録がすべて
- * 追従する。片方だけ足して沈黙失敗になるのを防ぐ。
+ * 対象を足すときはここだけ直せば、未確認件数の集計・バッジがすべて追従する。
+ * 既読は詳細APIを開いたときに recordSubmissionViewed で付く。**管理者が開いて
+ * 読める画面と詳細APIがあるものだけ**を対象にする（ちょこ添削・要約/論理ドリルは
+ * 管理画面から外した後も数え続けており、開けないので赤が消えなかった）。
  *
  * 既読は管理者ごとに users/{adminUid}/viewedSubmissions/{kind}__{id} で持つ。
  * 「自分がまだ確認していない」を出すため、閲覧者ごとに分ける必要がある。
  */
-export type SubmissionKind =
-  | "essay"
-  | "document"
-  | "chocoReview"
-  | "summaryDrill"
-  | "logicDrill";
+export type SubmissionKind = "essay" | "document";
 
 export interface SubmissionKindConfig {
   label: string;
@@ -41,21 +38,6 @@ export const SUBMISSION_KINDS: Record<SubmissionKind, SubmissionKindConfig> = {
     timestampField: "updatedAt",
     // 下書きは提出ではない
     countable: (d) => d.status && d.status !== "draft",
-  },
-  chocoReview: {
-    label: "ちょこ添削",
-    subcollection: "chokoReviews",
-    timestampField: "createdAt",
-  },
-  summaryDrill: {
-    label: "要約ドリル",
-    subcollection: "summaryDrills",
-    timestampField: "completedAt",
-  },
-  logicDrill: {
-    label: "論理ドリル",
-    subcollection: "logicDrills",
-    timestampField: "completedAt",
   },
 };
 
@@ -89,8 +71,7 @@ function toDate(v: unknown): Date | null {
 /**
  * 対象期間内の提出かどうか。
  *
- * 日付が全く取れないものは true（隠すより見せる）。取りこぼしても
- * 「すべて既読にする」で消せる。
+ * 日付が全く取れないものは true（隠すより見せる）。
  */
 export function isRecentSubmission(
   data: FirebaseFirestore.DocumentData,

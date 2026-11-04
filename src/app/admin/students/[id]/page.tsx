@@ -57,7 +57,7 @@ import {
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { resetPassword } from "@/lib/firebase/auth";
-import { authFetch, markSubmissionViewed } from "@/lib/api/client";
+import { authFetch } from "@/lib/api/client";
 import {
   useUnviewedSubmissions,
   useUnviewedSubmissionsMutate,
@@ -593,10 +593,6 @@ function AdminStudentDetailPageInner() {
 
   async function openEssayDetail(essayId: string) {
     setEssayDetailOpen(true);
-    // 開いた1件を自分の既読にする（未確認バッジ用）
-    void markSubmissionViewed("essay", essayId, id).then(() =>
-      mutateUnviewed()
-    );
     setEssayLoading(true);
     setEssayDetail(null);
     setEssayMarkSelected(null);
@@ -607,6 +603,8 @@ function AdminStudentDetailPageInner() {
       );
       if (res.ok) {
         setEssayDetail(await res.json());
+        // 詳細APIが既読を付けるので、バッジを読み直すだけ
+        void mutateUnviewed();
       }
     } catch {
       // error

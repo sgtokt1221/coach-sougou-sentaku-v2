@@ -2,6 +2,7 @@ import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
 import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import { NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { recordSubmissionViewed } from "@/lib/api/viewed-submissions";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Essay } from "@/lib/types/essay";
@@ -58,6 +59,8 @@ export async function GET(
         { status: 403 }
       );
     }
+
+    await recordSubmissionViewed(auth.uid, "essay", essayId, studentId);
 
     // 出題の文脈。retryContext は旧データでここに同じ情報が入っていることがあるため
     // フォールバックに使う。

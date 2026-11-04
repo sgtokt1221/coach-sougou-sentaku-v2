@@ -31,7 +31,6 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { AlertItem } from "@/lib/types/admin";
-import { MarkAllViewedButton } from "@/components/admin/UnviewedSubmissions";
 
 type FilterType =
   | "all"
@@ -326,7 +325,6 @@ export default function AdminAlertsPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <MarkAllViewedButton />
           {criticalCount > 0 && (
             <Badge variant="destructive" className="text-sm">
               緊急 {criticalCount}件
