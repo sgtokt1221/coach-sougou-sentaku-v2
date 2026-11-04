@@ -134,6 +134,8 @@ export interface CoachRequestBody {
   topic: string;
   /** 8000 文字で切り詰め済みの本文 */
   draft: string;
+  /** 生徒が設定した字数（提出時の添削に渡すものと同じ値） */
+  wordLimit?: number;
   universityId?: string;
   facultyId?: string;
   /** 出題形式。採点側 (EssayReviewRequest) と同じ区分を使う */

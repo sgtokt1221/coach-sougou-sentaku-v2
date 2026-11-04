@@ -220,6 +220,15 @@ export async function POST(request: NextRequest) {
   const universityId = body.universityId?.trim();
   const facultyId = body.facultyId?.trim();
   const oralExam = sanitizeOralExam(body.oralExam);
+  // 口頭試問は小問ごとの字数を progress で渡すので、全体の字数は渡さない
+  const wordLimit =
+    !oralExam &&
+    typeof body.wordLimit === "number" &&
+    Number.isInteger(body.wordLimit) &&
+    body.wordLimit > 0 &&
+    body.wordLimit <= 20000
+      ? body.wordLimit
+      : undefined;
   // 口頭試問の文脈があるときは出題形式を確定させる（画面側の渡し忘れで小論文扱いにしない）
   const questionType = oralExam ? "oral_exam" : body.questionType;
   const sourceText = body.sourceText?.trim();
@@ -375,6 +384,7 @@ export async function POST(request: NextRequest) {
     activities,
     selfAnalysis,
     draft,
+    wordLimit,
     turnCount,
     questionType,
     sourceText,

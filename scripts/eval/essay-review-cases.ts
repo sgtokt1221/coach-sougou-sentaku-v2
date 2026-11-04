@@ -107,6 +107,17 @@ const GENERIC_LIGHT_2 = "誰もが安心して暮らせる社会をつくるこ�
 const GENERIC_HEAVY =
   "第一の理由は、路線バスが地域の人々にとって欠かせない大切な存在だからだ。バスがあることで、住民は安心して毎日の生活を送ることができる。生活に必要なものを守ることは、行政の大切な役割である。住民の暮らしを守るためには、多少の費用がかかってもバスを残すべきだ。";
 
+/**
+ * 成熟度だけを動かす対（M1 / M2）。S0 の第4段落（反論と見直し案）だけを差し替え、
+ * 構成・論理の骨格と字数はそろえる。成熟度の点が他の軸と独立に動くかを見る。
+ */
+/** M1: 反論・利害の違い・副作用を扱わず、同じ立場の理由を重ねるだけ（成熟度5の記述） */
+const MATURITY_LOW =
+  "さらに、バスは住民にとって慣れ親しんだ移動手段であり、時刻表や停留所も長年変わらずに使われてきた。急に廃止すれば住民の生活は大きく乱れる。だからこそ、行政は税金を使ってでもバスを守り、住民が安心して移動できる状態を保つべきである。";
+/** M2: 利害の対立、見直し案の副作用、実行主体と費用分担まで検討し、主張を条件付きに更新（成熟度8-9の記述） */
+const MATURITY_HIGH =
+  "もちろん、税金を払う住民の多くはバスを使わない。その人たちにとっては、子育てや防災に回るはずの財源が減ることになる。そこで、利用の少ない時間帯は予約があるときだけ運行する方式に切り替える。ただしこの方式には、電話やアプリで予約できない高齢者ほど使えなくなるという副作用がある。運行を担う事業者だけでは防げないため、町が窓口で予約を代行し、その費用は空のバスを減らして浮いた分で賄う。維持してよいのは、この形でも移動が保てる路線に限られる。";
+
 const join = (paras: string[]) => paras.join("\n");
 
 export function withTwists(text: string): string {
@@ -222,7 +233,33 @@ export const SYNTHETIC_CASES: SyntheticCase[] = [
     id: "S0-base",
     label: "基底（普通に良い答案）",
     input: { topic: TOPIC_S, wordLimit: 800, ocrText: join(S0) },
-    expect: [{ type: "scoreMaximum", value: 50 }],
+    expect: [
+      { type: "scoreMaximum", value: 50 },
+      { type: "axisBelow", axis: "reasoningMaturity", caseId: "M2-maturity-high" },
+    ],
+  },
+  {
+    id: "M1-maturity-low",
+    label: "成熟度だけ低い（反論・利害を扱わない）",
+    input: {
+      topic: TOPIC_S,
+      wordLimit: 800,
+      ocrText: join([S0[0], S0[1], S0[2], MATURITY_LOW, S0[4]]),
+    },
+    expect: [
+      { type: "axesMax", axes: ["reasoningMaturity"], value: 6 },
+      { type: "axisBelow", axis: "reasoningMaturity", caseId: "S0-base" },
+    ],
+  },
+  {
+    id: "M2-maturity-high",
+    label: "成熟度だけ高い（利害・副作用・実行主体）",
+    input: {
+      topic: TOPIC_S,
+      wordLimit: 800,
+      ocrText: join([S0[0], S0[1], S0[2], MATURITY_HIGH, S0[4]]),
+    },
+    expect: [],
   },
   {
     id: "N1-blank",

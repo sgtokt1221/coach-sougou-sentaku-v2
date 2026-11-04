@@ -106,6 +106,8 @@ export interface ReferenceMaterial {
 interface EssayCoachPanelProps {
   topic: string;
   draft: string;
+  /** 生徒が設定した字数。AIコーチに渡す */
+  wordLimit?: number;
   universityId?: string;
   facultyId?: string;
   /** 過去問の参考資料 (あれば 資料 タブが先頭に追加され、コーチにも渡る) */
@@ -213,6 +215,7 @@ export function EssayCoachPanel(props: EssayCoachPanelProps) {
 export function EssayCoachPanelBody({
   topic,
   draft,
+  wordLimit,
   universityId,
   facultyId,
   referenceMaterial,
@@ -294,6 +297,7 @@ export function EssayCoachPanelBody({
           <EssayCoachChat
             topic={topic}
             draft={draft}
+            wordLimit={wordLimit}
             universityId={universityId}
             facultyId={facultyId}
             questionType={materialForCoach?.questionType}

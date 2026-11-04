@@ -2682,6 +2682,16 @@ export default function EssayNewPage() {
                 <EssayCoachPanel
                   topic={effectiveTopic}
                   draft={directText}
+                  wordLimit={
+                    (reportMode && reportMaterial
+                      ? reportMaterial.recommendedWordLimit
+                      : undefined) ||
+                    customMaxLength ||
+                    pastQuestion?.wordLimit ||
+                    selectedTheme?.wordLimit ||
+                    retryParent?.retryContext?.wordLimit ||
+                    undefined
+                  }
                   universityId={universityId || undefined}
                   facultyId={facultyId || undefined}
                   referenceMaterial={effectiveMaterial}

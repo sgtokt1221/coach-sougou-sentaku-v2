@@ -43,6 +43,8 @@ function stableDraftPart(value: string): string {
 export interface EssayCoachChatProps {
   topic: string;
   draft: string;
+  /** 生徒が設定した字数。コーチが構成・見本・削る量をこれに合わせる */
+  wordLimit?: number;
   universityId?: string;
   facultyId?: string;
   /** 出題形式・課題文。コーチが資料の中身に即して助言できるよう渡す */
@@ -79,6 +81,7 @@ export interface EssayCoachChatProps {
 export function EssayCoachChat({
   topic,
   draft,
+  wordLimit,
   universityId,
   facultyId,
   questionType,
@@ -206,6 +209,7 @@ export function EssayCoachChat({
       threadId: threadId ?? undefined,
       topic,
       draft,
+      wordLimit,
       universityId,
       facultyId,
       questionType,

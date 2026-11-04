@@ -40,6 +40,8 @@ export interface CoachContext {
   }>;
   selfAnalysis?: CoachSelfAnalysis;
   draft: string;
+  /** 設問の字数。本文の字数（draftLength）と並べて渡す */
+  wordLimit?: number;
   turnCount: number;
   /** 出題形式 (english-reading / data-analysis / mixed / lecture / report など) */
   questionType?: string;
@@ -155,6 +157,9 @@ export function buildEssayCoachSystemPrompt(ctx: CoachContext): string {
     activities: ctx.activities,
     selfAnalysis: ctx.selfAnalysis ?? null,
     draft: ctx.draft || null,
+    // 字数はモデルに数えさせない（日本語の字数を数え違える）
+    wordLimit: ctx.wordLimit ?? null,
+    draftLength: ctx.draft ? ctx.draft.length : 0,
     lecture: ctx.lecture ?? null,
     review: ctx.review ?? null,
     oralExam: ctx.oralExam
@@ -269,6 +274,9 @@ ${
 - 返答は短く 2-4 文。 長文で一方的に説明しない
 - ただし背景知識・見本を求められたときは、 この文数制限を外して十分に書く (下記)
 - 日本語で応答する
+- reference_data.wordLimit があれば、それがこの答案の字数です。生徒に聞き返さず、
+  構成案・字数配分・見本はこの字数に合わせます。本文の字数は draftLength を使い、
+  数え直しません。超えていればどこを削るか、半分に満たなければどこを書き足すかを示します
 
 ## 背景知識を聞かれたとき
 小論文は知識が無いと書けない。 背景を聞かれたら出し惜しみせず、 正確に、 必要なだけ書く。
@@ -283,7 +291,7 @@ ${
 「見本を見せて」 「書いてみて」 と言われたら、 断らずに全文を書く。
 書けないと言わない。 生徒の経験や下書きの材料を使って書いてよい。
 - 冒頭に 「これは例です。 自分の言葉に直してから使ってください」 と1行添える
-- 設問の条件 (字数・形式) に合わせる。 字数指定があればおおむね守る
+- 設問の条件 (字数・形式) に合わせる。 reference_data.wordLimit があればその字数におおむね収める
 - 入力にない活動・成果・数値・固有名詞は作らない。 材料が足りない箇所は
   〔ここに実際の出来事〕 のように空欄で示し、 本人に埋めさせる
 - 書いたあとに 「ここは自分の言葉に置き換えると強くなります」 と、
