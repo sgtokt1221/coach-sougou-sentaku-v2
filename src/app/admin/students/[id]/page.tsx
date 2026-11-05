@@ -522,9 +522,36 @@ function AdminStudentDetailPageInner() {
     router.replace(`?${sp.toString()}`, { scroll: false });
   };
 
-  const [detail, setDetail] = useState<StudentDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  /**
+   * 生徒詳細の本体は SWR で取る。以前は useEffect の素の fetch で、開くたびに
+   * スケルトンから始まっていた。SWR なら端末に残した前回の内容をすぐ出し、裏で取り直す。
+   * 手元の書き換え（setDetail）は取り直さずにキャッシュだけ差し替える。
+   */
+  const {
+    data: detailData,
+    error: detailError,
+    isLoading: detailLoading,
+    mutate: mutateDetail,
+  } = useAuthSWR<StudentDetail>(id ? `/api/admin/students/${id}` : null);
+  const detail = detailData ?? null;
+  const loading = detailLoading && !detailData;
+  const fetchError = detailError
+    ? detailError instanceof Error
+      ? detailError.message
+      : "不明なエラー"
+    : null;
+  const setDetail = (
+    next:
+      | StudentDetail
+      | null
+      | ((prev: StudentDetail | null) => StudentDetail | null)
+  ) => {
+    void mutateDetail(
+      (prev) =>
+        (typeof next === "function" ? next(prev ?? null) : next) ?? undefined,
+      { revalidate: false }
+    );
+  };
   const [openSections, setOpenSections] = useState({
     weaknesses: false,
     essays: false,
@@ -781,31 +808,6 @@ function AdminStudentDetailPageInner() {
   const [saving, setSaving] = useState(false);
   const [unlockingRealtime, setUnlockingRealtime] = useState(false);
 
-  useEffect(() => {
-    async function fetchDetail() {
-      try {
-        const res = await authFetch(`/api/admin/students/${id}`);
-        if (!res.ok) {
-          const body = await res.text().catch(() => "");
-          const msg = `HTTP ${res.status}: ${body || res.statusText}`;
-          console.error("[AdminStudentDetail] fetch failed:", msg);
-          setFetchError(msg);
-          setDetail(null);
-          return;
-        }
-        const data = await res.json();
-        setDetail(data);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "不明なエラー";
-        console.error("[AdminStudentDetail] fetch error:", msg);
-        setFetchError(msg);
-        setDetail(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (id) fetchDetail();
-  }, [id]);
 
   async function handleSendResetEmail() {
     if (!detail?.profile.email) {

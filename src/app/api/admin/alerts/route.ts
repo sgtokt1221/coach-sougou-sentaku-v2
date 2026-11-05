@@ -428,6 +428,8 @@ export async function GET(request: NextRequest) {
           .collection("essays")
           .where("userId", "==", studentUid)
           .orderBy("submittedAt", "desc")
+          // 本文は要らない（点と日時だけ）
+          .select("submittedAt", "scores.total", "scores.apAlignment", "feedback.scoreMaximum")
           .get()
           .catch((e) => {
             console.warn(
@@ -444,25 +446,84 @@ export async function GET(request: NextRequest) {
           activityDates.push(latestEssay.submittedAt.toDate().getTime());
         }
 
-        // 面接・要約ドリル・活動ログ (ネタインプット/面接ドリル)
-        const otherCollections: Array<{ name: string; field: string }> = [
-          { name: "interviews", field: "startedAt" },
-          { name: "summaryDrills", field: "completedAt" },
-          { name: "activityLogs", field: "createdAt" },
-        ];
-        for (const { name, field } of otherCollections) {
-          try {
-            const snap = await adminDb!
-              .collection(`users/${studentUid}/${name}`)
-              .orderBy(field, "desc")
-              .limit(1)
-              .get();
-            const latest = snap.docs[0]?.data();
-            const ts = latest?.[field]?.toDate?.();
-            if (ts) activityDates.push(ts.getTime());
-          } catch {
+        /**
+         * この生徒について読むものを全部同時に投げる。以前は約10回の await が
+         * 直列で、生徒の人数 × 10往復の待ちになっていた。
+         * 失敗したものは「無し」として扱う（1つの失敗で全体を落とさない）。
+         */
+        const emptySnap = { docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] };
+        const soft = <T,>(p: Promise<T>, fallback: T, what: string) =>
+          p.catch((e) => {
+            console.warn(`[admin/alerts] ${what} failed for ${studentUid}:`, e);
+            return fallback;
+          });
+        const latestOf = (name: string, field: string) =>
+          adminDb!
+            .collection(`users/${studentUid}/${name}`)
+            .orderBy(field, "desc")
+            .limit(1)
+            .get()
+            .then((snap) => snap.docs[0]?.data()?.[field]?.toDate?.()?.getTime() as number | undefined)
             // フィールド不存在・インデックス未作成時はスキップ
+            .catch(() => undefined);
+        const firstEssayAt = essaysSnap.docs[essaysSnap.docs.length - 1]
+          ?.data()
+          ?.submittedAt?.toDate?.()
+          ?.getTime();
+        const [
+          summaryDrillAt,
+          activityLogAt,
+          interviewsSnap,
+          weaknessesSnap,
+          documentsSnap,
+          acksSnap,
+          saSnap,
+          passerBenchmark,
+        ] = await Promise.all([
+          latestOf("summaryDrills", "completedAt"),
+          latestOf("activityLogs", "createdAt"),
+          // 面接の実データはトップレベル interviews（以前は users/{uid}/interviews を
+          // 読んでいて常に空で、面接が最終活動に入っていなかった）
+          soft(
+            adminDb!.collection("interviews").where("userId", "==", studentUid).select("startedAt").get(),
+            emptySnap as unknown as FirebaseFirestore.QuerySnapshot,
+            "interviews"
+          ),
+          adminDb!.collection("users").doc(studentUid).collection("weaknesses").get(),
+          // 実データはグローバル documents/{docId}（userId で紐付け）。orderBy なし＝複合インデックス不要
+          soft(
+            adminDb!.collection("documents").where("userId", "==", studentUid).get(),
+            emptySnap as unknown as FirebaseFirestore.QuerySnapshot,
+            "documents"
+          ),
+          // 確認済みアラートのキー集合 (doc id = alertKey)。未作成なら空集合。
+          soft(
+            adminDb!.collection("users").doc(studentUid).collection("alertAcks").get(),
+            emptySnap as unknown as FirebaseFirestore.QuerySnapshot,
+            "alertAcks"
+          ),
+          adminDb!.doc(`selfAnalysis/${studentUid}`).get().catch(() => null),
+          // 合格者ライン（答案は新しい順に全件読んであるので、最初の答案は末尾）
+          passerBenchmarkViewFor(
+            adminDb!,
+            studentUid,
+            data.targetUniversities,
+            firstEssayAt ?? null
+          ).catch(() => null),
+        ]);
+
+        // 面接・要約ドリル・活動ログ (ネタインプット/面接ドリル)
+        let latestInterview: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+        let latestInterviewMs = -1;
+        for (const d of interviewsSnap.docs) {
+          const ts = d.data()?.startedAt?.toDate?.()?.getTime();
+          if (typeof ts === "number" && ts > latestInterviewMs) {
+            latestInterviewMs = ts;
+            latestInterview = d;
           }
+        }
+        for (const t of [latestInterviewMs > 0 ? latestInterviewMs : undefined, summaryDrillAt, activityLogAt]) {
+          if (typeof t === "number") activityDates.push(t);
         }
 
         // users.lastSeenAt (ハートビートで更新される「最後にアプリを開いた時刻」)
@@ -491,17 +552,6 @@ export async function GET(request: NextRequest) {
           .filter((s): s is number => typeof s === "number")
           .reverse();
 
-        // 合格者ライン（答案は新しい順に全件読んであるので、最初の答案は末尾）
-        const firstEssayAt = essaysSnap.docs[essaysSnap.docs.length - 1]
-          ?.data()
-          ?.submittedAt?.toDate?.()
-          ?.getTime();
-        const passerBenchmark = await passerBenchmarkViewFor(
-          adminDb!,
-          studentUid,
-          data.targetUniversities,
-          firstEssayAt ?? null
-        ).catch(() => null);
 
         // Extract AP alignment scores separately for ap_struggle detection
         const apAlignmentScores = essaysSnap.docs
@@ -509,11 +559,6 @@ export async function GET(request: NextRequest) {
           .filter((s): s is number => typeof s === "number")
           .reverse();
 
-        const weaknessesSnap = await adminDb!
-          .collection("users")
-          .doc(studentUid)
-          .collection("weaknesses")
-          .get();
         const weaknesses = weaknessesSnap.docs
           .filter((d) => !d.data().archivedAt) // Phase 4: archive 済みはアラート対象外
           .map((d) => {
@@ -529,21 +574,6 @@ export async function GET(request: NextRequest) {
             };
           });
 
-        // Document data
-        // 実データはグローバル documents/{docId}（userId で紐付け）。
-        // essays 同様に collection + userId where で取得（orderBy なし＝複合インデックス不要）。
-        // 失敗時は console.warn で痕跡を残しつつ、その生徒だけ「documents なし」扱いに。
-        const documentsSnap = await adminDb!
-          .collection("documents")
-          .where("userId", "==", studentUid)
-          .get()
-          .catch((e) => {
-            console.warn(
-              `[admin/alerts] documents query failed for ${studentUid}:`,
-              e
-            );
-            return { docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] };
-          });
         const documents: DocumentAlertData[] = documentsSnap.docs.map((d) => {
           const dData = d.data();
           return {
@@ -554,19 +584,6 @@ export async function GET(request: NextRequest) {
           };
         });
 
-        // 確認済みアラートのキー集合 (doc id = alertKey)。未作成なら空集合。
-        const acksSnap = await adminDb!
-          .collection("users")
-          .doc(studentUid)
-          .collection("alertAcks")
-          .get()
-          .catch((e) => {
-            console.warn(
-              `[admin/alerts] alertAcks query failed for ${studentUid}:`,
-              e
-            );
-            return { docs: [] as FirebaseFirestore.QueryDocumentSnapshot[] };
-          });
         const acknowledgedKeys = new Set(acksSnap.docs.map((d) => d.id));
 
         // 直近(NEW_WINDOW_DAYS 以内)の活動を集めて info 通知の元にする
@@ -593,9 +610,8 @@ export async function GET(request: NextRequest) {
 
         // 自己分析 (top-level selfAnalysis/{uid}, updatedAt)
         try {
-          const saSnap = await adminDb!.doc(`selfAnalysis/${studentUid}`).get();
-          const saAt = saSnap.data()?.updatedAt?.toDate?.();
-          if (saSnap.exists && saAt && isRecent(saAt.getTime())) {
+          const saAt = saSnap?.data()?.updatedAt?.toDate?.();
+          if (saSnap?.exists && saAt && isRecent(saAt.getTime())) {
             recentActivities.push({
               type: "self_analysis_done",
               itemId: saAt.toISOString().slice(0, 10),
@@ -611,20 +627,7 @@ export async function GET(request: NextRequest) {
         // 模擬面接 — 実データはグローバル interviews/{id}（userId で紐付け、startedAt は Timestamp）。
         // userId where のみで取得し JS 側で最新 startedAt を選ぶ（複合インデックス不要）。
         try {
-          const iSnap = await adminDb!
-            .collection("interviews")
-            .where("userId", "==", studentUid)
-            .get();
-          let latestInterview: FirebaseFirestore.QueryDocumentSnapshot | null =
-            null;
-          let latestMs = -1;
-          for (const d of iSnap.docs) {
-            const ts = d.data()?.startedAt?.toDate?.();
-            if (ts && ts.getTime() > latestMs) {
-              latestMs = ts.getTime();
-              latestInterview = d;
-            }
-          }
+          const latestMs = latestInterviewMs;
           if (latestInterview && isRecent(latestMs)) {
             recentActivities.push({
               type: "interview_done",

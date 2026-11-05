@@ -1,5 +1,6 @@
 "use client";
 
+import { STUDENTS_LIST_KEY } from "@/lib/admin/student-list-key";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -98,7 +99,7 @@ export default function AdminSessionsPage() {
   // データ取得
   const { data: allSessions = [], mutate: mutateSessions, error: sessionsError } = useAuthSWR<Session[]>('/api/sessions');
   // 直接予定追加の生徒選択肢: コーチプランの担当生徒全員
-  const { data: allStudentsData = [] } = useAuthSWR<StudentListItem[]>('/api/admin/students');
+  const { data: allStudentsData = [] } = useAuthSWR<StudentListItem[]>(STUDENTS_LIST_KEY);
   const coachStudents = allStudentsData.filter((s) => s.plan === "coach");
   const { data: unplacedData, error: unplacedError, mutate: mutateUnplaced } = useAuthSWR<{ students: UnplacedStudent[] } | UnplacedStudent[]>(
     `/api/admin/sessions/unplaced?month=${currentMonth}`

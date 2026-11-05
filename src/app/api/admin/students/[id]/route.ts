@@ -171,7 +171,7 @@ export async function GET(
       }
     };
 
-    const [essaysSnap, interviewsSnap, weaknessesSnap] = await Promise.all([
+    const [essaysSnap, interviewsSnap, weaknessesSnap, draftsSnap] = await Promise.all([
       adminDb
         .collection("essays")
         .where("userId", "==", id)
@@ -179,6 +179,40 @@ export async function GET(
         .get(),
       fetchCompletedInterviews(),
       adminDb.collection(`users/${id}/weaknesses`).get(),
+      adminDb
+        .collection(`users/${id}/essayDrafts`)
+        .get()
+        .catch((err) => {
+          console.warn("[admin/students] essayDrafts fetch failed:", err);
+          return null;
+        }),
+    ]);
+
+    /**
+     * 答案・面接を読んだら、それを使う残りの読み込みを全部同時に始める。
+     * 以前は最終活動 → 合格者ライン → 集計 → 通知状態が直列で、集計は答案・面接を
+     * もう一度全件読んでいた。読み済みのものを渡して読み直さない。
+     */
+    const essayRows = essaysSnap.docs.map((d) => d.data());
+    const interviewRows = interviewsSnap.docs.map((d) => d.data());
+    const targetUnis: string[] = userData.targetUniversities ?? [];
+    const firstEssay = essaysSnap.docs[essaysSnap.docs.length - 1]?.get("submittedAt");
+    const latePromise = Promise.all([
+      resolveLastActivity(adminDb, id, { essays: essayRows, interviews: interviewRows }),
+      // 合格者ライン（答案は新しい順に全件読んであるので、最初の答案は末尾）
+      passerBenchmarkViewFor(
+        adminDb,
+        id,
+        targetUnis,
+        firstEssay?.toDate?.()?.getTime() ?? null
+      ).catch(() => null),
+      // スキル指標 = 直近10件の提出の平均。生徒一覧と同じ式・同じ入力で算出する。
+      computeEssayAggregate(id, essayRows),
+      computeInterviewAggregate(id, interviewRows),
+      // 通知が届く状態か（トークンの有無・最終配信・設定で全部切っているか）
+      import("@/lib/notifications/push-status").then(({ loadPushStatus }) =>
+        loadPushStatus(adminDb!, id, "student").catch(() => null)
+      ),
     ]);
 
     // 大学ID→日本語名のヘルパー（部分一致フォールバック付き）
@@ -210,10 +244,7 @@ export async function GET(
     // topic 未保存の答案をテーマ名に復元するための手がかり。生徒ごとに1回だけ引く。
     const draftHints: DraftHint[] = [];
     try {
-      const draftsSnap = await adminDb
-        .collection(`users/${id}/essayDrafts`)
-        .get();
-      for (const d of draftsSnap.docs) {
+      for (const d of draftsSnap?.docs ?? []) {
         const y = d.data();
         if (!y.themeId && !y.pastQuestionId) continue;
         draftHints.push({
@@ -513,7 +544,8 @@ export async function GET(
      * やっても更新されなかった。数える取り組みは lib/api/last-activity.ts に
      * まとめ、生徒一覧と同じ判定を通す。
      */
-    const lastActivity = await resolveLastActivity(adminDb, id);
+    const [lastActivity, passerBenchmark, essayAggregate, interviewAggregate, pushStatus] =
+      await latePromise;
     const lastActivityAt = lastActivity?.at ?? null;
 
     // 最終ログイン (ハートビートで更新される users.lastSeenAt)
@@ -522,29 +554,7 @@ export async function GET(
       (typeof userData.lastSeenAt === "string" ? userData.lastSeenAt : null);
 
     // 志望校のcompound IDを日本語名に解決
-    const targetUnis = userData.targetUniversities ?? [];
     const resolvedUniversities = resolveTargetUniversities(targetUnis);
-
-    // 合格者ライン（答案は新しい順に全件読んであるので、最初の答案は末尾）
-    const firstEssay = essaysSnap.docs[essaysSnap.docs.length - 1]?.get("submittedAt");
-    const passerBenchmark = await passerBenchmarkViewFor(
-      adminDb,
-      id,
-      targetUnis,
-      firstEssay?.toDate?.()?.getTime() ?? null
-    ).catch(() => null);
-
-    // スキル指標 = 直近10件の提出の平均。生徒一覧と同じ式・同じ入力で算出する。
-    const [essayAggregate, interviewAggregate] = await Promise.all([
-      computeEssayAggregate(id),
-      computeInterviewAggregate(id),
-    ]);
-
-    // 通知が届く状態か（トークンの有無・最終配信・設定で全部切っているか）
-    const { loadPushStatus } = await import("@/lib/notifications/push-status");
-    const pushStatus = await loadPushStatus(adminDb, id, "student").catch(
-      () => null
-    );
 
     const detail: StudentDetail = {
       profile: {

@@ -77,16 +77,37 @@ function toMillis(v: unknown): number | null {
 export async function resolveLastActivity(
   db: Firestore,
   uid: string,
+  /**
+   * 呼び出し側で読み済みのもの（全件の data）。渡したものは読み直さない。
+   * 生徒一覧は同じ生徒の essays・interviews・宿題を3回ずつ読んでいた。
+   */
+  preloaded?: {
+    essays?: FirebaseFirestore.DocumentData[];
+    interviews?: FirebaseFirestore.DocumentData[];
+    homework?: FirebaseFirestore.DocumentData[];
+  },
 ): Promise<LastActivity | null> {
   const candidates: { type: LastActivityType; ts: number }[] = [];
   const add = (type: LastActivityType, ts: number | null | undefined) => {
     if (typeof ts === "number" && ts > 0) candidates.push({ type, ts });
   };
 
+  const asDocs = (rows: FirebaseFirestore.DocumentData[]) => ({
+    docs: rows.map((r) => ({ data: () => r })),
+  });
+  const latestEssay = preloaded?.essays
+    ? [...preloaded.essays].sort(
+        (a, b) => (toMillis(b.submittedAt) ?? 0) - (toMillis(a.submittedAt) ?? 0)
+      )
+    : null;
   const results = await Promise.allSettled([
     // グローバルコレクション（userId で絞る）
-    db.collection("essays").where("userId", "==", uid).orderBy("submittedAt", "desc").limit(1).get(),
-    db.collection("interviews").where("userId", "==", uid).get(),
+    latestEssay
+      ? Promise.resolve(asDocs(latestEssay.slice(0, 1)))
+      : db.collection("essays").where("userId", "==", uid).orderBy("submittedAt", "desc").limit(1).get(),
+    preloaded?.interviews
+      ? Promise.resolve(asDocs(preloaded.interviews))
+      : db.collection("interviews").where("userId", "==", uid).get(),
     db.collection("documents").where("userId", "==", uid).orderBy("updatedAt", "desc").limit(1).get(),
     db.doc(`selfAnalysis/${uid}`).get(),
     // 生徒のサブコレクション
@@ -94,7 +115,9 @@ export async function resolveLastActivity(
       db.collection(`users/${uid}/${s.name}`).orderBy(s.field, "desc").limit(1).get(),
     ),
     // 宿題は提出時刻を見る（未提出は活動ではない）
-    db.collection(`users/${uid}/homeworkAssignments`).get(),
+    preloaded?.homework
+      ? Promise.resolve(asDocs(preloaded.homework))
+      : db.collection(`users/${uid}/homeworkAssignments`).get(),
   ]);
 
   const [essays, interviews, documents, selfAnalysis, ...rest] = results;

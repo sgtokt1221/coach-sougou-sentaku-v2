@@ -1,5 +1,7 @@
 "use client";
 
+import { filterAndSortStudents } from "@/lib/admin/student-list-query";
+import { STUDENTS_LIST_KEY } from "@/lib/admin/student-list-key";
 import { useState, useMemo, useEffect } from "react";
 import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
 import { useRouter } from "next/navigation";
@@ -180,17 +182,29 @@ export default function AdminStudentsPage() {
     }
   };
 
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  params.set("sort", sortKey);
-  if (universityFilter) params.set("university", universityFilter);
   // 未確認件数は一覧で1回だけ取得し、各行へ渡す（行ごとに取ると行数ぶん叩く）
   const { data: unviewed } = useUnviewedSubmissions();
+  /**
+   * 一覧は1回だけ取得し、検索・並べ替え・志望校の絞り込みは手元で行う。
+   * 以前は検索欄の1文字ごと・並べ替えのたびにサーバーで全生徒を読み直していた。
+   * キーはダッシュボードと同じにして、キャッシュを共有する。
+   */
   const {
-    data: rawData,
+    data: allStudents,
     isLoading,
     error: studentsError,
-  } = useAuthSWR<StudentListItem[]>(`/api/admin/students?${params.toString()}`);
+  } = useAuthSWR<StudentListItem[]>(STUDENTS_LIST_KEY);
+  const rawData = useMemo(
+    () =>
+      allStudents
+        ? filterAndSortStudents(allStudents, {
+            search,
+            sort: sortKey,
+            university: universityFilter,
+          })
+        : undefined,
+    [allStudents, search, sortKey, universityFilter]
+  );
 
   // ステータスフィルタをクライアントサイドで適用
   // 「卒業生」 タブ以外では卒業生を非表示にし、 通常リストを汚さない
@@ -233,11 +247,6 @@ export default function AdminStudentsPage() {
   const loading = isLoading;
 
   // フィルタなしの全データから志望校一覧を取得（フィルタ用）
-  const allParams = new URLSearchParams();
-  allParams.set("sort", sortKey);
-  const { data: allStudents } = useAuthSWR<StudentListItem[]>(
-    `/api/admin/students?${allParams.toString()}`
-  );
   const allCompoundIds = useMemo(() => {
     if (!allStudents) return [];
     const set = new Set<string>();

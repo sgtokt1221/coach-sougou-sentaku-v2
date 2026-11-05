@@ -1,3 +1,4 @@
+import { filterAndSortStudents } from "@/lib/admin/student-list-query";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveLastActivity } from "@/lib/api/last-activity";
 import { requireRole } from "@/lib/api/auth";
@@ -202,6 +203,8 @@ export async function GET(request: NextRequest) {
             .collection("essays")
             .where("userId", "==", uid)
             .orderBy("submittedAt", "desc")
+            // 一覧に本文は要らない。最終活動・ランクの集計にもこのまま渡す
+            .select("scores.total", "feedback.scoreMaximum", "submittedAt", "reviewedAt")
             .get(),
           adminDb!.collection(`users/${uid}/weaknesses`).get(),
           adminDb!.collection(`users/${uid}/documents`).get(),
@@ -293,7 +296,21 @@ export async function GET(request: NextRequest) {
          * 以前はここに6種類を直書きしており、出願書類・ちょこ添削・論理ドリル・
          * 自己分析・宿題などをやっても最終活動が更新されなかった。
          */
-        const lastActivity = await resolveLastActivity(adminDb!, uid);
+        const essayRows = essaysSnap.docs.map((d) => d.data());
+        const interviewRows = interviewsSnap.docs.map((d) => d.data());
+        // 読み済みの答案・面接・宿題を渡して読み直さない（集計も同じ）
+        const lastActivityPromise = resolveLastActivity(adminDb!, uid, {
+          essays: essayRows,
+          interviews: interviewRows,
+          homework: homeworkSnap.docs.map((d) => d.data()),
+        });
+        // 提出の平均からランクを算出する。生徒詳細と同じ式・同じ入力を使う。
+        // 最終活動と同時に走らせる（以前は最終活動 → 集計の直列だった）
+        const [lastActivity, essayAgg, interviewAgg] = await Promise.all([
+          lastActivityPromise,
+          computeEssayAggregate(uid, essayRows),
+          computeInterviewAggregate(uid, interviewRows),
+        ]);
 
         // 最終ログイン (users.lastSeenAt / ハートビート)
         const lastSeenDate = data.lastSeenAt?.toDate?.();
@@ -392,12 +409,6 @@ export async function GET(request: NextRequest) {
             lastSessionDoc.scheduledAt)
           : null;
 
-        // 提出の平均からランクを算出する。生徒詳細と同じ式・同じ入力を使う。
-        const [essayAgg, interviewAgg] = await Promise.all([
-          computeEssayAggregate(uid),
-          computeInterviewAggregate(uid),
-        ]);
-
         return {
           uid,
           displayName: data.displayName ?? "",
@@ -440,55 +451,12 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    let filtered = students;
-    if (search) {
-      const q = search.toLowerCase();
-      filtered = filtered.filter(
-        (s) =>
-          s.displayName.toLowerCase().includes(q) ||
-          s.email.toLowerCase().includes(q)
-      );
-    }
-    if (universityFilter) {
-      filtered = filtered.filter((s) =>
-        s.targetUniversities.includes(universityFilter)
-      );
-    }
-    if (rankFilter) {
-      filtered = filtered.filter((s) => s.currentSkillRank === rankFilter);
-    }
-
-    filtered.sort((a, b) => {
-      let cmp = 0;
-      if (sort === "score") {
-        cmp = (a.latestScore ?? -1) - (b.latestScore ?? -1);
-      } else if (sort === "name") {
-        cmp = a.displayName.localeCompare(b.displayName, "ja");
-      } else if (sort === "rank" || sort === "interviewRank") {
-        const rankOrder: Record<string, number> = {
-          S: 0,
-          A: 1,
-          B: 2,
-          C: 3,
-          D: 4,
-        };
-        const field =
-          sort === "interviewRank"
-            ? "currentInterviewRank"
-            : "currentSkillRank";
-        const aRank = a[field] ? rankOrder[a[field] as string] : 99;
-        const bRank = b[field] ? rankOrder[b[field] as string] : 99;
-        cmp = aRank - bRank;
-      } else {
-        const aTime = a.lastActivityAt
-          ? new Date(a.lastActivityAt).getTime()
-          : 0;
-        const bTime = b.lastActivityAt
-          ? new Date(b.lastActivityAt).getTime()
-          : 0;
-        cmp = aTime - bTime;
-      }
-      return order === "asc" ? cmp : -cmp;
+    const filtered = filterAndSortStudents(students, {
+      search,
+      sort,
+      order,
+      university: universityFilter,
+      rank: rankFilter,
     });
 
     return NextResponse.json(filtered);

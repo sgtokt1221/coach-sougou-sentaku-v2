@@ -77,18 +77,26 @@ function toBreakdown(
  * 伸びを隠す。常に10件分を見るので1件に引きずられない）。
  */
 export async function computeEssayAggregate(
-  userId: string
+  userId: string,
+  /** 呼び出し側で読み済みの答案（全件）。渡せば essays を読み直さない */
+  preloadedEssays?: FirebaseFirestore.DocumentData[]
 ): Promise<AggregateBreakdown> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return emptyBreakdown();
   try {
-    const [essayAll, chocoAll] = await Promise.all([
-      adminDb.collection("essays").where("userId", "==", userId).get(),
+    const [essayDocs, chocoAll] = await Promise.all([
+      preloadedEssays ??
+        adminDb
+          .collection("essays")
+          .where("userId", "==", userId)
+          // 本文は要らない（一覧・ランクの度に全答案の本文を読んでいた）
+          .select("scores.total", "feedback.scoreMaximum", "submittedAt", "reviewedAt")
+          .get()
+          .then((s) => s.docs.map((d) => d.data())),
       adminDb.collection(`users/${userId}/chokoReviews`).get(),
     ]);
     const items: PracticeScore[] = [];
-    for (const d of essayAll.docs) {
-      const data = d.data();
+    for (const data of essayDocs) {
       const total = data?.scores?.total;
       if (typeof total !== "number") continue;
       items.push({
@@ -149,18 +157,20 @@ const MIN_ANSWERS_FOR_RANK = 3;
  * 以前は一律 ×40/50 しており、40点満点の面接が2割低く出ていた。
  */
 export async function computeInterviewAggregate(
-  userId: string
+  userId: string,
+  /** 呼び出し側で読み済みの面接（全件）。渡せば interviews を読み直さない */
+  preloadedInterviews?: FirebaseFirestore.DocumentData[]
 ): Promise<AggregateBreakdown> {
   const { adminDb } = await import("@/lib/firebase/admin");
   if (!adminDb) return emptyBreakdown();
   try {
-    const snap = await adminDb
-      .collection("interviews")
-      .where("userId", "==", userId)
-      .get();
+    const docs =
+      preloadedInterviews ??
+      (
+        await adminDb.collection("interviews").where("userId", "==", userId).get()
+      ).docs.map((d) => d.data());
     const items: PracticeScore[] = [];
-    for (const d of snap.docs) {
-      const data = d.data();
+    for (const data of docs) {
       if (!isPracticed(data)) continue;
       const total = data?.scores?.total;
       if (typeof total !== "number") continue;

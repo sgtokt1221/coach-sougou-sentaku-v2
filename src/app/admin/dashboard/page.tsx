@@ -1,5 +1,6 @@
 "use client";
 
+import { STUDENTS_LIST_KEY } from "@/lib/admin/student-list-key";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
     data: rawData,
     isLoading,
     error: studentsError,
-  } = useAuthSWR<StudentListItem[]>("/api/admin/students?limit=500");
+  } = useAuthSWR<StudentListItem[]>(STUDENTS_LIST_KEY);
   const { data: alertsData, error: alertsError } =
     useAuthSWR<AlertItem[]>("/api/admin/alerts");
   const students = rawData ?? [];

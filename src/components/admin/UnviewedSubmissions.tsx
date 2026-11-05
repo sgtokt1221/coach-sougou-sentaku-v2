@@ -27,7 +27,7 @@ const UNVIEWED_KEY = "/api/admin/unviewed-submissions";
 export function useUnviewedSubmissions(enabled = true, poll = false) {
   const { data, mutate } = useAuthSWR<UnviewedSubmissionsData>(
     enabled ? UNVIEWED_KEY : null,
-    poll ? { refreshInterval: 60000 } : undefined,
+    poll ? { refreshInterval: 5 * 60_000 } : undefined,
   );
   return { data, mutate };
 }

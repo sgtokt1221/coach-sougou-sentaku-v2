@@ -1,5 +1,6 @@
 "use client";
 
+import { STUDENTS_LIST_KEY } from "@/lib/admin/student-list-key";
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,9 +60,7 @@ export default function AdminReportsPage() {
   } = useAuthSWR<GrowthReportSummary[]>("/api/admin/reports/latest");
 
   // 生徒のスキルランク (生徒一覧と同一キー → SWR が dedupe)。レポート行にバッヂ表示するため
-  const { data: studentsData } = useAuthSWR<StudentListItem[]>(
-    "/api/admin/students?limit=500"
-  );
+  const { data: studentsData } = useAuthSWR<StudentListItem[]>(STUDENTS_LIST_KEY);
   const skillByStudent = useMemo(() => {
     const m = new Map<
       string,

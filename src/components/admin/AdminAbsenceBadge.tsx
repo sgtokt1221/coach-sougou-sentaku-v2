@@ -9,8 +9,9 @@ import type { Session } from "@/lib/types/session";
  * Sidebar の admin「セッション」ナビ右側に表示（プッシュ通知に依存しない気づき用）。
  */
 export function AdminAbsenceBadge() {
+  // 欠席連絡は急ぎの気づきではないので5分ごとで足りる（以前は毎分、全セッションを読み直していた）
   const { data } = useAuthSWR<Session[]>("/api/sessions?status=cancelled", {
-    refreshInterval: 60000,
+    refreshInterval: 5 * 60_000,
   });
 
   const startOfToday = new Date();
