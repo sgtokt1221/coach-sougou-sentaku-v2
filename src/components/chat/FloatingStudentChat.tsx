@@ -150,8 +150,9 @@ export function FloatingStudentChat({
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={() => setOpen(true)}
             aria-label={`${studentName} さんとのメッセージを開く`}
-            // 右下のまま最前面(z-[60] > 下部ナビ z-50)に。モバイルは下部ナビ(--app-bottom-nav-height)＋余白分だけ持ち上げる。
-            className="fixed right-4 bottom-[calc(var(--app-bottom-nav-height)+0.75rem+env(safe-area-inset-bottom))] z-[60] flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 lg:bottom-6 lg:right-6"
+            // 右下のまま最前面(z-[60] > 下部ナビ z-50)に。
+            // スマホでは出さない（生徒詳細の「メッセージ」タブで足り、画面の右下を塞ぐだけだった）
+            className="fixed right-4 bottom-[calc(var(--app-bottom-nav-height)+0.75rem+env(safe-area-inset-bottom))] z-[60] hidden size-14 lg:flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 lg:bottom-6 lg:right-6"
           >
             <MessageSquare className="size-6" />
             {unread > 0 && (
