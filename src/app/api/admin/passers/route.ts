@@ -3,8 +3,14 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import {
   PASSER_DOCUMENT_TYPES,
+  passerIso,
   visiblePassers,
 } from "@/lib/passers/passer-access";
+import { normalizedEssayTotal } from "@/lib/types/essay";
+import {
+  computeEssayAggregate,
+  computeInterviewAggregate,
+} from "@/lib/skill-check/aggregate";
 
 /**
  * GET /api/admin/passers
@@ -21,20 +27,47 @@ export async function GET(request: NextRequest) {
     const passers = await visiblePassers(adminDb, auth);
     const rows = await Promise.all(
       passers.map(async (p) => {
-        const [essays, docs] = await Promise.all([
-          adminDb!.collection("essays").where("userId", "==", p.uid).count().get(),
+        const [essaySnap, docs, interviewsSnap] = await Promise.all([
+          adminDb!
+            .collection("essays")
+            .where("userId", "==", p.uid)
+            .select("submittedAt", "scores.total", "feedback.scoreMaximum", "status", "reviewedAt")
+            .get(),
           adminDb!
             .collection("documents")
             .where("userId", "==", p.uid)
             .select("type")
             .get(),
+          adminDb!.collection("interviews").where("userId", "==", p.uid).get(),
+        ]);
+        const essayRows = essaySnap.docs.map((d) => d.data());
+        // 推移（古い順・50点換算）。グラフと数値に使う
+        const series = essayRows
+          .filter((e) => e.status === "reviewed" && typeof e.scores?.total === "number")
+          .map((e) => ({
+            at: passerIso(e.submittedAt),
+            score: normalizedEssayTotal(e.scores.total, e.feedback?.scoreMaximum),
+          }))
+          .filter((x): x is { at: string; score: number } => !!x.at)
+          .sort((a, b) => a.at.localeCompare(b.at));
+        const [essayAgg, interviewAgg] = await Promise.all([
+          computeEssayAggregate(p.uid, essayRows),
+          computeInterviewAggregate(
+            p.uid,
+            interviewsSnap.docs.map((d) => d.data())
+          ),
         ]);
         return {
           uid: p.uid,
           name: p.name,
           label: p.label,
           passes: p.passes,
-          essayCount: essays.data().count,
+          essayCount: essaySnap.size,
+          series,
+          essayRank: essayAgg.compositeRank,
+          essayScore: essayAgg.compositeScore,
+          interviewRank: interviewAgg.compositeRank,
+          interviewScore: interviewAgg.compositeScore,
           documentCount: docs.docs.filter((d) =>
             (PASSER_DOCUMENT_TYPES as readonly string[]).includes(d.get("type"))
           ).length,
