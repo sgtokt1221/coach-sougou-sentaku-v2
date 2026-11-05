@@ -492,6 +492,11 @@
   animation: fadeIn 0.4s ease-out both;
 }
 
+/* 画面の切り替え（PageTransition）。待たせないよう短く */
+.animate-page-enter {
+  animation: fadeIn 0.15s ease-out both;
+}
+
 .animate-slide-in-left {
   animation: slideInLeft 0.4s ease-out both;
 }

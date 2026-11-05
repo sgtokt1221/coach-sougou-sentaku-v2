@@ -101,5 +101,7 @@ export async function signOutUser() {
   // チュートリアルフラグも必ず消す: /tour/* から普通にログアウトしたとき、
   // フラグが残っていると login 画面でも mock プロフィールが効いてしまう。
   localStorage.removeItem("tutorialActive");
+  const { clearCachedProfiles } = await import("@/lib/auth/profile-cache");
+  clearCachedProfiles();
   window.location.href = "/login";
 }

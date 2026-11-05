@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { getAppLayoutMode } from "@/lib/ui/app-layout-mode";
 
@@ -8,37 +7,24 @@ interface PageTransitionProps {
   children: React.ReactNode;
 }
 
+/**
+ * 画面が切り替わったときの短いフェードイン（CSS だけ、150ms）。
+ *
+ * 以前は framer-motion の AnimatePresence mode="wait" で、前の画面が消える
+ * 0.15秒を待ってから新しい画面を 0.3秒かけて blur 付きで出していた。
+ * 遷移のたびに約0.45秒の待ちが入り、全体が重く感じる元になっていた。
+ * template.tsx の中で使うので、画面が変わるたびにこの div が作り直されて再生される。
+ * 動きを減らす設定では globals.css の prefers-reduced-motion で止まる。
+ */
 export function PageTransition({ children }: PageTransitionProps) {
-  const shouldReduceMotion = useReducedMotion();
   const pathname = usePathname();
   // page モード（没入チャット/面接）では、この遷移ラッパーが `<main>` と
   // FullHeightPage の間に入るため、h-full の高さ連鎖が切れないよう自身も高さを満たす。
-  // reduced-motion 時はラッパーを描画しない（子が main の直下になり連鎖は保たれる）。
   const isPageMode = getAppLayoutMode(pathname).scrollOwner === "page";
 
-  if (shouldReduceMotion) {
-    return <>{children}</>;
-  }
-
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        className={isPageMode ? "h-full min-h-0" : undefined}
-        initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-        animate={{
-          opacity: 1,
-          y: 0,
-          filter: "blur(0px)",
-          transition: { duration: 0.3, ease: "easeOut" },
-        }}
-        exit={{
-          opacity: 0,
-          y: -8,
-          transition: { duration: 0.15, ease: "easeIn" },
-        }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div className={isPageMode ? "animate-page-enter h-full min-h-0" : "animate-page-enter"}>
+      {children}
+    </div>
   );
 }

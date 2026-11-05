@@ -71,6 +71,15 @@ function initAdminDb(app: App | null) {
 
 export const adminDb = initAdminDb(adminApp);
 
+/**
+ * uid → role の短いキャッシュ。すべての API が本体の前に users/{uid} を読み直しており、
+ * 直列の1往復（サーバーは台湾、Firestore は東京）と読み取り1件が毎回かかっていた。
+ * ロールの変更が届くまで最大60秒かかるが、権限を外す操作は稀で、IDトークン自体も
+ * 1時間有効なので許容する。インスタンスごとのメモリなので、増えすぎたら丸ごと捨てる。
+ */
+const ROLE_TTL_MS = 60_000;
+const roleCache = new Map<string, { role: string; at: number }>();
+
 export async function verifyAuthToken(
   request: Request
 ): Promise<{ uid: string; role: string } | null> {
@@ -82,8 +91,17 @@ export async function verifyAuthToken(
   try {
     const token = authHeader.slice(7);
     const decoded = await adminAuth.verifyIdToken(token);
+    const hit = roleCache.get(decoded.uid);
+    if (hit && Date.now() - hit.at < ROLE_TTL_MS) {
+      return { uid: decoded.uid, role: hit.role };
+    }
     const userDoc = await adminDb.doc(`users/${decoded.uid}`).get();
     const role = userDoc.data()?.role ?? "student";
+    // 登録直後で users がまだ無いときは「生徒」を覚えない（直後に作られる role を待つ）
+    if (userDoc.exists) {
+      if (roleCache.size > 5000) roleCache.clear();
+      roleCache.set(decoded.uid, { role, at: Date.now() });
+    }
     return { uid: decoded.uid, role };
   } catch {
     return null;

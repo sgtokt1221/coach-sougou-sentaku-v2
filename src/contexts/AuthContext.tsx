@@ -13,6 +13,12 @@ import { auth, db } from "@/lib/firebase/config";
 import type { UserProfile, PlanType } from "@/lib/types/user";
 import { TUTORIAL_MOCK_PROFILE } from "@/lib/tutorial/mock-profile";
 import { isTutorialActive } from "@/lib/tutorial/mocks";
+import {
+  markHeartbeatSent,
+  readCachedProfile,
+  shouldSendHeartbeat,
+  writeCachedProfile,
+} from "@/lib/auth/profile-cache";
 
 interface AuthContextValue {
   user: User | null;
@@ -97,6 +103,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!firebaseUser) {
           setUserProfile(null);
           setLoading(false);
+          return;
+        }
+        // 前回のプロフィールが残っていれば、Firestore を待たずに画面を出す
+        // （onSnapshot が届いたら差し替わる。権限はサーバー側で毎回判定する）
+        const cached = isTutorialActive() ? null : readCachedProfile(firebaseUser.uid);
+        if (cached) {
+          setUserProfile(cached);
+          setLoading(false);
         }
       },
       (err) => {
@@ -126,12 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (snap.exists()) {
           const data = snap.data();
           console.log("[AuthContext] Profile data role:", data.role);
-          setUserProfile({
+          const profile = {
             ...data,
             uid: user.uid,
             createdAt: data.createdAt?.toDate?.() ?? new Date(),
             updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
-          } as UserProfile);
+          } as UserProfile;
+          setUserProfile(profile);
+          writeCachedProfile(profile);
         } else {
           console.log("[AuthContext] No profile document found");
           setUserProfile(null);
@@ -151,18 +167,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    const BEAT_MS = 10 * 60 * 1000;
     const beat = async () => {
+      // 開くたびに users へ書くと、onSnapshot で画面全体が描き直される。
+      // 前回から10分経っていなければ送らない（最終ログインの粒度は10分で足りる）
+      if (!shouldSendHeartbeat(user.uid, BEAT_MS)) return;
       try {
         const token = await user.getIdToken();
         if (cancelled) return;
         await fetch("/api/student/heartbeat", {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
-        }).catch(() => {});
+        })
+          .then((r) => {
+            if (r.ok) markHeartbeatSent(user.uid);
+          })
+          .catch(() => {});
       } catch {}
     };
     beat();
-    const id = setInterval(beat, 10 * 60 * 1000);
+    const id = setInterval(beat, BEAT_MS);
     return () => {
       cancelled = true;
       clearInterval(id);

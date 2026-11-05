@@ -35,7 +35,7 @@ export function useAuthSWR<T>(
   key: string | null,
   config?: SWRConfiguration<T>
 ) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
   // チュートリアル（/tour/*）モードかどうかを毎レンダーで判定
   const tutorial = isTutorialActive();
@@ -43,8 +43,9 @@ export function useAuthSWR<T>(
 
   // フックは常に同じ順序で呼ぶ。引数だけ条件で切り替える
   // - tutorial 中: key はそのまま、fetcher はモック即返、fallbackData も供給
-  // - 通常: 認証完了まで key=null で保留
-  const resolvedKey = tutorial ? key : user && !loading ? key : null;
+  // - 通常: ログインが確定するまで key=null で保留。プロフィールの読み込み
+  //   （loading）は待たない。待つと端末に残したキャッシュまで出るのが遅れる
+  const resolvedKey = tutorial ? key : user ? key : null;
 
   return useSWR<T>(
     resolvedKey,
