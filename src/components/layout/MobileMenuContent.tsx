@@ -15,7 +15,6 @@ import {
   CalendarCheck,
   Bell,
   Settings,
-  Crown,
   LogOut,
   ChevronRight,
   ChevronDown,
@@ -420,14 +419,6 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
             icon={Settings}
             onNavigate={onNavigate}
           />
-          {isStudent && (
-            <FooterLink
-              label="プラン"
-              href="/student/pricing"
-              icon={Crown}
-              onNavigate={onNavigate}
-            />
-          )}
           <button
             type="button"
             onClick={() => {

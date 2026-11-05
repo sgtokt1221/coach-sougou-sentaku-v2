@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Crown, ChevronRight } from "lucide-react";
+import { Crown } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { UserSubscription } from "@/lib/types/subscription";
 
@@ -67,12 +65,6 @@ export function PlanSummarySection() {
               <p className="text-xs text-muted-foreground">読み込み中...</p>
             )}
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/student/pricing">
-              プラン詳細
-              <ChevronRight className="ml-1 size-4" />
-            </Link>
-          </Button>
         </div>
       </CardContent>
     </Card>

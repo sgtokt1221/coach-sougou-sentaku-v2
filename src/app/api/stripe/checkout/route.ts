@@ -59,8 +59,8 @@ export async function POST(request: Request) {
         mode: "subscription",
         payment_method_types: ["card"],
         line_items: [{ price: priceId, quantity: 1 }],
-        success_url: `${origin}/student/pricing?checkout=success&plan=standard`,
-        cancel_url: `${origin}/student/pricing?checkout=cancel`,
+        success_url: `${origin}/student/settings?checkout=success&plan=standard`,
+        cancel_url: `${origin}/student/settings?checkout=cancel`,
         metadata: { userId, plan: "standard" },
       };
 
@@ -89,8 +89,8 @@ export async function POST(request: Request) {
       mode: "payment",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/student/pricing?checkout=success&plan=document_package`,
-      cancel_url: `${origin}/student/pricing?checkout=cancel`,
+      success_url: `${origin}/student/settings?checkout=success&plan=document_package`,
+      cancel_url: `${origin}/student/settings?checkout=cancel`,
       metadata: { userId, plan: "document_package" },
     };
 

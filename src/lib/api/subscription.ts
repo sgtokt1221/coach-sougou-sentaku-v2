@@ -77,7 +77,7 @@ export async function requireFeature(
       {
         error: `${featureName}機能を利用するにはプランのアップグレードが必要です`,
         requiredFeature: feature,
-        upgradeUrl: "/student/pricing",
+        upgradeUrl: "/student/settings",
       },
       { status: 403 }
     );

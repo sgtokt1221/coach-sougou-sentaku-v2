@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
     const returnUrl =
       auth.role === "student"
-        ? `${origin}/student/pricing`
+        ? `${origin}/student/settings`
         : `${origin}/admin/students/${targetUserId}`;
 
     const portalSession = await stripe.billingPortal.sessions.create({
