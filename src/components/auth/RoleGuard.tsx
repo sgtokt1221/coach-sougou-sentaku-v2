@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { StartupLoader } from "@/components/shared/StartupLoader";
 import type { UserRole } from "@/lib/types/user";
 
 interface RoleGuardProps {
@@ -34,7 +35,9 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     }
   }, [userProfile, loading, allowedRoles, router]);
 
-  if (loading || !userProfile) return null;
+  // プロフィールを待つ間も、何も描かずに白くせず起動中の表示を出す
+  if (loading) return <StartupLoader />;
+  if (!userProfile) return null;
 
   const effectiveRoles =
     allowedRoles.includes("admin") || allowedRoles.includes("teacher")

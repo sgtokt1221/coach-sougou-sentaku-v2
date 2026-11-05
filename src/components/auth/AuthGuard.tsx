@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { StartupLoader } from "@/components/shared/StartupLoader";
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -14,13 +15,7 @@ export function AuthGuard({ children }: { children: ReactNode }) {
     }
   }, [user, loading, router]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (loading) return <StartupLoader />;
 
   if (!user) return null;
 
