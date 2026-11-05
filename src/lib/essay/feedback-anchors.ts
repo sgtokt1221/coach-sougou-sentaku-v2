@@ -9,6 +9,7 @@
  * 位置が計算で決まるもの（引用・根拠の一文・問の答えの範囲）はここで決め、
  * 決まらないものだけを AI 判定（feedback-anchor-judge.ts）に任せる。
  */
+import { isTeacherHidden } from "@/lib/essay/teacher-edits";
 import type {
   EssayFeedback,
   FeedbackAnchorGroup,
@@ -115,7 +116,10 @@ export function listFeedbackItems(
   const items: FeedbackItem[] = [];
   const push = (it: Omit<FeedbackItem, "key"> & { index: number }) => {
     const { index, ...rest } = it;
-    items.push({ key: `${it.kind}:${index}`, ...rest });
+    const key = `${it.kind}:${index}`;
+    // 先生が外した指摘は、どの画面にも出さない
+    if (isTeacherHidden(feedback, key, rest.text)) return;
+    items.push({ key, ...rest });
   };
 
   (feedback.languageCorrections ?? []).forEach((c, i) =>

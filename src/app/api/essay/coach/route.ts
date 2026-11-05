@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withTeacherEdits } from "@/lib/essay/teacher-edits";
 import {
   resolveQuestionSource,
   type QuestionSourceIds,
@@ -254,7 +255,11 @@ export async function POST(request: NextRequest) {
     ? (await adminDb.doc(`essays/${body.parentEssayId}`).get()).data()
     : undefined;
   if (parentData && parentData.userId === uid && parentData.feedback) {
-    const fb = parentData.feedback as Partial<EssayFeedback>;
+    // 先生が外した指摘は前回の課題にしない
+    const fb = withTeacherEdits(
+      parentData.feedback as Partial<EssayFeedback>,
+      parentData.teacherEdits
+    );
     previousAttempt = {
       total: typeof parentData.scores?.total === "number" ? parentData.scores.total : 0,
       maximum: typeof fb.scoreMaximum === "number" ? fb.scoreMaximum : 50,

@@ -100,6 +100,10 @@ export function EssayDigest({
   }));
 
   const chips: { label: string; tone: "good" | "warn" | "bad" }[] = [];
+  // 先生が点を直した答案は、点が AI のままでないことを本人にも見せる
+  if (feedback.teacherScoreEdited) {
+    chips.push({ label: "先生が点を見直し", tone: "good" });
+  }
   const engagement = feedback.reportInsights?.engagementLevel;
   if (engagement) {
     chips.push({
@@ -472,7 +476,7 @@ export function BrushupSection({
   initialText?: string | null;
   oralExam?: OralExamQuestionSet | null;
   canGenerate: boolean;
-  /** 書き直しでAIが補った事実（管理画面だけが渡す。先生が裏を取れるように） */
+  /** 書き直しで原文に無い数値・固有名詞が増えたもの（管理画面だけが渡す。先生が裏を取れるように） */
   addedFacts?: string[] | null;
 }) {
   const [text, setText] = useState(initialText?.trim() ? initialText : null);
@@ -575,15 +579,20 @@ export function BrushupSection({
         </div>
       )}
       {text && addedFacts && addedFacts.length > 0 && (
-        <div className="mt-3 grid gap-1.5 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/30">
+        <div className="mt-3 grid gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/30">
           <p className="text-xs font-bold text-amber-900 dark:text-amber-300">
-            AIが補った事実
+            原文に無い数値・固有名詞
           </p>
-          {addedFacts.map((f) => (
-            <p key={f} className="text-sm leading-relaxed">
-              {f}
-            </p>
-          ))}
+          <div className="flex flex-wrap gap-1.5">
+            {addedFacts.map((f) => (
+              <span
+                key={f}
+                className="bg-card rounded-md px-2 py-0.5 text-sm"
+              >
+                {f}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </DetailSection>

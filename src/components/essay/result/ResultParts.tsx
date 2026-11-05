@@ -1,5 +1,6 @@
 "use client";
 
+import { isTeacherHidden } from "@/lib/essay/teacher-edits";
 import { useReducedMotion } from "framer-motion";
 import {
   PolarAngleAxis,
@@ -443,7 +444,9 @@ export function useFixItems({
   const skip = new Set(focus?.keys ?? []);
   const items: FixItem[] = [];
   (feedback.improvements ?? []).forEach((t, i) => {
-    if (!skip.has(`improvement:${i}`)) items.push({ text: t });
+    const key = `improvement:${i}`;
+    if (!skip.has(key) && !isTeacherHidden(feedback, key, t))
+      items.push({ text: t });
   });
   const tf = feedback.taskFulfillment;
   if (tf && !tf.answersQuestion && tf.note) {
@@ -458,10 +461,12 @@ export function useFixItems({
     }
     items.push({ label: UNANCHORED_LABEL[item.kind], text: item.text });
   }
-  for (const c of corrections) {
+  corrections.forEach((c, i) => {
     const label = CORRECTION_LABEL[c.type];
-    if (label) items.push({ label, text: c.reason, quote: c.original });
-  }
+    // 赤ペンのキーは保存されている配列の位置（listFeedbackItems と同じ）
+    if (label && !isTeacherHidden(feedback, `language:${i}`, c.reason))
+      items.push({ label, text: c.reason, quote: c.original });
+  });
   return items;
 }
 

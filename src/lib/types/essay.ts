@@ -53,6 +53,8 @@ export interface Essay {
   retryComparison?: RetryComparison;
   /** 同じ題の書き直しの系列（管理者の答案APIが返す。1回きりなら空） */
   attempts?: EssayAttemptSummary[];
+  /** 先生の手直し（指摘を外す・点を直す）。管理者の答案APIが返す */
+  teacherEdits?: TeacherEdits;
 }
 
 /** 書き直しの系列の1回分（管理者の答案詳細で、回ごとの点と本文の差分を出す） */
@@ -425,6 +427,37 @@ export interface EssayFeedback {
   brushedUpText?: string;
   /** ブラッシュアップ版で原文に無い語が増えたもの（記録用。消さずに残す） */
   brushedUpAddedFacts?: string[];
+  /**
+   * 先生が外した指摘。保存先は essays/{id}.teacherEdits.hidden で、答案APIが
+   * 読むときにここへ載せる（withTeacherEdits）。feedback 自体には保存しない
+   */
+  teacherHidden?: TeacherHiddenItem[];
+  /** 先生が点を直したか（読むときに載せる。生徒の画面に札を出す） */
+  teacherScoreEdited?: boolean;
+}
+
+/** 先生が外した指摘1件。キーと文面の両方が一致したものだけを隠す */
+export interface TeacherHiddenItem {
+  key: string;
+  text: string;
+  by: string;
+  byName: string;
+  at: string;
+}
+
+/** 先生が点を直した記録。aiScores は最初に直す前の AI の点（何度直しても上書きしない） */
+export interface TeacherScoreEdit {
+  aiScores: EssayScores;
+  by: string;
+  byName: string;
+  at: string;
+  reason: string;
+}
+
+/** essays/{id}.teacherEdits */
+export interface TeacherEdits {
+  hidden?: TeacherHiddenItem[];
+  score?: TeacherScoreEdit;
 }
 
 /**

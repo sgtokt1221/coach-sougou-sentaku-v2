@@ -162,6 +162,7 @@ import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
 import { EssaySummaryStrip } from "@/components/admin/essay-detail/EssaySummaryStrip";
 import { weaknessCountOf } from "@/lib/growth/weakness-count";
 import { ReportInsightsCard } from "@/components/admin/essay-detail/ReportInsightsCard";
+import { HiddenFeedbackList } from "@/components/admin/essay-detail/HiddenFeedbackList";
 import {
   AttemptDiffView,
   AttemptSeriesStrip,
@@ -687,6 +688,42 @@ function AdminStudentDetailPageInner() {
   }, [essayDeepLink, detail]);
 
   // インラインコメント追加/削除後に essay を再取得 (フリッカーなし)
+  /**
+   * 先生の手直し（指摘を外す・戻す、点を直す・戻す）を保存して読み直す。
+   * 点を変えたら一覧の点も差し替える（前回との差・前後の答案の比較に使うため）。
+   */
+  async function patchEssay(body: Record<string, unknown>): Promise<void> {
+    if (!essayDetail) return;
+    const essayId = essayDetail.id;
+    const res = await authFetch(`/api/admin/students/${id}/essays/${essayId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      toast.error(json.error ?? "保存に失敗しました");
+      return;
+    }
+    if (body.action === "hide") setEssayMarkSelected(null);
+    const fresh = await authFetch(`/api/admin/students/${id}/essays/${essayId}`);
+    if (!fresh.ok) return;
+    const next = (await fresh.json()) as Essay;
+    setEssayDetail(next);
+    if (next.scores) {
+      setDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              essays: prev.essays.map((e) =>
+                e.id === essayId ? { ...e, scores: next.scores! } : e
+              ),
+            }
+          : prev
+      );
+    }
+  }
+
   async function refreshEssayDetail(essayId: string) {
     try {
       const res = await authFetch(
@@ -1917,6 +1954,7 @@ function AdminStudentDetailPageInner() {
                       }
                       selected={essayMarkSelected}
                       onClose={() => setEssayMarkSelected(null)}
+                      onHide={(key) => void patchEssay({ action: "hide", key })}
                     />
                   </div>
                   {/* 同じ題の書き直しの回ごとの点。押すとその回へ移る */}
@@ -1954,8 +1992,25 @@ function AdminStudentDetailPageInner() {
                         essayDetail.feedback?.apAlignmentAssessable !== false
                       }
                       previous={essayPreviousScores}
+                      teacherEdit={essayDetail.teacherEdits?.score ?? null}
+                      onSave={(scores, reason) =>
+                        patchEssay({ action: "scores", scores, reason })
+                      }
+                      onReset={() => patchEssay({ action: "resetScores" })}
                     />
                   )}
+
+                  {/* 先生が外した指摘。生徒の画面からも消えている */}
+                  <HiddenFeedbackList
+                    items={essayDetail.teacherEdits?.hidden ?? []}
+                    onRestore={(h) =>
+                      void patchEssay({
+                        action: "unhide",
+                        key: h.key,
+                        text: h.text,
+                      })
+                    }
+                  />
 
                   {/* Feedback。総合評価と、本文に結び付かない指摘。本文に結び付く指摘
                     （赤ペン・改善点・弱点・知識の誤りなど）は左の本文の印から見る */}
@@ -1966,6 +2021,9 @@ function AdminStudentDetailPageInner() {
                         model={essayFeedbackModel}
                         feedback={
                           essayDetail.feedback as Partial<EssayFeedback>
+                        }
+                        onHide={(key) =>
+                          void patchEssay({ action: "hide", key })
                         }
                       />
                     </>

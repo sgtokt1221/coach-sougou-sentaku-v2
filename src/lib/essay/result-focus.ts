@@ -7,6 +7,7 @@
  * 個々の指摘は「直すこと」と答案の印に出す。
  * 指摘のキーは feedback-anchors.ts の listFeedbackItems と同じ規則（`${kind}:${位置}`）。
  */
+import { isTeacherHidden } from "@/lib/essay/teacher-edits";
 import type { EssayFeedback } from "@/lib/types/essay";
 
 export type EssayResultKind = "theme" | "passage" | "data" | "lecture" | "oral";
@@ -56,9 +57,24 @@ function stripPraiseLine(text: string): string {
 }
 
 export function pickFocus(feedback: Partial<EssayFeedback>): EssayFocus | null {
-  if (feedback.priorityImprovement) {
+  // 先生が外した指摘は最優先にしない（次の改善点へ回す）
+  if (
+    feedback.priorityImprovement &&
+    !isTeacherHidden(feedback, "priority:0", feedback.priorityImprovement)
+  ) {
     return { text: stripPraiseLine(feedback.priorityImprovement), keys: ["priority:0"] };
   }
-  const first = feedback.improvements?.[0];
-  return first ? { text: first, keys: ["improvement:0"] } : null;
+  const improvements = feedback.improvements ?? [];
+  // 最優先が改善点1件目の言い直しなら、最優先を外したとき1件目も同じ指摘として飛ばす
+  const skipFirst =
+    !!feedback.priorityImprovement && feedback.priorityTarget === "improvement";
+  const i = improvements.findIndex(
+    (t, idx) =>
+      !!t &&
+      !(skipFirst && idx === 0) &&
+      !isTeacherHidden(feedback, `improvement:${idx}`, t)
+  );
+  return i >= 0
+    ? { text: improvements[i], keys: [`improvement:${i}`] }
+    : null;
 }

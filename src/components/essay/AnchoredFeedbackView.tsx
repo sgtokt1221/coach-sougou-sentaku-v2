@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { MessageSquare, X } from "lucide-react";
+import { EyeOff, MessageSquare, X } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { SegmentControl } from "@/components/shared/SegmentControl";
@@ -292,6 +292,7 @@ export function SelectedSpanFeedback({
   selected,
   onClose,
   sheetOnly = false,
+  onHide,
 }: {
   model: AnchoredFeedbackModel;
   feedback: Partial<EssayFeedback>;
@@ -299,6 +300,8 @@ export function SelectedSpanFeedback({
   onClose: () => void;
   /** 横に置く列が無いとき。PC でも下からのシートで出す */
   sheetOnly?: boolean;
+  /** 先生が指摘を外す（管理画面だけが渡す） */
+  onHide?: (key: string) => void;
 }) {
   const isDesktop = useIsDesktop() && !sheetOnly;
   const panel = selected ? (
@@ -307,6 +310,7 @@ export function SelectedSpanFeedback({
       itemByKey={model.itemByKey}
       groupOf={model.groupOf}
       feedback={feedback}
+      onHide={onHide}
     />
   ) : null;
   return (
@@ -354,10 +358,13 @@ export function GlobalFeedbackList({
   model,
   feedback,
   extra,
+  onHide,
 }: {
   model: AnchoredFeedbackModel;
   feedback: Partial<EssayFeedback>;
   extra?: ReactNode;
+  /** 先生が指摘を外す（管理画面だけが渡す） */
+  onHide?: (key: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -401,6 +408,7 @@ export function GlobalFeedbackList({
               itemByKey={model.itemByKey}
               groupOf={model.groupOf}
               feedback={feedback}
+              onHide={onHide}
             />
           </CardContent>
         </Card>
@@ -668,11 +676,13 @@ function GroupedItems({
   itemByKey,
   groupOf,
   feedback,
+  onHide,
 }: {
   keys: string[];
   itemByKey: Map<string, FeedbackItem>;
   groupOf: Map<string, FeedbackAnchorGroup>;
   feedback: Partial<EssayFeedback>;
+  onHide?: (key: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -687,9 +697,23 @@ function GroupedItems({
             </p>
             {inGroup.map((k) => {
               const it = itemByKey.get(k);
-              return it ? (
-                <ItemCard key={k} item={it} feedback={feedback} />
-              ) : null;
+              if (!it) return null;
+              if (!onHide) return <ItemCard key={k} item={it} feedback={feedback} />;
+              return (
+                <div key={k} className="space-y-1">
+                  <ItemCard item={it} feedback={feedback} />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => onHide(k)}
+                      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs"
+                    >
+                      <EyeOff className="size-3.5" />
+                      この指摘を外す
+                    </button>
+                  </div>
+                </div>
+              );
             })}
           </div>
         );

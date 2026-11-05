@@ -1,4 +1,5 @@
 import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
+import { withTeacherEdits } from "@/lib/essay/teacher-edits";
 import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeEssayAccess } from "@/lib/api/essay-access";
@@ -59,10 +60,13 @@ export async function GET(
 
     const scores = (data.scores ?? {}) as EssayScores;
     // 後から付けた1文ずつの点検と判定欄の弱点を合流させる（弱点DBと添削結果を揃える）
-    const feedback = feedbackWithDerivedIssues(
-      (data.feedback ?? {}) as EssayFeedback,
-      data.sentenceCheck,
-      { partial: isPartialEssay(data) }
+    const feedback = withTeacherEdits(
+      feedbackWithDerivedIssues(
+        (data.feedback ?? {}) as EssayFeedback,
+        data.sentenceCheck,
+        { partial: isPartialEssay(data) }
+      ),
+      data.teacherEdits
     );
     const attemptNumber =
       typeof data.attemptNumber === "number" ? data.attemptNumber : 1;
@@ -126,6 +130,9 @@ export async function GET(
         scoreMaximum: feedback.scoreMaximum ?? null,
         // 表示の出し分け（最優先と改善点1件目の重複排除）に使う
         priorityTarget: feedback.priorityTarget ?? null,
+        // 先生が外した指摘と、点を直したか。ここに足さないと生徒の画面に消えずに残る
+        teacherHidden: feedback.teacherHidden ?? null,
+        teacherScoreEdited: feedback.teacherScoreEdited ?? null,
       },
       targetUniversity: data.targetUniversity,
       targetFaculty: data.targetFaculty,

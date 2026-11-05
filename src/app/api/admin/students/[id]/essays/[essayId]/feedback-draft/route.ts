@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isTeacherHidden, withTeacherEdits } from "@/lib/essay/teacher-edits";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
@@ -71,10 +72,11 @@ export async function POST(
     );
   }
 
-  const feedback = feedbackWithDerivedIssues(
-    data.feedback as EssayFeedback,
-    data.sentenceCheck,
-    { partial: isPartialEssay(data) }
+  const feedback = withTeacherEdits(
+    feedbackWithDerivedIssues(data.feedback as EssayFeedback, data.sentenceCheck, {
+      partial: isPartialEssay(data),
+    }),
+    data.teacherEdits
   );
   const scores = data.scores as EssayScores | undefined;
 
@@ -105,7 +107,9 @@ export async function POST(
       attemptNumber:
         typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
       focus: pickFocus(feedback)?.text ?? null,
-      improvements: (feedback.improvements ?? []).slice(0, 3),
+      improvements: (feedback.improvements ?? [])
+        .filter((t, i) => !isTeacherHidden(feedback, `improvement:${i}`, t))
+        .slice(0, 3),
       goodPoints: (feedback.goodPoints ?? []).slice(0, 3),
       previousFocus: pfc
         ? { focus: pfc.focus, status: pfc.status, evidence: pfc.evidence }

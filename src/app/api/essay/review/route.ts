@@ -1,4 +1,5 @@
 import { pickFocus } from "@/lib/essay/result-focus";
+import { withTeacherEdits } from "@/lib/essay/teacher-edits";
 import { NextRequest, NextResponse } from "next/server";
 import {
   isMachineOnlyWeakness,
@@ -175,7 +176,9 @@ export async function POST(request: NextRequest) {
                     { partial }
                   ),
                   focus:
-                    pickFocus(pdata.feedback ?? {})?.text ?? null,
+                    pickFocus(
+                      withTeacherEdits(pdata.feedback ?? {}, pdata.teacherEdits)
+                    )?.text ?? null,
                 };
               }
             }

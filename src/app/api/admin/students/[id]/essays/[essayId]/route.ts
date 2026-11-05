@@ -1,4 +1,5 @@
 import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
+import { applyTeacherScores, withTeacherEdits } from "@/lib/essay/teacher-edits";
 import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import { NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
@@ -6,7 +7,18 @@ import { recordSubmissionViewed } from "@/lib/api/viewed-submissions";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { loadRetryComparison } from "@/lib/essay/load-retry-comparison";
-import type { Essay, EssayAttemptSummary } from "@/lib/types/essay";
+import type {
+  Essay,
+  EssayAttemptSummary,
+  EssayFeedback,
+  EssayScores,
+  TeacherEdits,
+  TeacherScoreEdit,
+} from "@/lib/types/essay";
+import { FieldValue } from "firebase-admin/firestore";
+import { listFeedbackItems } from "@/lib/essay/feedback-anchors";
+import { isLegacyEssayScores } from "@/lib/essay/score-axes";
+import { refreshEssayAggregateCache } from "@/lib/skill-check/aggregate";
 import type { CoachThread, LinkedCoachThread } from "@/lib/types/essay-coach";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
@@ -175,9 +187,12 @@ export async function GET(
       scores: data.scores || undefined,
       // 後から付けた1文ずつの点検と判定欄の弱点を合流させる（弱点DBと添削結果を揃える）
       feedback: data.feedback
-        ? feedbackWithDerivedIssues(data.feedback, data.sentenceCheck, {
-            partial: isPartialEssay(data),
-          })
+        ? withTeacherEdits(
+            feedbackWithDerivedIssues(data.feedback, data.sentenceCheck, {
+              partial: isPartialEssay(data),
+            }),
+            data.teacherEdits
+          )
         : undefined,
       inlineComments: data.inlineComments || [],
     };
@@ -223,6 +238,7 @@ export async function GET(
     return NextResponse.json({
       ...essay,
       attempts: attempts.length > 1 ? attempts : [],
+      teacherEdits: data.teacherEdits ?? null,
       attemptNumber:
         typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
       rootEssayId,
@@ -341,5 +357,150 @@ async function findCoachThreads(
   } catch (err) {
     console.warn("[admin/essay] coach threads fetch failed:", err);
     return [];
+  }
+}
+
+type PatchBody =
+  | { action: "hide"; key: string }
+  | { action: "unhide"; key: string; text: string }
+  | { action: "scores"; scores: Record<string, unknown>; reason?: string }
+  | { action: "resetScores" };
+
+/**
+ * PATCH /api/admin/students/[id]/essays/[essayId]
+ * 先生の手直し。指摘を外す・戻す、点を直す・AIの点に戻す。
+ * 点を直したら scores を上書きする（ランク・平均・グラフ・アラートが全部そのまま追従する）。
+ * 最初の AI の点は teacherEdits.score.aiScores に残し、何度直しても上書きしない。
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string; essayId: string }> }
+) {
+  const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
+  const { id: studentId, essayId } = await params;
+  if (!adminDb) {
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+  const db = adminDb;
+
+  // 答案詳細の GET と同じゲート
+  const scopeDoc = await db.doc(`users/${studentId}`).get();
+  const denied = await scopeByOrganization({
+    requesterUid: auth.uid,
+    requesterRole: auth.role,
+    studentUid: studentId,
+    studentData: {
+      managedBy: scopeDoc.data()?.managedBy,
+      organizationId: scopeDoc.data()?.organizationId,
+      assignedTeacherIds: getAssignedTeacherIds(scopeDoc.data()),
+    },
+    allowAssignedTeacher: true,
+  });
+  if (denied) return denied;
+
+  const body = (await request.json().catch(() => null)) as PatchBody | null;
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "不正なリクエスト" }, { status: 400 });
+  }
+  const callerDoc = await db.doc(`users/${auth.uid}`).get();
+  const byName = (callerDoc.data()?.displayName as string) ?? "担当者";
+  const now = new Date().toISOString();
+  const ref = db.doc(`essays/${essayId}`);
+
+  try {
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.data();
+      if (!data || data.userId !== studentId) {
+        return { status: 404, error: "答案が見つかりません" } as const;
+      }
+      const edits = (data.teacherEdits ?? {}) as TeacherEdits;
+
+      if (body.action === "hide" || body.action === "unhide") {
+        const hidden = [...(edits.hidden ?? [])];
+        if (body.action === "hide") {
+          // 文面はサーバーで引き直す（画面から送られた文面は信用しない）
+          const feedback = feedbackWithDerivedIssues(
+            (data.feedback ?? {}) as EssayFeedback,
+            data.sentenceCheck,
+            { partial: isPartialEssay(data) }
+          );
+          const item = listFeedbackItems(feedback).find(
+            (i) => i.key === body.key
+          );
+          if (!item) {
+            return { status: 404, error: "その指摘が見つかりません" } as const;
+          }
+          if (!hidden.some((h) => h.key === item.key && h.text === item.text)) {
+            hidden.push({
+              key: item.key,
+              text: item.text,
+              by: auth.uid,
+              byName,
+              at: now,
+            });
+          }
+        } else {
+          const i = hidden.findIndex(
+            (h) => h.key === body.key && h.text === body.text
+          );
+          if (i >= 0) hidden.splice(i, 1);
+        }
+        tx.update(ref, { "teacherEdits.hidden": hidden });
+        return { status: 200 } as const;
+      }
+
+      const scores = data.scores as EssayScores | undefined;
+      if (!scores) {
+        return { status: 400, error: "点数のない答案です" } as const;
+      }
+
+      if (body.action === "resetScores") {
+        if (!edits.score) return { status: 200 } as const;
+        tx.update(ref, {
+          scores: edits.score.aiScores,
+          "teacherEdits.score": FieldValue.delete(),
+        });
+        return { status: 200, rank: true } as const;
+      }
+
+      if (body.action === "scores") {
+        // 旧採点（独自性の軸）と満点40の答案は、今の計算で合計を出し直せないので直させない
+        const max = (data.feedback?.scoreMaximum as number | undefined) ?? 50;
+        if (isLegacyEssayScores(scores) || (max !== 50 && max !== 60)) {
+          return {
+            status: 400,
+            error: "この答案は採点方式が古いため、点を直せません",
+          } as const;
+        }
+        const next = applyTeacherScores(scores, body.scores ?? {});
+        const scoreEdit: TeacherScoreEdit = {
+          aiScores: edits.score?.aiScores ?? scores,
+          by: auth.uid,
+          byName,
+          at: now,
+          reason: String(body.reason ?? "").slice(0, 500),
+        };
+        tx.update(ref, { scores: next, "teacherEdits.score": scoreEdit });
+        return { status: 200, rank: true } as const;
+      }
+      return { status: 400, error: "不明な操作です" } as const;
+    });
+
+    if (result.status !== 200) {
+      return NextResponse.json(
+        { error: "error" in result ? result.error : "失敗しました" },
+        { status: result.status }
+      );
+    }
+    // ランク（users.currentSkillRank）は提出時にしか作り直されないので、ここで作り直す
+    if ("rank" in result && result.rank) {
+      await refreshEssayAggregateCache(studentId);
+    }
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("[admin/essay] patch failed:", err);
+    return NextResponse.json({ error: "保存に失敗しました" }, { status: 500 });
   }
 }
