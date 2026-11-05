@@ -3,21 +3,19 @@
 import { AccountSection } from "@/components/settings/AccountSection";
 import { LearningProfileSection } from "@/components/settings/LearningProfileSection";
 import { NotificationSettingsSection } from "@/components/settings/NotificationSettingsSection";
-import { PlanSummarySection } from "@/components/settings/PlanSummarySection";
 import { SupportSection } from "@/components/settings/SupportSection";
 import { WithdrawSection } from "@/components/settings/WithdrawSection";
 
 /**
  * 生徒ポータル「設定」ページ。
  * 旧 /student/settings (志望校 + 基礎情報 + チュートリアル) と
- * 旧 /student/settings/notifications (通知設定) を 5 セクションに統合。
+ * 旧 /student/settings/notifications (通知設定) を 4 セクションに統合。
  *
  * セクション:
  * 1. アカウント (表示名 / メール / 画像 / パスワード / ログアウト)
  * 2. 学習プロフィール (志望校 + 基礎情報)
  * 3. 通知 (Web Push + 書類期限 / 週次進捗 / 通知メール)
- * 4. プラン (現在のプラン表示 + 詳細リンク)
- * 5. サポート (チュートリアル再表示)
+ * 4. サポート (チュートリアル再表示)
  */
 export default function SettingsPage() {
   return (
@@ -27,13 +25,12 @@ export default function SettingsPage() {
           設定
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          アカウント / 学習プロフィール / 通知 / プラン / サポート
+          アカウント / 学習プロフィール / 通知 / サポート
         </p>
       </div>
       <AccountSection />
       <LearningProfileSection />
       <NotificationSettingsSection />
-      <PlanSummarySection />
       <SupportSection />
       <WithdrawSection />
     </div>
