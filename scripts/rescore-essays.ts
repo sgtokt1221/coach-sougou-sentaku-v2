@@ -29,7 +29,6 @@
  *   古い順に処理し、書き直しの子には採点し直した親の課題を渡す。
  *   弱点DBは書き換えないので、書き込んだ後に rebuild-weaknesses.ts --name=… を流す。
  */
-import { resolveQuestionSource } from "../src/lib/essay/lecture-info";
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
@@ -41,8 +40,7 @@ import {
   sentenceCheckFields,
   type EssayReviewCoreInput,
 } from "../src/lib/essay/review-core";
-import { isPartialEssay } from "../src/lib/essay/derive-weakness-issues";
-import { prepareAdmissionPolicy } from "../src/lib/ai/admission-policy";
+import { reviewInputOf } from "./lib/essay-review-input";
 import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { pickFocus } from "../src/lib/essay/result-focus";
@@ -66,33 +64,6 @@ const NAMES = (
   .filter(Boolean);
 
 const SINCE = process.argv.find((a) => a.startsWith("--since="))?.split("=")[1];
-
-async function resolveAdmissionPolicy(
-  universityId: string | undefined,
-  facultyId: string | undefined,
-  /** 過去問の学部名。本番の添削と同じく、こちらの学部のAPを優先する */
-  pastQuestionFacultyName?: string | null
-): Promise<string> {
-  if (!universityId) return "";
-  const uni = await adminDb!.doc(`universities/${universityId}`).get();
-  if (!uni.exists) return "";
-  const data = uni.data()!;
-  type Faculty = { id: string; name: string; admissionPolicy?: string };
-  const faculties: Faculty[] = data.faculties ?? [];
-  const faculty =
-    (pastQuestionFacultyName
-      ? faculties.find(
-          (f) =>
-            f.name === pastQuestionFacultyName ||
-            pastQuestionFacultyName.includes(f.name)
-        )
-      : undefined) ?? faculties.find((f) => f.id === facultyId);
-  if (!faculty?.admissionPolicy) return "";
-  const prepared = prepareAdmissionPolicy(faculty.admissionPolicy);
-  return prepared.text
-    ? `大学: ${data.name}\n学部: ${faculty.name}\nAP: ${prepared.text}`
-    : "";
-}
 
 /** 本番の添削（/api/essay/review）と同じ弱点リスト */
 async function weaknessListOf(uid: string): Promise<string> {
@@ -174,8 +145,6 @@ async function rescoreSince(since: string) {
   const results: SinceResult[] = [];
   for (const d of docs) {
     const e = d.data();
-    const ctx = e.questionContext ?? {};
-    const partial = isPartialEssay(e);
     if (!weaknessCache.has(e.userId))
       weaknessCache.set(e.userId, await weaknessListOf(e.userId));
     // 書き直しなら前回の答案と課題。親も採点し直した場合は新しい課題を使う
@@ -196,21 +165,7 @@ async function rescoreSince(since: string) {
     }
     try {
       const out = await reviewEssayCore({
-        ocrText: e.ocrText,
-        topic: e.topic,
-        questionType: ctx.questionType ?? undefined,
-        sourceText: ctx.sourceText ?? undefined,
-        chartDataSummary: ctx.chartDataSummary ?? undefined,
-        lectureInfo:
-          resolveQuestionSource(ctx).lectureInfo ?? ctx.lectureInfo ?? undefined,
-        wordLimit: ctx.wordLimit ?? undefined,
-        admissionPolicy: await resolveAdmissionPolicy(
-          e.targetUniversity,
-          e.targetFaculty,
-          ctx.pastQuestionFacultyName
-        ),
-        weaknessList: weaknessCache.get(e.userId)!,
-        partial,
+        ...(await reviewInputOf(e, weaknessCache.get(e.userId)!)),
         ...(previousAttempt ? { previousAttempt } : {}),
       });
       const r: SinceResult = {
@@ -285,29 +240,10 @@ async function main() {
 
   for (const d of list) {
     const e = d.data();
-    const ocrText: string = e.ocrText ?? e.originalText ?? "";
-    const ctx = e.questionContext ?? {};
-    const admissionPolicy = await resolveAdmissionPolicy(
-      e.targetUniversity,
-      e.targetFaculty,
-      ctx.pastQuestionFacultyName
-    );
-
     try {
-      const out = await reviewEssayCore({
-        ocrText,
-        topic: e.topic,
-        questionType: ctx.questionType ?? undefined,
-        sourceText: ctx.sourceText ?? undefined,
-        chartDataSummary: ctx.chartDataSummary ?? undefined,
-        // TED の書き起こしは保存していないので出題元から引き直す
-        lectureInfo:
-          resolveQuestionSource(ctx).lectureInfo ?? ctx.lectureInfo ?? undefined,
-        wordLimit: ctx.wordLimit ?? undefined,
-        admissionPolicy,
-        weaknessList: "（過去の弱点なし）",
-        partial: isPartialEssay(e),
-      });
+      const out = await reviewEssayCore(
+        await reviewInputOf(e, "（過去の弱点なし）")
+      );
 
       const before = e.scores;
       const after = out.scores;
