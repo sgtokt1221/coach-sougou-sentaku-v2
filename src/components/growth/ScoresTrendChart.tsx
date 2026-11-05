@@ -30,11 +30,8 @@ import {
 import { indexPoints, pointAxisProps } from "@/components/charts/point-axis";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomActiveDot } from "@/components/charts/CustomDot";
-import {
-  benchmarkAt,
-  monthsSince,
-  type PasserBenchmarkView,
-} from "@/lib/benchmark/passer-benchmark";
+import type { PasserBenchmarkView } from "@/lib/benchmark/passer-benchmark";
+import { passerLine, passerValueAt } from "@/components/charts/passer-line";
 
 /**
  * 小論文と面接のスコアを別系列で描画できるようにしたトレンドチャート。
@@ -108,11 +105,10 @@ function buildRows(
   const useTs = [...essay, ...interview].every((p) => Number.isFinite(p.ts));
   const keyOf = (p: SeriesPoint) => (useTs ? p.ts! : dateSortKey(p.date));
   // 合格者の同じ時期（書き始めからの月）の点。時刻が無いと月が出せないので描かない
-  const start = benchmark?.startAt ?? null;
-  const passerOf = (p: SeriesPoint) =>
-    benchmark && useTs && start !== null
-      ? { passer: benchmarkAt(benchmark, monthsSince(start, p.ts!)) }
-      : {};
+  const passerOf = (p: SeriesPoint) => {
+    const passer = useTs ? passerValueAt(benchmark, p.ts) : undefined;
+    return passer === undefined ? {} : { passer };
+  };
   const rows: Array<Row & { _key: number }> = [
     ...withKindTotals(essay).map((p) => {
       const { total: _t, kind: _k, ts: _ts, ...rest } = p;
@@ -224,20 +220,7 @@ export function ScoresTrendChart({
                 animationEasing={CHART_ANIMATION.easing}
               />
             ))}
-            {hasPasser && (
-              <Line
-                type="stepAfter"
-                dataKey="passer"
-                name={`${benchmark!.label} 合格者`}
-                stroke="var(--muted-foreground)"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                dot={false}
-                activeDot={false}
-                connectNulls
-                isAnimationActive={false}
-              />
-            )}
+            {hasPasser && passerLine(benchmark!)}
             {showInterview && (interviewData?.length ?? 0) > 0 && (
               <Line
                 type="monotone"

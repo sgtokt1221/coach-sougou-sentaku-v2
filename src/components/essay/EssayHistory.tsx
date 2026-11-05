@@ -1,5 +1,7 @@
 "use client";
 
+import type { PasserBenchmarkView } from "@/lib/benchmark/passer-benchmark";
+import { passerLine, passerValueAt } from "@/components/charts/passer-line";
 import { ESSAY_KIND_COLORS } from "@/components/charts/theme";
 import {
   EssayKindFilter,
@@ -157,6 +159,9 @@ export function EssayHistory() {
   const { data: rawData, isLoading: loading } = useAuthSWR<{
     essays: EssayHistoryItem[];
   }>("/api/essay/history");
+  const { data: passerData } = useAuthSWR<{
+    benchmark: PasserBenchmarkView | null;
+  }>("/api/student/passer-benchmark");
   const history = useMemo(() => rawData?.essays ?? [], [rawData]);
 
   function toggleLine(key: string) {
@@ -195,6 +200,7 @@ export function EssayHistory() {
       apAlignment: item.scores.apAlignment,
       responsiveness: item.scores.responsiveness,
       originality: item.scores.originality,
+      passer: passerValueAt(passerData?.benchmark, Date.parse(item.submittedAt)),
     }));
 
   // 旧採点（独自性）の答案が混ざっているときだけ、旧軸の線も選べるようにする
@@ -337,6 +343,10 @@ export function EssayHistory() {
                   axisLine={false}
                 />
                 <Tooltip content={<CustomTooltip labelKey="date" />} />
+                {visibleLines.has("total") &&
+                  passerData?.benchmark &&
+                  chartData.some((d) => d.passer !== undefined) &&
+                  passerLine(passerData.benchmark)}
                 {visibleLines.has("total") && !splitTotals && (
                   <Line
                     type="monotone"
