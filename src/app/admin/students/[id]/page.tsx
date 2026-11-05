@@ -159,10 +159,8 @@ import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { LectureProgressSection } from "@/components/admin/LectureProgressSection";
 import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
-import {
-  EssaySummaryStrip,
-  weaknessCountOf,
-} from "@/components/admin/essay-detail/EssaySummaryStrip";
+import { EssaySummaryStrip } from "@/components/admin/essay-detail/EssaySummaryStrip";
+import { weaknessCountOf } from "@/lib/growth/weakness-count";
 import { ReportInsightsCard } from "@/components/admin/essay-detail/ReportInsightsCard";
 import {
   AttemptDiffView,
@@ -1784,6 +1782,9 @@ function AdminStudentDetailPageInner() {
                   onValueChange={setEssayFbText}
                   open={essayFbOpen}
                   onOpenChange={setEssayFbOpen}
+                  draftFromEssayId={
+                    essayDetail.feedback ? essayDetail.id : undefined
+                  }
                 />
               </div>
             )}

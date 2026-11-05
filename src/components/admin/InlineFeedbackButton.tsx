@@ -13,7 +13,7 @@ import {
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { useDraggableDialog } from "@/hooks/useDraggableDialog";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
-import { MessageSquare, Send, Loader2, Clock } from "lucide-react";
+import { MessageSquare, Send, Loader2, Clock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import {
@@ -26,6 +26,7 @@ import type {
   ChatReference,
 } from "@/lib/types/feedback";
 import { RichText } from "@/components/chat/RichText";
+import type { FeedbackDraftTone } from "@/lib/ai/prompts/essay-feedback-draft";
 import { RichField } from "@/components/chat/RichField";
 import {
   postCoachFeedback,
@@ -50,7 +51,15 @@ interface InlineFeedbackButtonProps {
   /** 外から開いた状態にする */
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
+  /** 小論文の答案から下書きを作れるようにする（答案詳細だけが渡す） */
+  draftFromEssayId?: string;
 }
+
+const DRAFT_TONES: { tone: FeedbackDraftTone; label: string }[] = [
+  { tone: "short", label: "もっと短く" },
+  { tone: "praise", label: "ほめを多めに" },
+  { tone: "one", label: "課題を1つに絞る" },
+];
 
 export function InlineFeedbackButton({
   studentId,
@@ -63,6 +72,7 @@ export function InlineFeedbackButton({
   onValueChange,
   open: openProp,
   onOpenChange,
+  draftFromEssayId,
 }: InlineFeedbackButtonProps) {
   const [openInner, setOpenInner] = useState(false);
   const [messageInner, setMessageInner] = useState("");
@@ -78,6 +88,43 @@ export function InlineFeedbackButton({
     else setMessageInner(v);
   };
   const [sending, setSending] = useState(false);
+  const [drafting, setDrafting] = useState<FeedbackDraftTone | null>(null);
+  /** 直前にAIが入れた下書き。欄がそのままなら次の下書きで置き換える */
+  const [lastDraft, setLastDraft] = useState<string | null>(null);
+
+  async function handleDraft(tone: FeedbackDraftTone) {
+    if (!draftFromEssayId || drafting) return;
+    setDrafting(tone);
+    try {
+      const res = await authFetch(
+        `/api/admin/students/${studentId}/essays/${draftFromEssayId}/feedback-draft`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tone }),
+        }
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        draft?: string;
+        error?: string;
+      };
+      if (!res.ok || !json.draft) throw new Error(json.error);
+      // 空か、前の下書きのままなら置き換える。先生が書いた文があれば後ろに足す
+      const current = message.trim();
+      const next =
+        !current || current === lastDraft?.trim()
+          ? json.draft
+          : `${message.trimEnd()}\n\n${json.draft}`;
+      setMessage(next);
+      setLastDraft(json.draft);
+    } catch (e) {
+      toast.error(
+        e instanceof Error && e.message ? e.message : "下書きを作れませんでした"
+      );
+    } finally {
+      setDrafting(null);
+    }
+  }
   const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>([]);
   const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
 
@@ -205,6 +252,36 @@ export function InlineFeedbackButton({
           </DialogHeader>
 
           <DialogBody className="space-y-3">
+            {draftFromEssayId && (
+              <div className="flex flex-wrap gap-1.5">
+                <Button
+                  size="sm"
+                  onClick={() => handleDraft("default")}
+                  disabled={!!drafting}
+                >
+                  {drafting === "default" ? (
+                    <Loader2 className="mr-1 size-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-1 size-3" />
+                  )}
+                  講評から下書き
+                </Button>
+                {DRAFT_TONES.map(({ tone, label }) => (
+                  <Button
+                    key={tone}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDraft(tone)}
+                    disabled={!!drafting}
+                  >
+                    {drafting === tone && (
+                      <Loader2 className="mr-1 size-3 animate-spin" />
+                    )}
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            )}
             {/* チャットと同じ装飾つきの入力欄。片方だけ色が付けられない
                 という状態にしないため、同じ部品を使う */}
             <RichField
