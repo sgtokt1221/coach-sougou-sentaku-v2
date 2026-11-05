@@ -28,7 +28,6 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   User,
@@ -49,6 +48,8 @@ import {
   Mic,
   MicOff,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Activity,
   Calendar,
@@ -97,9 +98,6 @@ import {
   type Essay,
   type EssayFeedback,
 } from "@/lib/types/essay";
-import { axisPoints } from "@/lib/score-rank";
-import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
-import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -107,7 +105,6 @@ import type { EnglishCert } from "@/lib/types/user";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
 import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
-import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
 import { computeAxisAverages } from "@/lib/admin/axis-averages";
@@ -162,6 +159,17 @@ import { GrowthReportsSection } from "@/components/admin/GrowthReportsSection";
 import { DocumentsSection } from "@/components/admin/DocumentsSection";
 import { LectureProgressSection } from "@/components/admin/LectureProgressSection";
 import { EssayQuestionContext } from "@/components/admin/EssayQuestionContext";
+import {
+  EssaySummaryStrip,
+  weaknessCountOf,
+} from "@/components/admin/essay-detail/EssaySummaryStrip";
+import { ReportInsightsCard } from "@/components/admin/essay-detail/ReportInsightsCard";
+import { BrushupSection } from "@/components/essay/result/EssayResultSections";
+import {
+  AdminEssayScores,
+  scoreColor,
+  type PreviousScores,
+} from "@/components/admin/essay-detail/AdminEssayScores";
 import { InterviewsSection } from "@/components/admin/InterviewsSection";
 import { InterviewDrillsSection } from "@/components/admin/InterviewDrillsSection";
 import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
@@ -343,17 +351,6 @@ function weaknessBadge(w: WeaknessRecord) {
     default:
       return <Badge variant="secondary">-</Badge>;
   }
-}
-
-/**
- * 満点は答案ごとに違う（口頭試問型は専門知識を合計に入れるので60）。
- * 40/30 の絶対値で色を決めると、口頭試問型だけ甘く出る。割合で見る。
- */
-function scoreColor(total: number, max = 50): string {
-  const pct = max > 0 ? (total / max) * 100 : 0;
-  if (pct >= 80) return "text-emerald-600 dark:text-emerald-400";
-  if (pct >= 60) return "text-amber-600 dark:text-amber-400";
-  return "text-rose-600 dark:text-rose-400";
 }
 
 /**
@@ -589,7 +586,60 @@ function AdminStudentDetailPageInner() {
   const [essayMarkSelected, setEssayMarkSelected] = useState<string[] | null>(
     null
   );
-  const [essayTextMode, setEssayTextMode] = useState<"ai" | "comment">("ai");
+  const [essayTextMode, setEssayTextMode] = useState<
+    "ai" | "brushup" | "comment"
+  >("ai");
+
+  /** 一覧（新しい順）の中での位置。前後の答案へ移るのに使う */
+  const essayNav = useMemo(() => {
+    const list = detail?.essays ?? [];
+    const i = essayDetail ? list.findIndex((e) => e.id === essayDetail.id) : -1;
+    if (i < 0) return null;
+    return {
+      position: list.length - i,
+      count: list.length,
+      olderId: list[i + 1]?.id ?? null,
+      newerId: list[i - 1]?.id ?? null,
+    };
+  }, [detail?.essays, essayDetail]);
+
+  /**
+   * 点を比べる相手。書き直しなら親の答案、それ以外は1つ前の提出。
+   * 満点が違う答案（口頭試問型）とは比べない。
+   */
+  const essayPreviousScores = useMemo<PreviousScores | null>(() => {
+    if (!essayDetail?.scores) return null;
+    const max = essayDetail.feedback?.scoreMaximum ?? 50;
+    const rc = essayDetail.retryComparison;
+    if (rc?.parentScores) {
+      return {
+        scores: rc.parentScores,
+        label: `${rc.parentAttemptNumber}回目`,
+      };
+    }
+    const list = detail?.essays ?? [];
+    const i = list.findIndex((e) => e.id === essayDetail.id);
+    const prev = i >= 0 ? list.slice(i + 1).find((e) => e.scores) : undefined;
+    if (!prev?.scores || (prev.scoreMaximum ?? 50) !== max) return null;
+    const d = new Date(prev.submittedAt);
+    return {
+      scores: prev.scores,
+      label: `前回（${d.getMonth() + 1}/${d.getDate()}）`,
+    };
+  }, [essayDetail, detail?.essays]);
+
+  /** 本文の「弱点」の印に、弱点DBでの回数を付ける（2回以上のときだけ） */
+  const essayWeaknessBadge = useMemo(() => {
+    const issues = essayDetail?.feedback?.repeatedIssues ?? [];
+    const weaknesses = detail?.weaknesses ?? [];
+    return (key: string): string | null => {
+      const m = /^weakness:(\d+)$/.exec(key);
+      const issue = m ? issues[Number(m[1])] : undefined;
+      if (!issue) return null;
+      const hit = weaknessCountOf(issue, weaknesses);
+      return hit && hit.count >= 2 ? `これまで${hit.count}回` : null;
+    };
+  }, [essayDetail?.feedback?.repeatedIssues, detail?.weaknesses]);
 
   async function openEssayDetail(essayId: string) {
     setEssayDetailOpen(true);
@@ -1653,16 +1703,55 @@ function AdminStudentDetailPageInner() {
       <Dialog open={essayDetailOpen} onOpenChange={setEssayDetailOpen}>
         <DialogContent className="sm:max-w-3xl lg:max-w-6xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="size-5" />
-              小論文詳細
-            </DialogTitle>
-            {essayDetail && (
-              <DialogDescription>
-                {essayDetail.targetUniversity} {essayDetail.targetFaculty}
-                {essayDetail.topic ? ` - ${essayDetail.topic}` : ""}
-              </DialogDescription>
-            )}
+            <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
+              <div className="space-y-1.5">
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="size-5" />
+                  小論文詳細
+                  {(essayDetail?.attemptNumber ?? 1) > 1 && (
+                    <span className="bg-muted rounded-md px-2 py-0.5 text-xs font-medium">
+                      書き直し {essayDetail?.attemptNumber}回目
+                    </span>
+                  )}
+                </DialogTitle>
+                {essayDetail && (
+                  <DialogDescription>
+                    {essayDetail.targetUniversity} {essayDetail.targetFaculty}
+                    {essayDetail.topic ? ` - ${essayDetail.topic}` : ""}
+                  </DialogDescription>
+                )}
+              </div>
+              {/* 閉じずに前後の答案へ移る（一覧は新しい順なので、前＝古い方） */}
+              {essayNav && essayNav.count > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!essayNav.olderId || essayLoading}
+                    onClick={() =>
+                      essayNav.olderId && openEssayDetail(essayNav.olderId)
+                    }
+                  >
+                    <ChevronLeft className="size-4" />
+                    前の答案
+                  </Button>
+                  <span className="text-muted-foreground px-1 text-xs tabular-nums">
+                    {essayNav.position} / {essayNav.count}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!essayNav.newerId || essayLoading}
+                    onClick={() =>
+                      essayNav.newerId && openEssayDetail(essayNav.newerId)
+                    }
+                  >
+                    次の答案
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </DialogHeader>
 
           <DialogBody>
@@ -1699,13 +1788,19 @@ function AdminStudentDetailPageInner() {
                     fullWidth
                     size="sm"
                     value={essayTextMode}
-                    onChange={(v) => setEssayTextMode(v as "ai" | "comment")}
+                    onChange={(v) =>
+                      setEssayTextMode(v as "ai" | "brushup" | "comment")
+                    }
                     options={[
                       {
                         id: "ai",
                         label: "AIの指摘",
                         count: essayFeedbackModel.marked.length,
                       },
+                      // 書き直し例は作ってあるときだけ（管理画面からは作らない）
+                      ...(essayDetail.feedback?.brushedUpText?.trim()
+                        ? [{ id: "brushup", label: "書き直し例" }]
+                        : []),
                       {
                         id: "comment",
                         label: "コメントを付ける",
@@ -1735,8 +1830,18 @@ function AdminStudentDetailPageInner() {
                         oralExam={essayOralExam}
                         selected={essayMarkSelected}
                         onSelect={setEssayMarkSelected}
+                        badgeOf={essayWeaknessBadge}
                       />
                     </div>
+                  ) : essayTextMode === "brushup" ? (
+                    <BrushupSection
+                      key={essayDetail.id}
+                      essayId={essayDetail.id}
+                      initialText={essayDetail.feedback?.brushedUpText}
+                      oralExam={essayOralExam}
+                      canGenerate={false}
+                      addedFacts={essayDetail.feedback?.brushedUpAddedFacts}
+                    />
                   ) : (
                     <>
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -1787,6 +1892,13 @@ function AdminStudentDetailPageInner() {
                       onClose={() => setEssayMarkSelected(null)}
                     />
                   </div>
+                  {/* 面談で何を言うかを、講評を読む前に決められるようにする */}
+                  {essayDetail.feedback && (
+                    <EssaySummaryStrip
+                      feedback={essayDetail.feedback}
+                      weaknesses={detail?.weaknesses ?? []}
+                    />
+                  )}
                   {/* 出題の文脈。生徒が何を読んで何に答えたかが分からないと添削の妥当性を判断できない */}
                   <EssayQuestionContext
                     topic={essayDetail.topic}
@@ -1794,137 +1906,22 @@ function AdminStudentDetailPageInner() {
                     context={essayDetail.questionContext}
                   />
 
-                  {/* Score bars + レーダー。5軸の偏りは棒だけだと掴みにくいので図も出す */}
-                  {essayDetail.scores && (
-                    <div className="space-y-3">
-                      <h3 className="text-foreground text-sm font-semibold">
-                        AIスコア
-                      </h3>
-                      <div className="grid gap-3 sm:grid-cols-2 sm:items-center">
-                        {/* APは合計に入らないので軸に混ぜない。数値は下の一覧に残す */}
-                        <SkillRadarChart
-                          scores={essayDetail.scores}
-                          height={220}
-                        />
-                        <div className="grid gap-2">
-                          {/* 軸の並び・配点・旧データ（独自性・旧配点）の扱いは生徒の結果画面と同じ正本を通す。
-                            手書きの一覧だと、旧採点の答案で成熟度を今の配点で換算し、独自性も出さず、
-                            生徒の画面と点が食い違っていた */}
-                          {essayScoreAxisRows(essayDetail.scores)
-                            .filter((r) => r.key !== "knowledgeAccuracy")
-                            .map((item) => {
-                              const val = item.value;
-                              return (
-                                <div
-                                  key={item.key}
-                                  className="flex items-center gap-3"
-                                >
-                                  <span className="text-muted-foreground w-28 text-xs">
-                                    {item.label}
-                                  </span>
-                                  <div className="flex-1">
-                                    <Progress
-                                      value={val * 10}
-                                      className="h-2"
-                                    />
-                                  </div>
-                                  <span className="w-12 text-right text-xs font-medium tabular-nums">
-                                    {axisPoints(val, item.weight).toFixed(1)}/
-                                    {item.weight}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          {/* 口頭試問型の専門知識。合計に入る（満点60） */}
-                          {typeof essayDetail.scores.knowledgeAccuracy ===
-                            "number" && (
-                            <div className="flex items-center gap-3 border-t pt-2">
-                              <span className="text-muted-foreground w-28 text-xs">
-                                専門知識の正確性
-                              </span>
-                              <div className="flex-1">
-                                <Progress
-                                  value={
-                                    essayDetail.scores.knowledgeAccuracy * 10
-                                  }
-                                  className="h-2"
-                                />
-                              </div>
-                              <span className="w-12 text-right text-xs font-medium tabular-nums">
-                                {essayDetail.scores.knowledgeAccuracy}/10
-                              </span>
-                            </div>
-                          )}
-                          {/* 合計外の参考値。レーダーには含めない */}
-                          {essayDetail.feedback?.apAlignmentAssessable !==
-                            false &&
-                            typeof essayDetail.scores.apAlignment ===
-                              "number" && (
-                              <div className="flex items-center gap-3 border-t pt-2">
-                                <span className="text-muted-foreground w-28 text-xs">
-                                  AP合致度
-                                  <span className="text-muted-foreground/70 ml-1 text-[10px]">
-                                    合計外
-                                  </span>
-                                </span>
-                                <div className="flex-1">
-                                  <Progress
-                                    value={essayDetail.scores.apAlignment * 10}
-                                    className="h-2"
-                                  />
-                                </div>
-                                <span className="text-muted-foreground w-12 text-right text-xs font-medium tabular-nums">
-                                  {essayDetail.scores.apAlignment}/10
-                                </span>
-                              </div>
-                            )}
-                          <div className="mt-1 flex items-center gap-3 border-t pt-2">
-                            <span className="w-20 text-xs font-semibold">
-                              合計
-                            </span>
-                            <div className="flex-1" />
-                            {/* 添削履歴の一覧と同じランク表記。点だけだと水準を掴みにくい */}
-                            <SkillRankBadge
-                              rank={scoreToSkillRank(
-                                essayDetail.scores.total,
-                                essayDetail.feedback?.scoreMaximum ?? 50
-                              )}
-                              size="sm"
-                              animate={false}
-                            />
-                            <span
-                              className={`text-lg font-bold ${scoreColor(essayDetail.scores.total, essayDetail.feedback?.scoreMaximum ?? 50)}`}
-                            >
-                              {essayDetail.scores.total}/
-                              {essayDetail.feedback?.scoreMaximum ?? 50}
-                            </span>
-                          </div>
+                  {essayDetail.feedback?.reportInsights && (
+                    <ReportInsightsCard
+                      insights={essayDetail.feedback.reportInsights}
+                    />
+                  )}
 
-                          {/* 面談で「次はここを狙おう」と言えるようにする。
-                              生徒画面と同じ計算を使う */}
-                          {(() => {
-                            const next = buildNextStepHint(
-                              essayDetail.scores!,
-                              essayDetail.feedback?.scoreMaximum ?? 50
-                            );
-                            if (!next) return null;
-                            return (
-                              <p className="bg-muted/60 mt-2 rounded-lg px-3 py-2 text-xs">
-                                あと
-                                <span className="mx-1 font-bold tabular-nums">
-                                  {next.gap.needed}
-                                </span>
-                                点で {next.gap.nextRank} ランク・伸びしろは
-                                <span className="mx-1 font-semibold">
-                                  {headroomAxisLabel(next.headroom.axis)}
-                                </span>
-                                （満点なら +{next.headroom.gain}点）
-                              </p>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
+                  {/* 点数。前回（書き直しなら親、それ以外は1つ前の提出）との差も並べる */}
+                  {essayDetail.scores && (
+                    <AdminEssayScores
+                      scores={essayDetail.scores}
+                      scoreMaximum={essayDetail.feedback?.scoreMaximum ?? 50}
+                      apAlignmentAssessable={
+                        essayDetail.feedback?.apAlignmentAssessable !== false
+                      }
+                      previous={essayPreviousScores}
+                    />
                   )}
 
                   {/* Feedback。総合評価と、本文に結び付かない指摘。本文に結び付く指摘

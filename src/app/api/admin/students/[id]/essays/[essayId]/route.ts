@@ -5,6 +5,7 @@ import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { recordSubmissionViewed } from "@/lib/api/viewed-submissions";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
+import { loadRetryComparison } from "@/lib/essay/load-retry-comparison";
 import type { Essay } from "@/lib/types/essay";
 import type { CoachThread, LinkedCoachThread } from "@/lib/types/essay-coach";
 import { getThemeById } from "@/data/essay-themes";
@@ -181,8 +182,20 @@ export async function GET(
       inlineComments: data.inlineComments || [],
     };
 
+    // 書き直しなら前回比（生徒の結果画面と同じ比べ方）
+    const parentEssayId: string | null = data.parentEssayId ?? null;
+    const retryComparison = await loadRetryComparison(adminDb, parentEssayId, {
+      scores: essay.scores,
+      feedback: essay.feedback,
+    });
+
     return NextResponse.json({
       ...essay,
+      attemptNumber:
+        typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
+      rootEssayId: data.rootEssayId ?? essayDoc.id,
+      parentEssayId,
+      ...(retryComparison ? { retryComparison } : {}),
       coachThreads,
       topicEstimated,
       // 指摘を本文に結び付けた結果（生徒と同じ見え方で出すため）。無ければ画面が /anchors で作る

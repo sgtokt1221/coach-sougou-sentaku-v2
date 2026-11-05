@@ -495,7 +495,7 @@ export function FixList({ items }: { items: FixItem[] }) {
   );
 }
 
-const PREVIOUS_STATUS: Record<
+export const PREVIOUS_STATUS: Record<
   PreviousFocusCheck["status"],
   { label: string; className: string }
 > = {

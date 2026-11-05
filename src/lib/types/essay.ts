@@ -49,6 +49,8 @@ export interface Essay {
   coachThreadId?: string;
   /** この答案を書いていたときの AIコーチ会話（管理者の答案詳細で表示する） */
   coachThreads?: LinkedCoachThread[];
+  /** 書き直しの前回比（保存しない。答案APIが読むたびに出す） */
+  retryComparison?: RetryComparison;
 }
 
 /**

@@ -2,12 +2,8 @@ import { feedbackWithDerivedIssues } from "@/lib/essay/review-core";
 import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeEssayAccess } from "@/lib/api/essay-access";
-import { computeRetryComparison } from "@/lib/essay/retry-comparison";
-import type {
-  EssayFeedback,
-  EssayScores,
-  RetryComparison,
-} from "@/lib/types/essay";
+import { loadRetryComparison } from "@/lib/essay/load-retry-comparison";
+import type { EssayFeedback, EssayScores } from "@/lib/types/essay";
 
 export async function GET(
   request: NextRequest,
@@ -74,37 +70,12 @@ export async function GET(
     const parentEssayId: string | null = data.parentEssayId ?? null;
 
     // 親essayがあれば前回比を毎回算出
-    let retryComparison: RetryComparison | undefined;
-    if (parentEssayId && data.scores && data.feedback) {
-      try {
-        const parentDoc = await adminDb.doc(`essays/${parentEssayId}`).get();
-        if (parentDoc.exists) {
-          const pdata = parentDoc.data()!;
-          if (pdata.scores && pdata.feedback) {
-            retryComparison = computeRetryComparison(
-              {
-                id: parentDoc.id,
-                attemptNumber:
-                  typeof pdata.attemptNumber === "number"
-                    ? pdata.attemptNumber
-                    : 1,
-                submittedAt: pdata.submittedAt?.toDate?.() ?? new Date(),
-                scores: pdata.scores as EssayScores,
-                // 今回の答案と同じ規則の弱点で比べる（derive を通した feedback 同士）
-                feedback: feedbackWithDerivedIssues(
-                  pdata.feedback as EssayFeedback,
-                  pdata.sentenceCheck,
-                  { partial: isPartialEssay(pdata) }
-                ),
-              },
-              { scores, feedback }
-            );
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to compute retry comparison:", err);
-      }
-    }
+    const retryComparison = data.feedback
+      ? await loadRetryComparison(adminDb, parentEssayId, {
+          scores: data.scores ? scores : undefined,
+          feedback,
+        })
+      : undefined;
 
     return NextResponse.json({
       id: essayDoc.id,

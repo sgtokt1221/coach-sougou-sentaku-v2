@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { MessageSquare, X } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -169,6 +175,7 @@ export function AnchoredEssayBody({
   oralExam,
   selected,
   onSelect,
+  badgeOf,
 }: {
   model: AnchoredFeedbackModel;
   text: string;
@@ -176,22 +183,46 @@ export function AnchoredEssayBody({
   oralExam?: OralExamQuestionSet | null;
   selected: string[] | null;
   onSelect: (keys: string[]) => void;
+  /** 指摘のキーごとに、印の後ろへ置く小さな札（管理画面の「これまでN回」） */
+  badgeOf?: (key: string) => string | null;
 }) {
+  // 札は指摘の最後の箇所の直後に1つだけ置く
+  const badgesAt = new Map<number, string[]>();
+  if (badgeOf) {
+    for (const a of model.marked) {
+      const label = badgeOf(a.key);
+      if (!label) continue;
+      const end = Math.max(...a.spans.map((sp) => sp.end));
+      const list = badgesAt.get(end) ?? [];
+      if (!list.includes(label)) list.push(label);
+      badgesAt.set(end, list);
+    }
+  }
   const renderRange = (range: Span) =>
     model.segments
       .filter((s) => s.end > range.start && s.start < range.end)
       .map((s) => (
-        <SegmentText
-          key={`${s.start}-${s.end}`}
-          segment={s}
-          text={text.slice(
-            Math.max(s.start, range.start),
-            Math.min(s.end, range.end)
-          )}
-          groupOf={model.groupOf}
-          active={!!selected && sameKeys(selected, s.keys)}
-          onSelect={onSelect}
-        />
+        <Fragment key={`${s.start}-${s.end}`}>
+          <SegmentText
+            segment={s}
+            text={text.slice(
+              Math.max(s.start, range.start),
+              Math.min(s.end, range.end)
+            )}
+            groupOf={model.groupOf}
+            active={!!selected && sameKeys(selected, s.keys)}
+            onSelect={onSelect}
+          />
+          {s.end <= range.end &&
+            badgesAt.get(s.end)?.map((label) => (
+              <span
+                key={label}
+                className="mx-0.5 inline-block rounded-full bg-orange-100 px-1.5 align-[2px] text-[11px] leading-[18px] font-bold text-orange-800 dark:bg-orange-950/50 dark:text-orange-300"
+              >
+                {label}
+              </span>
+            ))}
+        </Fragment>
       ));
 
   if (oralExam && model.answerSpans && model.answerSpans.size > 0) {

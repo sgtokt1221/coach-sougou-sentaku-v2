@@ -466,11 +466,14 @@ export function BrushupSection({
   initialText,
   oralExam,
   canGenerate,
+  addedFacts,
 }: {
   essayId: string;
   initialText?: string | null;
   oralExam?: OralExamQuestionSet | null;
   canGenerate: boolean;
+  /** 書き直しでAIが補った事実（管理画面だけが渡す。先生が裏を取れるように） */
+  addedFacts?: string[] | null;
 }) {
   const [text, setText] = useState(initialText?.trim() ? initialText : null);
   const [generating, setGenerating] = useState(false);
@@ -569,6 +572,18 @@ export function BrushupSection({
           <p className="bg-card rounded-xl p-4 text-[15px] leading-8 whitespace-pre-wrap">
             {text}
           </p>
+        </div>
+      )}
+      {text && addedFacts && addedFacts.length > 0 && (
+        <div className="mt-3 grid gap-1.5 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/30">
+          <p className="text-xs font-bold text-amber-900 dark:text-amber-300">
+            AIが補った事実
+          </p>
+          {addedFacts.map((f) => (
+            <p key={f} className="text-sm leading-relaxed">
+              {f}
+            </p>
+          ))}
         </div>
       )}
     </DetailSection>
