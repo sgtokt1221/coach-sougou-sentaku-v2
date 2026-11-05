@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { SCORE_LINES, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { indexPoints, pointAxisProps } from "@/components/charts/point-axis";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import {
@@ -72,26 +73,28 @@ export function DetailedScoresTrendChart({ data: allData, lines }: DetailedScore
     <div>
       {filter}
     <ResponsiveContainer width="100%" height={280}>
-      <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+      <LineChart data={indexPoints(chartData)} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid
           strokeDasharray={GRID_STYLE.strokeDasharray}
           stroke={GRID_STYLE.stroke}
           opacity={GRID_STYLE.opacity}
         />
         <XAxis
-          dataKey="date"
+          {...pointAxisProps(chartData)}
           tick={{ fontSize: 12 }}
           tickLine={false}
           axisLine={false}
         />
         <YAxis
           domain={[0, 10]}
+          // 既定の目盛りは 0・3・6・10 と不揃いになる
+          ticks={[0, 2, 4, 6, 8, 10]}
           tick={{ fontSize: 12 }}
           tickLine={false}
           axisLine={false}
           width={30}
         />
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<CustomTooltip labelKey="date" />} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         {lineDefs.map((line) => (
           <Line

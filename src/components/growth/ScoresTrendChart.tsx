@@ -27,6 +27,7 @@ import {
   useEssayKindFilter,
   withKindTotals,
 } from "@/components/growth/EssayKindFilter";
+import { indexPoints, pointAxisProps } from "@/components/charts/point-axis";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomActiveDot } from "@/components/charts/CustomDot";
 
@@ -154,7 +155,7 @@ export function ScoresTrendChart({
         )}
         <ResponsiveContainer width="100%" height={chartHeight}>
           <LineChart
-            data={merged}
+            data={indexPoints(merged)}
             margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
           >
             <CartesianGrid
@@ -163,7 +164,7 @@ export function ScoresTrendChart({
               opacity={GRID_STYLE.opacity}
             />
             <XAxis
-              dataKey="date"
+              {...pointAxisProps(merged)}
               tick={{ fontSize: 12 }}
               tickLine={false}
               axisLine={false}
@@ -175,7 +176,7 @@ export function ScoresTrendChart({
               axisLine={false}
               width={30}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip labelKey="date" />} />
             <Legend
               wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
               iconType="circle"
@@ -255,7 +256,7 @@ export function ScoresTrendChart({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart
-        data={chartData}
+        data={indexPoints(chartData)}
         margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
       >
         <CartesianGrid
@@ -264,7 +265,7 @@ export function ScoresTrendChart({
           opacity={GRID_STYLE.opacity}
         />
         <XAxis
-          dataKey="date"
+          {...pointAxisProps(chartData)}
           tick={{ fontSize: 12 }}
           tickLine={false}
           axisLine={false}
@@ -277,7 +278,7 @@ export function ScoresTrendChart({
           width={30}
         />
         <Tooltip
-          content={<CustomTooltip />}
+          content={<CustomTooltip labelKey="date" />}
           formatter={(value) => [`${value}点`, "合計スコア"]}
         />
         <Line

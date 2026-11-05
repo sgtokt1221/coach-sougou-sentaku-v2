@@ -20,6 +20,7 @@ import {
   CHART_ANIMATION,
   GRID_STYLE,
 } from "@/components/charts/theme";
+import { indexPoints, pointAxisProps } from "@/components/charts/point-axis";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
@@ -121,14 +122,14 @@ export function InterviewHistory() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={chartData}>
+              <LineChart data={indexPoints(chartData)}>
                 <CartesianGrid
                   strokeDasharray={GRID_STYLE.strokeDasharray}
                   stroke={GRID_STYLE.stroke}
                   opacity={GRID_STYLE.opacity}
                 />
                 <XAxis
-                  dataKey="date"
+                  {...pointAxisProps(chartData)}
                   tick={{ fontSize: 11 }}
                   tickLine={false}
                   axisLine={false}
@@ -139,7 +140,7 @@ export function InterviewHistory() {
                   tickLine={false}
                   axisLine={false}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip labelKey="date" />} />
                 <Line
                   type="monotone"
                   dataKey="score"

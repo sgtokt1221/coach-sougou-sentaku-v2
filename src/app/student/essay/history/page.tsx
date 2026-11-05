@@ -37,6 +37,7 @@ import {
   CHART_ANIMATION,
   GRID_STYLE,
 } from "@/components/charts/theme";
+import { indexPoints, pointAxisProps } from "@/components/charts/point-axis";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
@@ -271,14 +272,14 @@ export default function EssayHistoryPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={kindChartData}>
+                  <LineChart data={indexPoints(kindChartData)}>
                     <CartesianGrid
                       strokeDasharray={GRID_STYLE.strokeDasharray}
                       stroke={GRID_STYLE.stroke}
                       opacity={GRID_STYLE.opacity}
                     />
                     <XAxis
-                      dataKey="date"
+                      {...pointAxisProps(kindChartData)}
                       tick={{ fontSize: 11 }}
                       tickLine={false}
                       axisLine={false}
@@ -289,7 +290,7 @@ export default function EssayHistoryPage() {
                       tickLine={false}
                       axisLine={false}
                     />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip labelKey="date" />} />
                     {visibleLines.has("total") && !splitTotals && (
                       <Line
                         type="monotone"

@@ -25,6 +25,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { CHART_COLORS, CHART_ANIMATION, GRID_STYLE } from "@/components/charts/theme";
+import { indexPoints, pointAxisProps } from "@/components/charts/point-axis";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomDot, CustomActiveDot } from "@/components/charts/CustomDot";
 import { LOGIC_DRILL_TYPE_LABELS } from "@/lib/types/logic-drill";
@@ -114,15 +115,15 @@ export default function LogicDrillHistoryPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={chartData}>
+                  <LineChart data={indexPoints(chartData)}>
                     <CartesianGrid
                       strokeDasharray={GRID_STYLE.strokeDasharray}
                       stroke={GRID_STYLE.stroke}
                       opacity={GRID_STYLE.opacity}
                     />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <XAxis {...pointAxisProps(chartData)} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                     <YAxis domain={[0, 15]} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip labelKey="date" />} />
                     <Line
                       type="monotone"
                       dataKey="total"
