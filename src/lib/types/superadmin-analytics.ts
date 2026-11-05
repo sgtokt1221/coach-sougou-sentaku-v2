@@ -72,3 +72,22 @@ export interface WeaknessAggregateResponse {
   totalRecords: number;
   generatedAt: string;
 }
+
+/** 採点のずれ（版ごとの小論文の点の分布、50点換算） */
+export interface ScoringVersionRow {
+  version: string;
+  count: number;
+  mean: number;
+  median: number;
+  p25: number;
+  p75: number;
+  /** その版で採点した最初と最後の提出日（ISO） */
+  from: string;
+  to: string;
+}
+
+export interface ScoringDriftResponse {
+  currentVersion: string;
+  rows: ScoringVersionRow[];
+  benchmarks: { label: string; level: number; promptVersion: string }[];
+}

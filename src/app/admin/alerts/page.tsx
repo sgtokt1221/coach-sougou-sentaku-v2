@@ -24,6 +24,7 @@ import {
   FileCheck,
   Sparkles,
   Mic,
+  Flag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,8 @@ type FilterType =
   | "ap_struggle"
   | "weakness_stuck"
   | "deadline_risk"
-  | "score_plateau";
+  | "score_plateau"
+  | "passer_gap";
 
 const filterOptions: { value: FilterType; label: string }[] = [
   { value: "all", label: "すべて" },
@@ -53,6 +55,7 @@ const filterOptions: { value: FilterType; label: string }[] = [
   { value: "weakness_stuck", label: "弱点停滞" },
   { value: "deadline_risk", label: "期限リスク" },
   { value: "score_plateau", label: "成長停滞" },
+  { value: "passer_gap", label: "合格ライン遅れ" },
 ];
 
 /**
@@ -79,6 +82,8 @@ function alertTypeConfig(type: AlertItem["type"]) {
       return { label: "期限リスク", icon: CalendarClock, color: "text-indigo-600 dark:text-indigo-400" };
     case "score_plateau":
       return { label: "成長停滞", icon: Activity, color: "text-cyan-600 dark:text-cyan-400" };
+    case "passer_gap":
+      return { label: "合格ライン遅れ", icon: Flag, color: "text-orange-600 dark:text-orange-400" };
     // 活動系（お知らせ）タイプ — 控えめな青系
     case "essay_reviewed":
       return { label: "添削提出", icon: FileText, color: "text-sky-600 dark:text-sky-400" };
@@ -177,7 +182,9 @@ export default function AdminAlertsPage() {
   ).length;
   const predictiveCount = alerts.filter(
     (a) =>
-      ["ap_struggle", "weakness_stuck", "deadline_risk", "score_plateau"].includes(a.type) &&
+      ["ap_struggle", "weakness_stuck", "deadline_risk", "score_plateau", "passer_gap"].includes(
+        a.type
+      ) &&
       !a.acknowledged
   ).length;
 

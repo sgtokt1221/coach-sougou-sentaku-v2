@@ -74,6 +74,8 @@ function alertTypeLabel(type: string): string {
       return "繰り返し弱点";
     case "document_deadline":
       return "書類期限";
+    case "passer_gap":
+      return "合格ライン遅れ";
     default:
       return type;
   }

@@ -1,23 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, School, MessageSquare, Mic } from "lucide-react";
+import { BarChart3, School, MessageSquare, Mic, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSWR } from "@/lib/api/swr";
 import { UniversityAggregateTable } from "@/components/superadmin/UniversityAggregateTable";
 import { WeaknessAggregateTable } from "@/components/superadmin/WeaknessAggregateTable";
 import type {
+  ScoringDriftResponse,
   UniversityAggregateResponse,
   WeaknessAggregateResponse,
 } from "@/lib/types/superadmin-analytics";
 
-type TabId = "universities" | "essay" | "interview";
+type TabId = "universities" | "essay" | "interview" | "scoring";
 
 const TABS: Array<{ id: TabId; label: string; icon: typeof BarChart3 }> = [
   { id: "universities", label: "志望校別", icon: School },
   { id: "essay", label: "小論文弱点", icon: MessageSquare },
   { id: "interview", label: "面接弱点", icon: Mic },
+  { id: "scoring", label: "採点のずれ", icon: Scale },
 ];
 
 export default function SuperadminAnalyticsPage() {
@@ -56,6 +58,7 @@ export default function SuperadminAnalyticsPage() {
       {tab === "universities" && <UniversityTab />}
       {tab === "essay" && <WeaknessTab source="essay" />}
       {tab === "interview" && <WeaknessTab source="interview" />}
+      {tab === "scoring" && <ScoringTab />}
     </div>
   );
 }
@@ -160,6 +163,109 @@ function WeaknessTab({ source }: { source: "essay" | "interview" }) {
             totalRecords={data?.totalRecords ?? 0}
             emptyLabel={emptyLabel}
           />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ScoringTab() {
+  const { data, isLoading, error } = useAuthSWR<ScoringDriftResponse>(
+    "/api/superadmin/analytics/scoring"
+  );
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6 space-y-3">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+  if (error || !data) {
+    return (
+      <p className="text-sm text-destructive">データ取得に失敗しました。</p>
+    );
+  }
+  const day = (iso: string) => (iso ? iso.slice(5, 10).replace("-", "/") : "-");
+  return (
+    <div className="space-y-4">
+      {data.benchmarks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">合格者ライン</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {data.benchmarks.map((b) => {
+              const stale = b.promptVersion !== data.currentVersion;
+              return (
+                <div
+                  key={b.label}
+                  className={`flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-4 py-3 text-sm ${
+                    stale
+                      ? "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                      : "bg-muted"
+                  }`}
+                >
+                  <span className="font-medium">{b.label}</span>
+                  <span className="text-xl font-bold tabular-nums">
+                    {b.level}
+                    <span className="ml-0.5 text-xs font-normal">点</span>
+                  </span>
+                  <span className="tabular-nums">{b.promptVersion}</span>
+                  {stale && <span className="font-medium">今の版と違う</span>}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">版ごとの点（直近180日・50点換算）</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.rows.length === 0 ? (
+            <p className="text-muted-foreground text-sm">まだ答案がありません</p>
+          ) : (
+            <div className="overflow-x-auto" data-allow-x-scroll>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/50 border-b">
+                    <th className="px-3 py-2 text-left font-medium">版</th>
+                    <th className="px-3 py-2 text-right font-medium">件数</th>
+                    <th className="px-3 py-2 text-right font-medium">平均</th>
+                    <th className="px-3 py-2 text-right font-medium">中央値</th>
+                    <th className="px-3 py-2 text-right font-medium">中央の半分</th>
+                    <th className="px-3 py-2 text-right font-medium">期間</th>
+                  </tr>
+                </thead>
+                <tbody className="tabular-nums">
+                  {data.rows.map((r) => (
+                    <tr
+                      key={r.version}
+                      className={`border-b ${
+                        r.version === data.currentVersion ? "bg-teal-50 font-medium dark:bg-teal-950" : ""
+                      }`}
+                    >
+                      <td className="px-3 py-2">{r.version}</td>
+                      <td className="px-3 py-2 text-right">{r.count}</td>
+                      <td className="px-3 py-2 text-right">{r.mean}</td>
+                      <td className="px-3 py-2 text-right font-bold">{r.median}</td>
+                      <td className="px-3 py-2 text-right">
+                        {r.p25}〜{r.p75}
+                      </td>
+                      <td className="text-muted-foreground px-3 py-2 text-right">
+                        {day(r.from)}〜{day(r.to)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

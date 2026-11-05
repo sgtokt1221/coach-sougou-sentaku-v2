@@ -4,6 +4,12 @@ import { normalizedEssayTotal } from "@/lib/types/essay";
 import { getOrgMemberAdminUids, chunk } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import type { AlertItem } from "@/lib/types/admin";
+import { passerBenchmarkViewFor } from "@/lib/benchmark/passer-benchmark-server";
+import {
+  benchmarkAt,
+  monthsSince,
+  type PasserBenchmarkView,
+} from "@/lib/benchmark/passer-benchmark";
 import {
   getWeaknessReminderLevel,
   type WeaknessRecord,
@@ -29,6 +35,8 @@ interface StudentAlertData {
   displayName: string;
   lastActivityAt: string | null;
   scoreHistory: number[];
+  /** 志望校の段の合格者ライン（無ければ null） */
+  passerBenchmark: PasserBenchmarkView | null;
   apAlignmentScores: number[];
   weaknesses: {
     area: string;
@@ -308,6 +316,26 @@ function detectAlerts(students: StudentAlertData[]): AlertItem[] {
       });
     }
 
+    // passer_gap: 書き始めてから同じ月数の合格者より、直近3回の平均が3点以上低い
+    const pb = student.passerBenchmark;
+    if (pb && pb.startAt !== null && scores.length >= 3) {
+      const month = monthsSince(pb.startAt, Date.now());
+      const passer = benchmarkAt(pb, month);
+      const recent3 = scores.slice(-3);
+      const avg =
+        Math.round((recent3.reduce((s, v) => s + v, 0) / recent3.length) * 10) / 10;
+      if (avg <= passer - 3) {
+        add(student, undefined, {
+          type: "passer_gap",
+          severity: "warning",
+          message: `書き始めて${month + 1}か月目で直近3回の平均${avg}点。${pb.label}の合格者は同じ時期に${passer}点`,
+          detectedAt: new Date().toISOString(),
+          recommendedAction:
+            "最優先の改善点を1つに絞り、同じ型の設問で書き直しを重ねさせましょう。",
+        });
+      }
+    }
+
     // === ACTIVITY NOTIFICATIONS (info) ===
     for (const act of student.recentActivities) {
       add(student, act.itemId, {
@@ -462,6 +490,18 @@ export async function GET(request: NextRequest) {
           })
           .filter((s): s is number => typeof s === "number")
           .reverse();
+
+        // 合格者ライン（答案は新しい順に全件読んであるので、最初の答案は末尾）
+        const firstEssayAt = essaysSnap.docs[essaysSnap.docs.length - 1]
+          ?.data()
+          ?.submittedAt?.toDate?.()
+          ?.getTime();
+        const passerBenchmark = await passerBenchmarkViewFor(
+          adminDb!,
+          studentUid,
+          data.targetUniversities,
+          firstEssayAt ?? null
+        ).catch(() => null);
 
         // Extract AP alignment scores separately for ap_struggle detection
         const apAlignmentScores = essaysSnap.docs
@@ -626,6 +666,7 @@ export async function GET(request: NextRequest) {
           displayName: data.displayName ?? "",
           lastActivityAt,
           scoreHistory,
+          passerBenchmark,
           apAlignmentScores,
           weaknesses,
           documents,

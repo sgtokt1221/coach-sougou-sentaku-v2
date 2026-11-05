@@ -1,3 +1,4 @@
+import type { PasserBenchmarkView } from "@/lib/benchmark/passer-benchmark";
 import type { EssayKind } from "@/lib/essay/essay-kind";
 import type { WeaknessRecord } from "./growth";
 import type { EssayScores } from "./essay";
@@ -122,6 +123,8 @@ export interface StudentDetail {
   scoreTrend?: ScoreTrendPoint[];
   essayScoreTrend?: ScoreTrendPoint[];
   interviewScoreTrend?: InterviewScoreTrendPoint[];
+  /** 志望校の段の合格者ライン。無ければ null */
+  passerBenchmark?: PasserBenchmarkView | null;
   /** 直近 essays の 5 軸平均 (0-10)。スキル俯瞰レーダー用 */
   essayCategoryAverages?: {
     structure: number;
@@ -304,6 +307,8 @@ export interface OrganizationStat {
   avgEssayScore: number | null;
   /** 直近30日に活動 (lastSeenAt) した生徒数 */
   activeStudentCount: number;
+  /** 合格者ラインのある志望校の生徒のうち、水準に届いている人数。ラインが無ければ null */
+  passLine?: { reached: number; total: number } | null;
 }
 
 export interface SuperadminDashboardStats {
@@ -361,6 +366,7 @@ export interface AlertItem {
     | "weakness_stuck"
     | "deadline_risk"
     | "score_plateau"
+    | "passer_gap" // 合格者の同じ時期の点に届いていない
     // 活動系（通知）タイプ
     | "essay_reviewed" // 添削を提出・完了
     | "self_analysis_done" // 自己分析の進捗・完了

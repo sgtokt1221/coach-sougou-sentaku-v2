@@ -1,3 +1,4 @@
+import { passerBenchmarkViewFor } from "@/lib/benchmark/passer-benchmark-server";
 import { NextRequest, NextResponse } from "next/server";
 import { essayKindOf } from "@/lib/essay/essay-kind";
 import { resolveLastActivity } from "@/lib/api/last-activity";
@@ -524,6 +525,15 @@ export async function GET(
     const targetUnis = userData.targetUniversities ?? [];
     const resolvedUniversities = resolveTargetUniversities(targetUnis);
 
+    // 合格者ライン（答案は新しい順に全件読んであるので、最初の答案は末尾）
+    const firstEssay = essaysSnap.docs[essaysSnap.docs.length - 1]?.get("submittedAt");
+    const passerBenchmark = await passerBenchmarkViewFor(
+      adminDb,
+      id,
+      targetUnis,
+      firstEssay?.toDate?.()?.getTime() ?? null
+    ).catch(() => null);
+
     // スキル指標 = 直近10件の提出の平均。生徒一覧と同じ式・同じ入力で算出する。
     const [essayAggregate, interviewAggregate] = await Promise.all([
       computeEssayAggregate(id),
@@ -572,6 +582,7 @@ export async function GET(
       essays,
       essayScoreTrend,
       interviewScoreTrend,
+      passerBenchmark,
       ...(essayCategoryAverages ? { essayCategoryAverages } : {}),
       ...(essayStatsSummary ? { essayStatsSummary } : {}),
       ...(interviewStatsSummary ? { interviewStatsSummary } : {}),

@@ -1187,6 +1187,7 @@ function AdminStudentDetailPageInner() {
             <ScoresTrendChart
               essayData={essayChartData}
               interviewData={interviewChartData}
+              benchmark={detail.passerBenchmark}
             />
           ) : perfTab === "essay" ? (
             essayChartData.length > 0 ? (

@@ -24,6 +24,7 @@ import {
 import type { GrowthReport as AdminGrowthReport } from "@/lib/types/growth-report";
 import type { InterviewScores, InterviewMode } from "@/lib/types/interview";
 import { useAuthSWR } from "@/lib/api/swr";
+import type { PasserBenchmarkView } from "@/lib/benchmark/passer-benchmark";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SESSION_TYPE_LABELS, type Session } from "@/lib/types/session";
@@ -203,6 +204,9 @@ export default function GrowthPage() {
       };
     }[];
   }>("/api/essay/history?userId=current");
+  const { data: passerData } = useAuthSWR<{
+    benchmark: PasserBenchmarkView | null;
+  }>("/api/student/passer-benchmark");
   const { data: interviewData, isLoading: loadingInterviews } = useAuthSWR<{
     interviews: InterviewHistoryItem[];
   }>("/api/interview/history?userId=current");
@@ -471,6 +475,7 @@ export default function GrowthPage() {
                   <ScoresTrendChart
                     essayData={essaySeries}
                     interviewData={interviewTrendData}
+                    benchmark={passerData?.benchmark}
                   />
                 )}
                 {trendTab === "essay" &&
@@ -479,7 +484,10 @@ export default function GrowthPage() {
                       小論文のデータがありません
                     </p>
                   ) : (
-                    <ScoresTrendChart essayData={essaySeries} />
+                    <ScoresTrendChart
+                      essayData={essaySeries}
+                      benchmark={passerData?.benchmark}
+                    />
                   ))}
                 {trendTab === "interview" &&
                   (interviewTrendData.length === 0 ? (

@@ -30,6 +30,11 @@ import {
 import { indexPoints, pointAxisProps } from "@/components/charts/point-axis";
 import { CustomTooltip } from "@/components/charts/CustomTooltip";
 import { CustomActiveDot } from "@/components/charts/CustomDot";
+import {
+  benchmarkAt,
+  monthsSince,
+  type PasserBenchmarkView,
+} from "@/lib/benchmark/passer-benchmark";
 
 /**
  * 小論文と面接のスコアを別系列で描画できるようにしたトレンドチャート。
@@ -74,6 +79,8 @@ interface ScoresTrendChartProps {
   interviewData?: SeriesPoint[];
   /** チャート高さ (px)。既定 280 */
   height?: number;
+  /** 合格者ライン（小論文の2系列モードだけ。時刻 ts のある点に重ねる） */
+  benchmark?: PasserBenchmarkView | null;
 }
 
 /** "M/D" を並べ替え用の数値にする（localeCompare だと "4/11" < "4/8" になる） */
@@ -83,7 +90,7 @@ function dateSortKey(s: string): number {
   return parts[0] * 100 + parts[1];
 }
 
-type Row = { date: string; interview?: number } & Partial<
+type Row = { date: string; interview?: number; passer?: number } & Partial<
   Record<`total_${EssayKind}`, number>
 >;
 
@@ -92,18 +99,29 @@ type Row = { date: string; interview?: number } & Partial<
  * 以前は日付キーでまとめていたため、同じ日に2本書くと1点しか残らなかった。
  * 自分の系列にだけ値を持たせ、線は connectNulls で同じ系列どうしをつなぐ。
  */
-function buildRows(essay: SeriesPoint[], interview: SeriesPoint[]): Row[] {
+function buildRows(
+  essay: SeriesPoint[],
+  interview: SeriesPoint[],
+  benchmark?: PasserBenchmarkView | null
+): Row[] {
   // 時刻が1点でも欠けていたら全体を日付で並べる（ミリ秒と "M/D" を混ぜて比べない）
   const useTs = [...essay, ...interview].every((p) => Number.isFinite(p.ts));
   const keyOf = (p: SeriesPoint) => (useTs ? p.ts! : dateSortKey(p.date));
+  // 合格者の同じ時期（書き始めからの月）の点。時刻が無いと月が出せないので描かない
+  const start = benchmark?.startAt ?? null;
+  const passerOf = (p: SeriesPoint) =>
+    benchmark && useTs && start !== null
+      ? { passer: benchmarkAt(benchmark, monthsSince(start, p.ts!)) }
+      : {};
   const rows: Array<Row & { _key: number }> = [
     ...withKindTotals(essay).map((p) => {
       const { total: _t, kind: _k, ts: _ts, ...rest } = p;
-      return { ...rest, _key: keyOf(p) };
+      return { ...rest, ...passerOf(p), _key: keyOf(p) };
     }),
     ...interview.map((p) => ({
       date: p.date,
       interview: p.total,
+      ...passerOf(p),
       _key: keyOf(p),
     })),
   ];
@@ -115,6 +133,7 @@ export function ScoresTrendChart({
   essayData,
   interviewData,
   height = 280,
+  benchmark,
 }: ScoresTrendChartProps) {
   const isCombined = essayData != null || interviewData != null;
   const kindFilter = useEssayKindFilter(essayData ?? []);
@@ -124,8 +143,10 @@ export function ScoresTrendChart({
     const showInterview = kindFilter.selected === "all";
     const merged = buildRows(
       kindFilter.filtered,
-      showInterview ? (interviewData ?? []) : []
+      showInterview ? (interviewData ?? []) : [],
+      benchmark
     );
+    const hasPasser = merged.some((r) => r.passer !== undefined);
     // 種類が1つだけなら、これまでどおり「小論文」1本の線として出す
     // 切り替えの段の分だけグラフを低くする。親が高さを固定していると凡例が切れる
     const chartHeight = kindFilter.showFilter ? height - 44 : height;
@@ -203,6 +224,20 @@ export function ScoresTrendChart({
                 animationEasing={CHART_ANIMATION.easing}
               />
             ))}
+            {hasPasser && (
+              <Line
+                type="stepAfter"
+                dataKey="passer"
+                name={`${benchmark!.label} 合格者`}
+                stroke="var(--muted-foreground)"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={false}
+                connectNulls
+                isAnimationActive={false}
+              />
+            )}
             {showInterview && (interviewData?.length ?? 0) > 0 && (
               <Line
                 type="monotone"

@@ -558,6 +558,9 @@ export default function SuperadminDashboard() {
                       <th className="px-3 py-2 text-center font-medium">
                         活動率
                       </th>
+                      <th className="px-3 py-2 text-center font-medium">
+                        合格ライン到達
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -606,6 +609,20 @@ export default function SuperadminDashboard() {
                             )}
                           </td>
                           <td className="px-3 py-2 text-center">{rate}%</td>
+                          <td className="px-3 py-2 text-center">
+                            {o.passLine && o.passLine.total > 0 ? (
+                              <span>
+                                <span className="font-bold">
+                                  {o.passLine.reached}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  /{o.passLine.total}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}

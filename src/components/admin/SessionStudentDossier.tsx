@@ -211,6 +211,7 @@ export function SessionStudentDossier({
                 <ScoresTrendChart
                   essayData={essayChartData}
                   interviewData={interviewChartData}
+                  benchmark={detail.passerBenchmark}
                 />
               </div>
 

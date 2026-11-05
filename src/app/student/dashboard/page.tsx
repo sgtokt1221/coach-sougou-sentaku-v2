@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TargetUniversityCards } from "@/components/dashboard/TargetUniversityCards";
 import type { StudentProfile } from "@/lib/types/user";
 import { useAuthSWR } from "@/lib/api/swr";
+import type { PasserBenchmarkView } from "@/lib/benchmark/passer-benchmark";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 import { UpcomingSessionCard } from "@/components/student/UpcomingSessionCard";
 import { EssayDraftsSection } from "@/components/essay/EssayDraftsSection";
@@ -58,6 +59,9 @@ export default function StudentDashboard() {
   }>("/api/interview/history?userId=current");
   const { data: rank, error: rankError } =
     useAuthSWR<StudentRankResponse>("/api/student/rank");
+  const { data: passerData } = useAuthSWR<{
+    benchmark: PasserBenchmarkView | null;
+  }>("/api/student/passer-benchmark");
   // 取れなかったときに「まだ提出がありません」と出すと、提出0件と見分けがつかない
   const rankEmptyMessage = rankError
     ? "ランクを読み込めませんでした"
@@ -258,6 +262,7 @@ export default function StudentDashboard() {
                 essayData={essayTrend}
                 interviewData={interviewTrend}
                 height={220}
+                benchmark={passerData?.benchmark}
               />
             )}
           </CardContent>

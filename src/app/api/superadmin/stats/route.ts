@@ -12,6 +12,11 @@ import type {
   FeatureUsageItem,
 } from "@/lib/types/admin";
 import { normalizedEssayTotal } from "@/lib/types/essay";
+import {
+  loadPasserBenchmark,
+  tierOfTarget,
+} from "@/lib/benchmark/passer-benchmark-server";
+import type { PasserTier } from "@/lib/benchmark/passer-benchmark";
 
 /**
  * Firestore Timestamp / Date / ISO 文字列 / 数値タイムスタンプ のどれでも
@@ -76,6 +81,7 @@ export async function GET(request: Request) {
     // 生徒uid → 所属塾orgId ("__none__"=未所属)。塾別スコア推移の集計に使う。
     // perf セクションで構築。degrade 時は空のまま (= scoreTrendByOrg 空、全体は従来通り)。
     const studentOrgMap = new Map<string, string>();
+    const passLineByOrg = new Map<string, { reached: number; total: number }>();
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
     const isActive = (data: FirebaseFirestore.DocumentData): boolean => {
       const iso = toIsoOrNull(
@@ -102,6 +108,28 @@ export async function GET(request: Request) {
           sDoc.id,
           typeof orgId === "string" && orgId ? orgId : "__none__"
         );
+      }
+
+      // 合格ライン到達: 志望校に合格者ラインのある生徒のうち、直近10件の平均
+      // （users.currentSkillScore、提出時に更新されるキャッシュ）が水準以上の人数
+      const levelOfTier = new Map<PasserTier, number | null>();
+      for (const sDoc of allStudentsSnap.docs) {
+        const d = sDoc.data();
+        const tier = tierOfTarget(d.targetUniversities);
+        if (!tier || typeof d.currentSkillScore !== "number") continue;
+        if (!levelOfTier.has(tier)) {
+          levelOfTier.set(
+            tier,
+            (await loadPasserBenchmark(adminDb, tier).catch(() => null))?.level ?? null
+          );
+        }
+        const level = levelOfTier.get(tier);
+        if (level == null) continue;
+        const orgId = studentOrgMap.get(sDoc.id)!;
+        const cur = passLineByOrg.get(orgId) ?? { reached: 0, total: 0 };
+        cur.total++;
+        if (d.currentSkillScore >= level) cur.reached++;
+        passLineByOrg.set(orgId, cur);
       }
 
       // 組織マップ: adminUid → {orgId,orgName}、orgId → {name, adminCount}
@@ -292,6 +320,7 @@ export async function GET(request: Request) {
               ? Math.round((a.scoreSum / a.scoreCount) * 10) / 10
               : null,
           activeStudentCount: a.activeCount,
+          passLine: passLineByOrg.get(orgId) ?? null,
         }))
         .sort((x, y) => y.studentCount - x.studentCount);
     } catch (err) {
