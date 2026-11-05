@@ -1,3 +1,4 @@
+import { NEW_HOST, hostOfOrigin } from "@/lib/move/origin-move";
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { verifyAuthToken } from "@/lib/firebase/admin";
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
       ? ((body as { userAgent: string }).userAgent as string)
       : "";
   const standalone = (body as { standalone?: unknown }).standalone === true;
+  const originHost = hostOfOrigin(request.headers.get("origin"));
   const deviceId =
     typeof (body as { deviceId?: unknown }).deviceId === "string"
       ? ((body as { deviceId: string }).deviceId as string).slice(0, 64)
@@ -107,9 +109,30 @@ export async function POST(request: Request) {
       /** ホーム画面に追加したPWAの中で登録したか。iOSはこれが true でないと届かない */
       standalone,
       ...(deviceId ? { deviceId } : {}),
+      // どの URL で登録したか（台湾→東京の移行で URL が変わるため）
+      ...(originHost ? { originHost } : {}),
     },
     { merge: true }
   );
+
+  /**
+   * 新しい URL（東京）で登録し直したら、その人の旧 URL での登録を消す。
+   * 端末 ID は URL ごとに別（localStorage が別）なので、上の「同じ端末の古いトークン」
+   * では消えない。残すと旧 URL と新 URL の両方に同じ通知が2通届く。
+   * originHost の無い登録は移行前のもの（＝旧 URL）として扱う。
+   */
+  if (originHost === NEW_HOST) {
+    const all = await adminDb.collection(`users/${authResult.uid}/fcmTokens`).get();
+    const batch = adminDb.batch();
+    let movedOut = 0;
+    for (const d of all.docs) {
+      if (d.id === fcmToken || d.data().originHost === NEW_HOST) continue;
+      batch.delete(d.ref);
+      batch.delete(adminDb.collection(OWNER_COLLECTION).doc(ownerDocId(d.id)));
+      movedOut++;
+    }
+    if (movedOut > 0) await batch.commit();
+  }
 
   /**
    * 同じ端末の古いトークンを消す。
