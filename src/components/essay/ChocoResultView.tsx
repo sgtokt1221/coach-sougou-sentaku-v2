@@ -32,7 +32,7 @@ export function ChocoResultView({
             <RadarChart data={radarData} outerRadius="80%">
               <PolarGrid gridType="polygon" stroke="#e2e8f0" />
               <PolarAngleAxis dataKey="subject" tick={{ fill: "#475569", fontSize: 12 }} />
-              <PolarRadiusAxis domain={[0, 10]} tickCount={6} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} />
+              <PolarRadiusAxis angle={90} domain={[0, 10]} tickCount={6} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} />
               <Radar name="スコア" dataKey="value" stroke="#2563eb" fill="#0ea5e9" fillOpacity={0.25} strokeWidth={2} />
             </RadarChart>
           </ResponsiveContainer>

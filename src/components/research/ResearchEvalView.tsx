@@ -82,7 +82,7 @@ function ResearchScoreRadar({ scores }: { scores: ResearchScores }) {
         <RadarChart data={data}>
           <PolarGrid stroke="#e2e8f0" />
           <PolarAngleAxis dataKey="axis" tick={{ fontSize: 12 }} />
-          <PolarRadiusAxis domain={[0, 10]} tick={{ fontSize: 10 }} />
+          <PolarRadiusAxis angle={90} domain={[0, 10]} tickCount={6} tick={{ fontSize: 10 }} />
           <Radar
             name="スコア"
             dataKey="score"

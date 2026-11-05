@@ -39,7 +39,14 @@ export function SkillRadarChart({
         <RadarChart data={data}>
           <PolarGrid stroke="#e2e8f0" />
           <PolarAngleAxis dataKey="axis" tick={{ fontSize: 12 }} />
-          <PolarRadiusAxis domain={[0, 10]} tick={{ fontSize: 10 }} />
+          {/* angle を省くと目盛りの軸が右向き(0度)になり、Recharts が数字を 90-angle 度回して横倒しで出す。
+              上向き(90度)にして数字を立て、目盛りは2点刻みに揃える */}
+          <PolarRadiusAxis
+            angle={90}
+            domain={[0, 10]}
+            tickCount={6}
+            tick={{ fontSize: 10 }}
+          />
           <Radar
             name="スコア"
             dataKey="score"
