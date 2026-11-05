@@ -93,13 +93,13 @@ import {
   type WeaknessGroupKey,
 } from "@/lib/growth/weakness-taxonomy";
 import {
-  ESSAY_SCORE_WEIGHTS,
   ESSAY_STATUS_LABELS,
   type Essay,
   type EssayFeedback,
 } from "@/lib/types/essay";
 import { axisPoints } from "@/lib/score-rank";
 import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";
+import { essayScoreAxisRows } from "@/lib/essay/score-axes";
 import type { WeaknessRecord } from "@/lib/types/growth";
 import { getWeaknessReminderLevel } from "@/lib/types/growth";
 import { UniversitySelectStep } from "@/components/onboarding/UniversitySelectStep";
@@ -1361,9 +1361,7 @@ function AdminStudentDetailPageInner() {
             <TabsTrigger value="overview">概要</TabsTrigger>
             <TabsTrigger value="performance">
               添削・面接
-              <TabUnviewedBadge
-                count={tabUnviewed(["essay"])}
-              />
+              <TabUnviewedBadge count={tabUnviewed(["essay"])} />
             </TabsTrigger>
             <TabsTrigger value="activity">
               活動・書類
@@ -1809,56 +1807,34 @@ function AdminStudentDetailPageInner() {
                           height={220}
                         />
                         <div className="grid gap-2">
-                          {[
-                            {
-                              key: "structure",
-                              label: "構成",
-                              weight: ESSAY_SCORE_WEIGHTS.structure,
-                            },
-                            {
-                              key: "logic",
-                              label: "論理性",
-                              weight: ESSAY_SCORE_WEIGHTS.logic,
-                            },
-                            {
-                              key: "expression",
-                              label: "表現力",
-                              weight: ESSAY_SCORE_WEIGHTS.expression,
-                            },
-                            {
-                              key: "responsiveness",
-                              label: "回答力",
-                              weight: ESSAY_SCORE_WEIGHTS.responsiveness,
-                            },
-                            {
-                              key: "reasoningMaturity",
-                              label: "議論の成熟度",
-                              weight: ESSAY_SCORE_WEIGHTS.reasoningMaturity,
-                            },
-                          ].map((item) => {
-                            const val = essayDetail.scores![
-                              item.key as keyof typeof essayDetail.scores
-                            ] as number;
-                            // 議論の成熟度は旧データには無い
-                            if (typeof val !== "number") return null;
-                            return (
-                              <div
-                                key={item.key}
-                                className="flex items-center gap-3"
-                              >
-                                <span className="text-muted-foreground w-28 text-xs">
-                                  {item.label}
-                                </span>
-                                <div className="flex-1">
-                                  <Progress value={val * 10} className="h-2" />
+                          {/* 軸の並び・配点・旧データ（独自性・旧配点）の扱いは生徒の結果画面と同じ正本を通す。
+                            手書きの一覧だと、旧採点の答案で成熟度を今の配点で換算し、独自性も出さず、
+                            生徒の画面と点が食い違っていた */}
+                          {essayScoreAxisRows(essayDetail.scores)
+                            .filter((r) => r.key !== "knowledgeAccuracy")
+                            .map((item) => {
+                              const val = item.value;
+                              return (
+                                <div
+                                  key={item.key}
+                                  className="flex items-center gap-3"
+                                >
+                                  <span className="text-muted-foreground w-28 text-xs">
+                                    {item.label}
+                                  </span>
+                                  <div className="flex-1">
+                                    <Progress
+                                      value={val * 10}
+                                      className="h-2"
+                                    />
+                                  </div>
+                                  <span className="w-12 text-right text-xs font-medium tabular-nums">
+                                    {axisPoints(val, item.weight).toFixed(1)}/
+                                    {item.weight}
+                                  </span>
                                 </div>
-                                <span className="w-12 text-right text-xs font-medium tabular-nums">
-                                  {axisPoints(val, item.weight).toFixed(1)}/
-                                  {item.weight}
-                                </span>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
                           {/* 口頭試問型の専門知識。合計に入る（満点60） */}
                           {typeof essayDetail.scores.knowledgeAccuracy ===
                             "number" && (
