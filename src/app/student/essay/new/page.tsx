@@ -1786,7 +1786,12 @@ export default function EssayNewPage() {
   }
 
   if (isSubmitting) {
-    return <ReviewProgress longRunning={reportMode} />;
+    return (
+      <ReviewProgress
+        longRunning={reportMode}
+        essayText={inputMode === "text" ? directText : ocrText}
+      />
+    );
   }
 
   /**

@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
+import { ScoresTrendChart } from "@/components/charts/lazy";
 import { TeacherReportsSection } from "@/components/student/TeacherReportsSection";
 import { SegmentControl } from "@/components/shared/SegmentControl";
-import { ReportDetailCard } from "@/components/admin/ReportDetailCard";
+import { ReportDetailCard } from "@/components/charts/lazy";
 import {
   TrendingUp,
   AlertCircle,

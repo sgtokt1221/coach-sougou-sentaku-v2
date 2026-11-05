@@ -8,7 +8,7 @@ import { WeaknessList } from "@/components/dashboard/WeaknessList";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 import type { EssayKind } from "@/lib/essay/essay-kind";
 import { ArrowUpRight, GraduationCap } from "lucide-react";
-import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
+import { ScoresTrendChart } from "@/components/charts/lazy";
 import { useAuth } from "@/contexts/AuthContext";
 import { TargetUniversityCards } from "@/components/dashboard/TargetUniversityCards";
 import type { StudentProfile } from "@/lib/types/user";

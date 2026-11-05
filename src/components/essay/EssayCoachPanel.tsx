@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -42,22 +42,6 @@ import {
   type FacultyEntry,
 } from "@/data/faculty-topics/registry";
 import { stripHighlights } from "@/lib/topics/highlightParser";
-import { lawTopics } from "@/data/faculty-topics/law";
-import { economicsTopics } from "@/data/faculty-topics/economics";
-import { medicineTopics } from "@/data/faculty-topics/medicine";
-import { nursingTopics } from "@/data/faculty-topics/nursing";
-import { informaticsTopics } from "@/data/faculty-topics/informatics";
-import { engineeringTopics } from "@/data/faculty-topics/engineering";
-import { educationTopics } from "@/data/faculty-topics/education";
-import { psychologyTopics } from "@/data/faculty-topics/psychology";
-import { internationalTopics } from "@/data/faculty-topics/international";
-import { sociologyTopics } from "@/data/faculty-topics/sociology";
-import { businessTopics } from "@/data/faculty-topics/business";
-import { humanitiesTopics } from "@/data/faculty-topics/humanities";
-import { scienceTopics } from "@/data/faculty-topics/science";
-import { agricultureTopics } from "@/data/faculty-topics/agriculture";
-import { pharmacyTopics } from "@/data/faculty-topics/pharmacy";
-import { artSportsTopics } from "@/data/faculty-topics/art-sports";
 
 /** Faculty.academicField から学部別ネタインプットの登録IDへのマッピング */
 const ACADEMIC_FIELD_TO_TOPIC_FACULTY: Record<string, string> = {
@@ -72,24 +56,28 @@ const ACADEMIC_FIELD_TO_TOPIC_FACULTY: Record<string, string> = {
   engineering: "engineering",
 };
 
-/** topic-input 学部ID → 静的データ */
-const FACULTY_TOPIC_DATA: Record<string, FacultyTopicData> = {
-  law: lawTopics,
-  economics: economicsTopics,
-  medicine: medicineTopics,
-  nursing: nursingTopics,
-  informatics: informaticsTopics,
-  engineering: engineeringTopics,
-  education: educationTopics,
-  psychology: psychologyTopics,
-  international: internationalTopics,
-  sociology: sociologyTopics,
-  business: businessTopics,
-  humanities: humanitiesTopics,
-  science: scienceTopics,
-  agriculture: agricultureTopics,
-  pharmacy: pharmacyTopics,
-  "art-sports": artSportsTopics,
+/**
+ * topic-input 学部ID → 静的データ（使うときに読む）。
+ * 全17学部分（約1.4MB）を答案作成画面の最初の読み込みでまとめて読んでいた。
+ * 「ネタ」タブで学部が決まったときに、その学部の分だけ読み込む。
+ */
+const FACULTY_TOPIC_LOADERS: Record<string, () => Promise<FacultyTopicData>> = {
+  law: () => import("@/data/faculty-topics/law").then((m) => m.lawTopics),
+  economics: () => import("@/data/faculty-topics/economics").then((m) => m.economicsTopics),
+  medicine: () => import("@/data/faculty-topics/medicine").then((m) => m.medicineTopics),
+  nursing: () => import("@/data/faculty-topics/nursing").then((m) => m.nursingTopics),
+  informatics: () => import("@/data/faculty-topics/informatics").then((m) => m.informaticsTopics),
+  engineering: () => import("@/data/faculty-topics/engineering").then((m) => m.engineeringTopics),
+  education: () => import("@/data/faculty-topics/education").then((m) => m.educationTopics),
+  psychology: () => import("@/data/faculty-topics/psychology").then((m) => m.psychologyTopics),
+  international: () => import("@/data/faculty-topics/international").then((m) => m.internationalTopics),
+  sociology: () => import("@/data/faculty-topics/sociology").then((m) => m.sociologyTopics),
+  business: () => import("@/data/faculty-topics/business").then((m) => m.businessTopics),
+  humanities: () => import("@/data/faculty-topics/humanities").then((m) => m.humanitiesTopics),
+  science: () => import("@/data/faculty-topics/science").then((m) => m.scienceTopics),
+  agriculture: () => import("@/data/faculty-topics/agriculture").then((m) => m.agricultureTopics),
+  pharmacy: () => import("@/data/faculty-topics/pharmacy").then((m) => m.pharmacyTopics),
+  "art-sports": () => import("@/data/faculty-topics/art-sports").then((m) => m.artSportsTopics),
 };
 
 type TabId = "reference" | "coach" | "ap" | "neta" | "self";
@@ -403,9 +391,29 @@ function NetaReference({
     undefined
   );
   const effectiveFacultyId = manualFacultyId ?? autoResolvedFacultyId;
-  const topicData = effectiveFacultyId
-    ? FACULTY_TOPIC_DATA[effectiveFacultyId]
-    : undefined;
+  const [loadedTopic, setLoadedTopic] = useState<{
+    id: string;
+    data: FacultyTopicData;
+  } | null>(null);
+  useEffect(() => {
+    const load = effectiveFacultyId ? FACULTY_TOPIC_LOADERS[effectiveFacultyId] : undefined;
+    if (!effectiveFacultyId || !load) return;
+    let cancelled = false;
+    load()
+      .then((data) => {
+        if (!cancelled) setLoadedTopic({ id: effectiveFacultyId, data });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveFacultyId]);
+  const topicData =
+    effectiveFacultyId && loadedTopic?.id === effectiveFacultyId
+      ? loadedTopic.data
+      : undefined;
+  const topicLoading =
+    !!effectiveFacultyId && !!FACULTY_TOPIC_LOADERS[effectiveFacultyId] && !topicData;
 
   // 利用可能な学部をカテゴリ別にグループ化
   const groupedFaculties = useMemo(() => {
@@ -468,7 +476,7 @@ function NetaReference({
 
       {/* 本体 */}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {isLoading && universityId && !effectiveFacultyId ? (
+        {(isLoading && universityId && !effectiveFacultyId) || topicLoading ? (
           <div className="text-muted-foreground p-4 text-sm">読み込み中...</div>
         ) : !topicData ? (
           <div className="text-muted-foreground p-4 text-sm">

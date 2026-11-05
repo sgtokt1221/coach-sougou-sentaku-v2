@@ -19,7 +19,7 @@ import { AnimatedList } from "@/components/shared/AnimatedList";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { StudentListItem, AlertItem } from "@/lib/types/admin";
-import { StudentStatusPie } from "@/components/admin/StudentStatusPie";
+import { StudentStatusPie } from "@/components/charts/lazy";
 import { AdminCalendar } from "@/components/admin/AdminCalendar";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
 

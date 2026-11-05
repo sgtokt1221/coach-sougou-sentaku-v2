@@ -65,8 +65,8 @@ import {
   TabUnviewedBadge,
 } from "@/components/admin/UnviewedSubmissions";
 import type { SubmissionKind } from "@/lib/api/submission-kinds";
-import { ScoresTrendChart } from "@/components/growth/ScoresTrendChart";
-import { DetailedScoresTrendChart } from "@/components/growth/DetailedScoresTrendChart";
+import { ScoresTrendChart } from "@/components/charts/lazy";
+import { DetailedScoresTrendChart } from "@/components/charts/lazy";
 import { INTERVIEW_SCORE_LINES } from "@/components/charts/theme";
 import { WeaknessSourceBadge } from "@/components/growth/WeaknessSourceBadge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -106,9 +106,9 @@ import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import type { AggregateBreakdown } from "@/lib/skill-check/aggregate";
 import { LAST_ACTIVITY_LABELS } from "@/lib/api/last-activity";
 import { scoreToSkillRank } from "@/lib/history-rank";
-import { StudentSkillRadar } from "@/components/admin/StudentSkillRadar";
+import { StudentSkillRadar } from "@/components/charts/lazy";
 import { computeAxisAverages } from "@/lib/admin/axis-averages";
-import { CategoryAverageRadar } from "@/components/admin/CategoryAverageRadar";
+import { CategoryAverageRadar } from "@/components/charts/lazy";
 
 /**
  * 生徒が設定した字数制限に対する現在の字数。
@@ -180,7 +180,7 @@ import { ActivitiesSection } from "@/components/admin/ActivitiesSection";
 import { DiscoverSection } from "@/components/admin/DiscoverSection";
 import { InlineFeedbackButton } from "@/components/admin/InlineFeedbackButton";
 import { CoachMemo } from "@/components/admin/CoachMemo";
-import { ActivityHeatmap } from "@/components/admin/ActivityHeatmap";
+import { ActivityHeatmap } from "@/components/charts/lazy";
 import { WeaknessTopChart } from "@/components/admin/WeaknessTopChart";
 import { HomeworkStatusSection } from "@/components/admin/HomeworkStatusSection";
 import { StudentEssayDraftsSection } from "@/components/admin/StudentEssayDraftsSection";

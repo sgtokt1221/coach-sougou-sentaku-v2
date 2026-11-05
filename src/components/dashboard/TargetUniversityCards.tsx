@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useAuthSWR } from "@/lib/api/swr";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -193,33 +194,19 @@ export function TargetUniversityCards({
   targetUniversities,
   compact = false,
 }: Props) {
-  const [resolved, setResolved] = useState<ResolvedUniversity[]>([]);
-  const [loading, setLoading] = useState(true);
+  /**
+   * 志望校名の解決は SWR で取る。以前は素の fetch で、ダッシュボードを開くたびに
+   * キャッシュ無しで待っていた（配列が作り直されるたびに取り直すこともあった）。
+   */
+  const key =
+    targetUniversities.length > 0
+      ? `/api/universities/resolve?ids=${targetUniversities.join(",")}`
+      : null;
+  const { data, isLoading } = useAuthSWR<{ resolved?: ResolvedUniversity[] }>(key);
+  const resolved = data?.resolved ?? [];
+  const loading = key !== null && isLoading && !data;
   /** 展開中のカード（compound id）。null は全て折りたたみ。 */
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (targetUniversities.length === 0) {
-      setLoading(false);
-      return;
-    }
-
-    async function fetchResolved() {
-      try {
-        const res = await fetch(
-          `/api/universities/resolve?ids=${targetUniversities.join(",")}`
-        );
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setResolved(data.resolved ?? []);
-      } catch {
-        setResolved([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchResolved();
-  }, [targetUniversities]);
 
   if (loading) {
     if (compact) {

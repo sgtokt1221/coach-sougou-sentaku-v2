@@ -5,7 +5,7 @@ import { Loader2, Minus, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { SkillRadarChart } from "@/components/skill-check/SkillRadarChart";
+import { SkillRadarChart } from "@/components/charts/lazy";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
 import { scoreToSkillRank } from "@/lib/history-rank";
 import { buildNextStepHint, headroomAxisLabel } from "@/lib/essay/next-step";

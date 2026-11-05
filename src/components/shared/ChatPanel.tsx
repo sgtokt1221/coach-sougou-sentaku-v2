@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingDots } from "@/components/ui/loading-dots";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
@@ -61,10 +62,8 @@ export function ChatPanel({
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-muted px-4 py-3">
-              <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" />
-              <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" />
-              <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground" />
+            <div className="flex items-center rounded-2xl rounded-tl-sm bg-muted px-4 py-3 text-primary">
+              <LoadingDots label="考え中" />
             </div>
           </div>
         )}

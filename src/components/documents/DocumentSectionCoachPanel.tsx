@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingDots } from "@/components/ui/loading-dots";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   MessageSquare,
@@ -470,9 +471,8 @@ function PanelBody({
           })}
         {sending && (
           <div className="flex justify-start">
-            <div className="bg-muted text-muted-foreground rounded-2xl rounded-bl-sm px-3 py-2 text-sm">
-              <Loader2 className="mr-1 inline size-3 animate-spin" />
-              考え中...
+            <div className="bg-muted text-primary rounded-2xl rounded-bl-sm px-4 py-3">
+              <LoadingDots label="考え中" />
             </div>
           </div>
         )}

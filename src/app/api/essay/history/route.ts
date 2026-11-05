@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { essayKindOf } from "@/lib/essay/essay-kind";
 
+/** 履歴の一覧に要る項目（本文・講評は読まない） */
+const HISTORY_FIELDS = [
+  "targetUniversity",
+  "targetFaculty",
+  "topic",
+  "submittedAt",
+  "status",
+  "scores",
+  "feedback.scoreMaximum",
+  "questionContext.questionType",
+  "retryContext.questionType",
+  "questionType",
+  "rootEssayId",
+  "parentEssayId",
+  "attemptNumber",
+  "inputMode",
+  "sourceType",
+] as const;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -52,6 +71,8 @@ export async function GET(request: NextRequest) {
         .where("userId", "==", userId)
         .where("status", "==", "reviewed")
         .orderBy("submittedAt", "desc")
+        // 一覧に要る項目だけ読む（本文・講評まで全件読んでいた）
+        .select(...HISTORY_FIELDS)
         .get();
     } catch {
       // Fallback: インデックス未作成時はorderByなしでクエリし、JS側でソート
@@ -59,13 +80,16 @@ export async function GET(request: NextRequest) {
         .collection("essays")
         .where("userId", "==", userId)
         .where("status", "==", "reviewed")
+        // 一覧に要る項目だけ読む（本文・講評まで全件読んでいた）
+        .select(...HISTORY_FIELDS)
         .get();
     }
 
-    // 大学名解決用キャッシュ
+    // 大学名解決用キャッシュ。全答案を同時に解決するので、読み込み中の Promise を持つ
+    // （値を await の後に入れていたため、同じ大学の doc を答案の数だけ読んでいた）
     const universityCache = new Map<
       string,
-      { name: string; faculties: Array<{ id: string; name: string }> }
+      Promise<{ name: string; faculties: Array<{ id: string; name: string }> } | null>
     >();
 
     // 旧データの universityId/facultyId 表記揺れに対する alias 辞書。
@@ -86,18 +110,19 @@ export async function GET(request: NextRequest) {
       const resolvedUniversityId =
         universityIdAliases[universityId] ?? universityId;
       if (!universityCache.has(resolvedUniversityId)) {
-        const uniDoc = await adminDb!
-          .doc(`universities/${resolvedUniversityId}`)
-          .get();
-        if (uniDoc.exists) {
-          const d = uniDoc.data()!;
-          universityCache.set(resolvedUniversityId, {
-            name: d.name,
-            faculties: d.faculties ?? [],
-          });
-        }
+        universityCache.set(
+          resolvedUniversityId,
+          adminDb!
+            .doc(`universities/${resolvedUniversityId}`)
+            .get()
+            .then((uniDoc) => {
+              if (!uniDoc.exists) return null;
+              const d = uniDoc.data()!;
+              return { name: d.name, faculties: d.faculties ?? [] };
+            })
+        );
       }
-      const uni = universityCache.get(resolvedUniversityId);
+      const uni = await universityCache.get(resolvedUniversityId);
       const resolvedFacultyId = facultyIdAliases[facultyId] ?? facultyId;
       const faculty = uni?.faculties.find((f) => f.id === resolvedFacultyId);
       // 学部名が見つからない場合は facultyId を表示せず空文字にする
