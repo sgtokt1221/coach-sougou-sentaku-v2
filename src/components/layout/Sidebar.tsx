@@ -136,6 +136,7 @@ const adminNavGroups: NavGroup[] = [
       { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
       { label: "管理者管理", href: "/admin/members", icon: Shield },
       { label: "大学データ", href: "/admin/universities", icon: Database },
+      { label: "合格者答案", href: "/admin/passers", icon: Trophy },
       { label: "セッション", href: "/admin/sessions", icon: ClipboardList, badge: AdminAbsenceBadge },
     ],
   },
@@ -160,6 +161,7 @@ const teacherNavGroups: NavGroup[] = [
       { label: "シフト入力", href: "/teacher/schedule", icon: CalendarCheck },
       { label: "担当生徒", href: "/teacher/roster", icon: Users },
       { label: "メッセージ", href: "/teacher/students", icon: MessageSquare, badge: TeacherMessagesBadge },
+      { label: "合格者答案", href: "/admin/passers", icon: Trophy },
     ],
   },
   {
@@ -192,7 +194,7 @@ const superadminNavGroups: NavGroup[] = [
   {
     title: "Analytics",
     items: [
-      { label: "合格者データ", href: "/admin/passed-data", icon: Trophy },
+      { label: "合格者答案", href: "/admin/passers", icon: Trophy },
       { label: "担当分析", href: "/admin/analytics", icon: BarChart3 },
       { label: "全体分析", href: "/superadmin/analytics", icon: BarChart3 },
     ],

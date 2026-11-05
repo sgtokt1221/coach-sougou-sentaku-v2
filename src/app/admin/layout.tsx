@@ -19,6 +19,8 @@ import { useAuth } from "@/contexts/AuthContext";
 const SUPERADMIN_ALLOWED_ADMIN_PATHS = [
   "/admin/messages",
   "/admin/universities",
+  "/admin/passers",
+  // 旧「合格者データ」。/admin/passers へ転送する
   "/admin/passed-data",
   "/admin/analytics",
 ];

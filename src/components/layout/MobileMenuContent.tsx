@@ -166,7 +166,12 @@ const adminPrimary: PrimaryAction[] = [
 const adminSecondary: ListItem[] = [
   { label: "講師管理", href: "/admin/teachers", icon: GraduationCap },
   { label: "大学データ", href: "/admin/universities", icon: Database },
+  { label: "合格者答案", href: "/admin/passers", icon: Trophy },
   { label: "セッション", href: "/admin/sessions", icon: ClipboardList },
+];
+
+const teacherSecondary: ListItem[] = [
+  { label: "合格者答案", href: "/admin/passers", icon: Trophy },
 ];
 
 const superadminPrimary: PrimaryAction[] = [
@@ -202,7 +207,7 @@ const superadminPrimary: PrimaryAction[] = [
 
 const superadminSecondary: ListItem[] = [
   { label: "大学データ", href: "/admin/universities", icon: Database },
-  { label: "合格者データ", href: "/admin/passed-data", icon: Trophy },
+  { label: "合格者答案", href: "/admin/passers", icon: Trophy },
   { label: "分析", href: "/admin/analytics", icon: BarChart3 },
   // Admin View（管理者ダッシュボード）は廃止。担当の分離を崩さないため
 ];
@@ -257,7 +262,7 @@ export function MobileMenuContent({ onNavigate }: { onNavigate?: () => void }) {
       : role === "superadmin"
         ? superadminSecondary
         : role === "teacher"
-          ? []
+          ? teacherSecondary
           : studentSecondary;
 
   const isStudent = role === "student";
