@@ -49,7 +49,7 @@
 | src/components/layout/     | レイアウトコンポーネント                                                                                                                         |
 | src/components/shared/     | 共通コンポーネント                                                                                                                               |
 | src/lib/firebase/config.ts | Firebase初期化（getApps重複防止）                                                                                                                |
-| src/lib/types/             | 型定義（user.ts, university.ts, essay.ts, interview.ts, matching.ts, growth.ts, admin.ts, session.ts, document.ts, activity.ts, passed-data.ts） |
+| src/lib/types/             | 型定義（user.ts, university.ts, essay.ts, interview.ts, matching.ts, growth.ts, admin.ts, session.ts, document.ts, activity.ts） |
 | src/lib/utils.ts           | cn() ユーティリティ（shadcn/ui用）                                                                                                               |
 | src/lib/growth/analyze.ts  | 成長分析ロジック（弱点検出・更新・フィルタ）                                                                                                     |
 | src/lib/ai/prompts/        | AIプロンプト（essay.ts, interview.ts, summary.ts, document.ts, activity.ts）                                                                     |
@@ -293,19 +293,16 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
   - /student/activities: 活動一覧（カテゴリフィルタ）
   - /student/activities/new: 活動登録（AIヒアリング/手動入力切替）
   - /student/activities/[id]: 活動詳細（構造化データ+AP最適化）
-- Phase 5C: 合格者データ集計・閲覧完了
-  - src/lib/types/passed-data.ts: PassedDataStatistics, PassedDataResponse, PassedDataCompareResponse
-  - /api/passed-data/[universityId]/[facultyId]: 合格者統計
-  - /api/passed-data/compare: 自分vs合格者比較
-  - /student/passed-data: 合格者データ（平均カード、Rechartsスコア推移、弱点パターン）
-  - /admin/passed-data: データ収集ダッシュボード
+- Phase 5C: 合格者データ → 2026-11-06 に「合格者答案」へ置き換え（旧 /api/passed-data は認証が無かったので削除）
+  - /admin/passers: 合格者の小論文と志望理由書・自己推薦書を読むだけ。同じ塾と本部だけ、本部は名前を伏せる（`src/lib/passers/passer-access.ts`）
+  - 合格者ライン: `src/lib/benchmark/`（グラフの破線・遅れアラート・本部の到達率）
 - Phase 5D: マルチモーダル面接分析完了
   - src/lib/types/interview.ts: VoiceAnalysis型追加
   - src/components/interview/VoiceAnalyzer.tsx: Web Audio APIリアルタイム音声分析
   - src/components/interview/VoiceAnalysisReport.tsx: 話速・フィラー・話し方分析レポート
   - /student/interview/session/[id]: VoiceAnalyzer統合
   - /student/interview/[id]/result: VoiceAnalysisReport表示
-  - Sidebar: 生徒「出願書類」「活動実績」「合格者データ」、管理者「合格者データ」追加
+  - Sidebar: 生徒「出願書類」「活動実績」追加
 - Phase D-2: 合否結果トラッキング完了
   - src/lib/types/exam-result.ts: ExamResult, ExamResultInput, ExamResultStats型定義
   - /api/admin/students/[id]/exam-results: GET(一覧) + POST(追加) managedByスコーピング適用
