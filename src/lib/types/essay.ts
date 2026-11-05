@@ -51,6 +51,18 @@ export interface Essay {
   coachThreads?: LinkedCoachThread[];
   /** 書き直しの前回比（保存しない。答案APIが読むたびに出す） */
   retryComparison?: RetryComparison;
+  /** 同じ題の書き直しの系列（管理者の答案APIが返す。1回きりなら空） */
+  attempts?: EssayAttemptSummary[];
+}
+
+/** 書き直しの系列の1回分（管理者の答案詳細で、回ごとの点と本文の差分を出す） */
+export interface EssayAttemptSummary {
+  id: string;
+  attemptNumber: number;
+  submittedAt: string | null;
+  total: number | null;
+  scoreMaximum: number;
+  ocrText: string;
 }
 
 /**

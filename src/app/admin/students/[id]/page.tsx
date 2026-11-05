@@ -164,6 +164,11 @@ import {
   weaknessCountOf,
 } from "@/components/admin/essay-detail/EssaySummaryStrip";
 import { ReportInsightsCard } from "@/components/admin/essay-detail/ReportInsightsCard";
+import {
+  AttemptDiffView,
+  AttemptSeriesStrip,
+  parentAttemptOf,
+} from "@/components/admin/essay-detail/AttemptSeries";
 import { BrushupSection } from "@/components/essay/result/EssayResultSections";
 import {
   AdminEssayScores,
@@ -587,7 +592,7 @@ function AdminStudentDetailPageInner() {
     null
   );
   const [essayTextMode, setEssayTextMode] = useState<
-    "ai" | "brushup" | "comment"
+    "ai" | "brushup" | "diff" | "comment"
   >("ai");
 
   /** 一覧（新しい順）の中での位置。前後の答案へ移るのに使う */
@@ -627,6 +632,15 @@ function AdminStudentDetailPageInner() {
       label: `前回（${d.getMonth() + 1}/${d.getDate()}）`,
     };
   }, [essayDetail, detail?.essays]);
+
+  /** 書き直しの比べる相手（差分のタブに使う） */
+  const essayParentAttempt = essayDetail
+    ? parentAttemptOf(
+        essayDetail.attempts,
+        essayDetail.id,
+        essayDetail.parentEssayId
+      )
+    : null;
 
   /** 本文の「弱点」の印に、弱点DBでの回数を付ける（2回以上のときだけ） */
   const essayWeaknessBadge = useMemo(() => {
@@ -1789,7 +1803,9 @@ function AdminStudentDetailPageInner() {
                     size="sm"
                     value={essayTextMode}
                     onChange={(v) =>
-                      setEssayTextMode(v as "ai" | "brushup" | "comment")
+                      setEssayTextMode(
+                        v as "ai" | "brushup" | "diff" | "comment"
+                      )
                     }
                     options={[
                       {
@@ -1800,6 +1816,9 @@ function AdminStudentDetailPageInner() {
                       // 書き直し例は作ってあるときだけ（管理画面からは作らない）
                       ...(essayDetail.feedback?.brushedUpText?.trim()
                         ? [{ id: "brushup", label: "書き直し例" }]
+                        : []),
+                      ...(essayParentAttempt
+                        ? [{ id: "diff", label: "前回との差分" }]
                         : []),
                       {
                         id: "comment",
@@ -1833,6 +1852,13 @@ function AdminStudentDetailPageInner() {
                         badgeOf={essayWeaknessBadge}
                       />
                     </div>
+                  ) : essayTextMode === "diff" && essayParentAttempt ? (
+                    <AttemptDiffView
+                      before={essayParentAttempt.ocrText}
+                      after={essayDetail.ocrText ?? ""}
+                      beforeLabel={`${essayParentAttempt.attemptNumber}回目`}
+                      comparison={essayDetail.retryComparison}
+                    />
                   ) : essayTextMode === "brushup" ? (
                     <BrushupSection
                       key={essayDetail.id}
@@ -1892,6 +1918,12 @@ function AdminStudentDetailPageInner() {
                       onClose={() => setEssayMarkSelected(null)}
                     />
                   </div>
+                  {/* 同じ題の書き直しの回ごとの点。押すとその回へ移る */}
+                  <AttemptSeriesStrip
+                    attempts={essayDetail.attempts ?? []}
+                    currentId={essayDetail.id}
+                    onOpen={openEssayDetail}
+                  />
                   {/* 面談で何を言うかを、講評を読む前に決められるようにする */}
                   {essayDetail.feedback && (
                     <EssaySummaryStrip

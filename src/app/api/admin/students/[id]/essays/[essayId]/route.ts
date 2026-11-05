@@ -6,7 +6,7 @@ import { recordSubmissionViewed } from "@/lib/api/viewed-submissions";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
 import { loadRetryComparison } from "@/lib/essay/load-retry-comparison";
-import type { Essay } from "@/lib/types/essay";
+import type { Essay, EssayAttemptSummary } from "@/lib/types/essay";
 import type { CoachThread, LinkedCoachThread } from "@/lib/types/essay-coach";
 import { getThemeById } from "@/data/essay-themes";
 import { getPastQuestionById } from "@/data/essay-past-questions";
@@ -189,11 +189,43 @@ export async function GET(
       feedback: essay.feedback,
     });
 
+    // 同じ題の書き直しの系列（1回目から今回より後まで）。等号2つなので複合インデックスは要らない
+    const rootEssayId: string = data.rootEssayId ?? essayDoc.id;
+    let attempts: EssayAttemptSummary[] = [];
+    try {
+      const snap = await adminDb
+        .collection("essays")
+        .where("userId", "==", studentId)
+        .where("rootEssayId", "==", rootEssayId)
+        .select("attemptNumber", "submittedAt", "scores", "feedback.scoreMaximum", "ocrText")
+        .get();
+      attempts = snap.docs
+        .map((d) => ({
+          id: d.id,
+          attemptNumber:
+            typeof d.get("attemptNumber") === "number" ? d.get("attemptNumber") : 1,
+          submittedAt:
+            d.get("submittedAt")?.toDate?.()?.toISOString?.() ?? null,
+          total:
+            typeof d.get("scores")?.total === "number" ? d.get("scores").total : null,
+          scoreMaximum: d.get("feedback.scoreMaximum") ?? 50,
+          ocrText: (d.get("ocrText") as string) ?? "",
+        }))
+        .sort(
+          (a, b) =>
+            a.attemptNumber - b.attemptNumber ||
+            (a.submittedAt ?? "").localeCompare(b.submittedAt ?? "")
+        );
+    } catch (err) {
+      console.warn("[admin/essay] attempts fetch failed:", err);
+    }
+
     return NextResponse.json({
       ...essay,
+      attempts: attempts.length > 1 ? attempts : [],
       attemptNumber:
         typeof data.attemptNumber === "number" ? data.attemptNumber : 1,
-      rootEssayId: data.rootEssayId ?? essayDoc.id,
+      rootEssayId,
       parentEssayId,
       ...(retryComparison ? { retryComparison } : {}),
       coachThreads,
