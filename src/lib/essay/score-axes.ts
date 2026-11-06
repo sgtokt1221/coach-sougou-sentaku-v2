@@ -20,7 +20,7 @@ import {
  */
 
 /** 軸の短縮ラベル（レーダーの頂点・内訳の見出し。横幅が狭い場所で使う） */
-const SHORT_LABELS: Record<EssayScoreAxis, string> = {
+export const ESSAY_AXIS_SHORT_LABELS: Record<EssayScoreAxis, string> = {
   structure: "構成",
   logic: "論理",
   expression: "表現",
@@ -102,7 +102,7 @@ export function essayScoreAxisRows(
         key === "originality"
           ? LEGACY_ESSAY_AXIS_LABELS.originality
           : ESSAY_AXIS_LABELS[key],
-      short: key === "originality" ? "独自性" : SHORT_LABELS[key],
+      short: key === "originality" ? "独自性" : ESSAY_AXIS_SHORT_LABELS[key],
       value,
       weight: (weights as Record<string, number>)[key] ?? 0,
       legacy: key === "originality",

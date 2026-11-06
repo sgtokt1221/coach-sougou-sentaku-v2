@@ -7,6 +7,8 @@
  *
  * 合格者が増えたとき・採点の版を上げたときに回し直す。採点し直した点は
  * .claude/passer-benchmark/ に答案ごとに残し、同じ版なら次回は AI を呼ばない。
+ * 保存した点の axes（軸ごと各0-10）は合格者答案のカードの指標に使う。手で付けた分は
+ * axesBy: "claude-code" が付いていて、軸の点を配点で足すと total に一致するようにしてある。
  *
  * 使い方（既定は確認のみ。--write で書き込み。本番への --write は確認を取ってから）:
  *   npx tsx --env-file=.env.local scripts/build-passer-benchmark.ts [--write]
@@ -19,7 +21,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { adminDb } from "../src/lib/firebase/admin";
 import { reviewEssayCore } from "../src/lib/essay/review-core";
 import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
-import { normalizedEssayTotal } from "../src/lib/types/essay";
+import {
+  ESSAY_SCORE_WEIGHTS,
+  normalizedEssayTotal,
+  type EssayScoreAxis,
+} from "../src/lib/types/essay";
 import {
   combinePassers,
   summarizePasser,
@@ -41,10 +47,22 @@ const VERSION = AI_PROMPT_VERSIONS.essayReview.promptVersion;
 const CACHE_DIR = ".claude/passer-benchmark";
 const CONCURRENCY = 3;
 
+type Axes = Partial<Record<EssayScoreAxis, number>>;
+
 interface Scored {
   at: number;
   total: number;
   max: number;
+  /** 軸ごとの点（各0-10）。合格者答案のカードで指標の平均を出すのに使う */
+  axes?: Axes;
+}
+
+function axesOf(scores: Record<string, unknown>): Axes {
+  const out: Axes = {};
+  for (const k of Object.keys(ESSAY_SCORE_WEIGHTS) as EssayScoreAxis[]) {
+    if (typeof scores[k] === "number") out[k] = scores[k] as number;
+  }
+  return out;
 }
 
 function toMs(v: unknown): number | null {
@@ -76,6 +94,7 @@ async function rescore(
     at,
     total: out.scores.total,
     max: out.feedback.scoreMaximum ?? 50,
+    axes: axesOf(out.scores as unknown as Record<string, unknown>),
   };
   writeFileSync(file, JSON.stringify(scored));
   return scored;
@@ -138,9 +157,10 @@ async function main() {
         }
       })
     ).filter((x): x is Scored => !!x);
-    const points: PasserEssayPoint[] = scored.map((s) => ({
+    const points: (PasserEssayPoint & { axes?: Axes })[] = scored.map((s) => ({
       at: s.at,
       score: normalizedEssayTotal(s.total, s.max),
+      axes: s.axes,
     }));
     const summary = summarizePasser(points);
     /**
@@ -152,7 +172,11 @@ async function main() {
         promptVersion: VERSION,
         points: [...points]
           .sort((a, b) => a.at - b.at)
-          .map((x) => ({ at: new Date(x.at).toISOString(), score: x.score })),
+          .map((x) => ({
+            at: new Date(x.at).toISOString(),
+            score: x.score,
+            axes: x.axes ?? null,
+          })),
         updatedAt: new Date().toISOString(),
       });
     }
