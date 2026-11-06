@@ -7,6 +7,8 @@ import {
   visiblePassers,
 } from "@/lib/passers/passer-access";
 import { normalizedEssayTotal } from "@/lib/types/essay";
+import { calculateRank } from "@/lib/skill-check/rank";
+import { PASSER_RESCORE_DOC } from "@/lib/benchmark/passer-benchmark-server";
 import {
   computeEssayAggregate,
   computeInterviewAggregate,
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
     const passers = await visiblePassers(adminDb, auth);
     const rows = await Promise.all(
       passers.map(async (p) => {
-        const [essaySnap, docs, interviewsSnap] = await Promise.all([
+        const [essaySnap, docs, interviewsSnap, rescoreSnap] = await Promise.all([
           adminDb!
             .collection("essays")
             .where("userId", "==", p.uid)
@@ -39,10 +41,18 @@ export async function GET(request: NextRequest) {
             .select("type")
             .get(),
           adminDb!.collection("interviews").where("userId", "==", p.uid).get(),
+          adminDb!.doc(`users/${p.uid}/${PASSER_RESCORE_DOC}`).get(),
         ]);
+        /**
+         * 合格ラインと同じ物差し（今の採点で付け直した点）があればそれを出す。
+         * 提出当時の点は採点の版が古く、合格ラインと並べると話が合わない。
+         */
+        const rescored = rescoreSnap.exists
+          ? (rescoreSnap.data() as { promptVersion: string; points: { at: string; score: number }[] })
+          : null;
         const essayRows = essaySnap.docs.map((d) => d.data());
         // 推移（古い順・50点換算）。グラフと数値に使う
-        const series = essayRows
+        const storedSeries = essayRows
           .filter((e) => e.status === "reviewed" && typeof e.scores?.total === "number")
           .map((e) => ({
             at: passerIso(e.submittedAt),
@@ -57,15 +67,22 @@ export async function GET(request: NextRequest) {
             interviewsSnap.docs.map((d) => d.data())
           ),
         ]);
+        const series = rescored?.points.length ? rescored.points : storedSeries;
+        // ランクの点は、付け直した点があればその直近10件の平均（生徒のランクと同じ件数）
+        const recent = rescored?.points.slice(-10).map((x) => x.score) ?? [];
+        const rescoredAvg = recent.length
+          ? Math.round((recent.reduce((a, b) => a + b, 0) / recent.length) * 10) / 10
+          : null;
         return {
           uid: p.uid,
+          scoredWith: rescored?.promptVersion ?? null,
           name: p.name,
           label: p.label,
           passes: p.passes,
           essayCount: essaySnap.size,
           series,
-          essayRank: essayAgg.compositeRank,
-          essayScore: essayAgg.compositeScore,
+          essayRank: rescoredAvg !== null ? calculateRank(rescoredAvg) : essayAgg.compositeRank,
+          essayScore: rescoredAvg ?? essayAgg.compositeScore,
           interviewRank: interviewAgg.compositeRank,
           interviewScore: interviewAgg.compositeScore,
           documentCount: docs.docs.filter((d) =>

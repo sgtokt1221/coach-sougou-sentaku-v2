@@ -13,6 +13,8 @@ import {
 } from "./passer-benchmark";
 
 export const PASSER_BENCHMARK_COLLECTION = "passedStudentData";
+/** 合格者ごとの、今の採点で付け直した点（users/{uid}/ の下）。合格者答案の一覧が読む */
+export const PASSER_RESCORE_DOC = "passerRescore/current";
 
 /** 大学ID（または "大学ID:学部ID"・大学名）から段を引く */
 export function tierOfUniversity(idOrName: string | undefined | null): PasserTier | null {

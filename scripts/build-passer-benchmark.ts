@@ -30,6 +30,7 @@ import {
 } from "../src/lib/benchmark/passer-benchmark";
 import {
   PASSER_BENCHMARK_COLLECTION,
+  PASSER_RESCORE_DOC,
   tierOfUniversity,
 } from "../src/lib/benchmark/passer-benchmark-server";
 import { reviewInputOf } from "./lib/essay-review-input";
@@ -142,6 +143,19 @@ async function main() {
       score: normalizedEssayTotal(s.total, s.max),
     }));
     const summary = summarizePasser(points);
+    /**
+     * 合格者答案の一覧（同じ塾と本部だけが見る）で、合格ラインと同じ物差しの点を出すために、
+     * 合格者ごとの採点し直した点を残す。全塾で共有する passedStudentData には入れない。
+     */
+    if (WRITE && !USE_STORED && points.length > 0) {
+      await db.doc(`users/${uid}/${PASSER_RESCORE_DOC}`).set({
+        promptVersion: VERSION,
+        points: [...points]
+          .sort((a, b) => a.at - b.at)
+          .map((x) => ({ at: new Date(x.at).toISOString(), score: x.score })),
+        updatedAt: new Date().toISOString(),
+      });
+    }
     // 名前は出さない（ログにも残さない）
     console.log(
       `合格者${n}（${tier}）: 答案 ${points.length} 件` +
