@@ -122,6 +122,8 @@ npm run dev:emu   # エミュレータに繋いだ dev サーバー
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8581 GCLOUD_PROJECT=demo-coach npx tsx scripts/seed-universities.ts
 ```
 
+`src/lib/firebase/admin` を通すスクリプトは `GCLOUD_PROJECT` を見ず `NEXT_PUBLIC_FIREBASE_PROJECT_ID` で名前空間を決める。`--env-file=.env.local` だけだと本番のIDになり同じ沈黙失敗になるので、`NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-coach` を前に付ける（`--env-file` は既にある環境変数を上書きしない）。
+
 エミュレータのデータは `.emulator-data/` に残る（gitignore 済み）。
 AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので実APIに出る。
 
