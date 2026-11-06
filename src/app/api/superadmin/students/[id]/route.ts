@@ -1,3 +1,4 @@
+import { disableStudentAccount } from "@/lib/api/account-disable";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
@@ -148,9 +149,7 @@ export async function DELETE(
   }
 
   try {
-    await adminDb
-      .doc(`users/${id}`)
-      .update({ role: "disabled", updatedAt: new Date() });
+    await disableStudentAccount(id);
     return NextResponse.json({ success: true, uid: id, role: "disabled" });
   } catch {
     return NextResponse.json(

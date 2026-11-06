@@ -1,3 +1,4 @@
+import { disableStudentAccount } from "@/lib/api/account-disable";
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import {
@@ -33,14 +34,8 @@ export async function POST(request: NextRequest) {
 
   try {
     await recordAdmissionResults(adminDb, uid, body);
-    await adminDb.doc(`users/${uid}`).set(
-      {
-        role: "disabled",
-        withdrawnAt: new Date().toISOString(),
-        updatedAt: new Date(),
-      },
-      { merge: true },
-    );
+    // ログインのアカウントも止める（role だけだとログインできて白い画面になる）
+    await disableStudentAccount(uid, { withdrawnAt: new Date().toISOString() });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[student/withdraw] error:", err);

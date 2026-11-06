@@ -80,7 +80,7 @@ export async function resetPassword(email: string) {
   await sendPasswordResetEmail(requireAuth(), email);
 }
 
-export async function signOutUser() {
+export async function signOutUser(opts: { reason?: "disabled" } = {}) {
   /**
    * 先にこの端末の通知登録を外す。外さずにログアウトすると、同じ端末で
    * 次にログインした人の通知と混ざり、前の利用者宛がこの端末に出続ける。
@@ -103,5 +103,5 @@ export async function signOutUser() {
   localStorage.removeItem("tutorialActive");
   const { clearCachedProfiles } = await import("@/lib/auth/profile-cache");
   clearCachedProfiles();
-  window.location.href = "/login";
+  window.location.href = opts.reason ? `/login?reason=${opts.reason}` : "/login";
 }

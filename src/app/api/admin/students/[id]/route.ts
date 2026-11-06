@@ -1,3 +1,5 @@
+import { WITHDRAW_REASONS } from "@/lib/types/withdrawal";
+import { disableStudentAccount } from "@/lib/api/account-disable";
 import { passerBenchmarkViewFor } from "@/lib/benchmark/passer-benchmark-server";
 import { NextRequest, NextResponse } from "next/server";
 import { essayKindOf } from "@/lib/essay/essay-kind";
@@ -768,10 +770,27 @@ export async function DELETE(
     });
     if (orgDenied) return orgDenied;
 
-    await adminDb.doc(`users/${id}`).update({
-      role: "disabled",
-      disabledAt: new Date().toISOString(),
-      updatedAt: new Date(),
+    // 退塾の理由とメモ（モーダルから送る。無ければ記録しない）
+    const body = (await request.json().catch(() => ({}))) as {
+      reason?: unknown;
+      note?: unknown;
+    };
+    const reason =
+      typeof body.reason === "string" &&
+      (WITHDRAW_REASONS as readonly string[]).includes(body.reason)
+        ? body.reason
+        : null;
+    const note = typeof body.note === "string" ? body.note.trim().slice(0, 1000) : "";
+    const byDoc = await adminDb.doc(`users/${uid}`).get();
+    await disableStudentAccount(id, {
+      withdrawnAt: new Date().toISOString(),
+      withdrawal: {
+        reason,
+        note,
+        by: uid,
+        byName: byDoc.get("displayName") ?? "",
+        at: new Date().toISOString(),
+      },
     });
     return NextResponse.json({ success: true, uid: id, role: "disabled" });
   } catch (error) {

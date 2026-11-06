@@ -80,6 +80,11 @@ export const adminDb = initAdminDb(adminApp);
 const ROLE_TTL_MS = 60_000;
 const roleCache = new Map<string, { role: string; at: number }>();
 
+/** その人の role のキャッシュを捨てる（退塾などで role を変えた直後に使う） */
+export function forgetCachedRole(uid: string): void {
+  roleCache.delete(uid);
+}
+
 export async function verifyAuthToken(
   request: Request
 ): Promise<{ uid: string; role: string } | null> {

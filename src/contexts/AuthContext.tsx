@@ -146,6 +146,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             createdAt: data.createdAt?.toDate?.() ?? new Date(),
             updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
           } as UserProfile;
+          // 退塾・退会したアカウントは使わせない（白い画面で止めず、ログイン画面へ戻す）
+          if (profile.role === ("disabled" as UserProfile["role"])) {
+            void import("@/lib/firebase/auth").then(({ signOutUser }) =>
+              signOutUser({ reason: "disabled" })
+            );
+            return;
+          }
           setUserProfile(profile);
           writeCachedProfile(profile);
         } else {

@@ -19,6 +19,8 @@ import FeatureSlider from "@/components/shared/FeatureSlider";
 
 type Mode = "login" | "signup" | "reset";
 
+const DISABLED_MESSAGE = "このアカウントは利用できません。";
+
 export default function LoginPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -101,6 +103,13 @@ export default function LoginPage() {
     return valid;
   }
 
+  // 退塾・退会したアカウントでログインしたとき（AuthContext がここへ戻す）
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("reason") === "disabled") {
+      toast.error(DISABLED_MESSAGE);
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validateFields()) return;
@@ -118,7 +127,11 @@ export default function LoginPage() {
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "認証に失敗しました"
+        err instanceof Error && err.message.includes("auth/user-disabled")
+          ? DISABLED_MESSAGE
+          : err instanceof Error
+            ? err.message
+            : "認証に失敗しました"
       );
     } finally {
       setLoading(false);
