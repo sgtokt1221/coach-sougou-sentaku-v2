@@ -12,6 +12,12 @@ import {
   type EssayScoreAxis,
 } from "@/lib/types/essay";
 import { normalizedInterviewTotal } from "@/lib/types/interview";
+import {
+  INTERVIEW_AXIS_LABELS,
+  interviewAxisLayout,
+  type InterviewAxisKey,
+} from "@/lib/interview/axis-layout";
+import { ESSAY_AXIS_SHORT_LABELS } from "@/lib/essay/score-axes";
 import { calculateRank } from "@/lib/skill-check/rank";
 import {
   PASSER_RESCORE_DOC,
@@ -108,13 +114,42 @@ export async function GET(request: NextRequest) {
                 .filter((v): v is number => typeof v === "number");
               const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
               const max = ESSAY_SCORE_WEIGHTS[key];
-              return { key, value: Math.round((avg / 10) * max * 10) / 10, max };
+              return {
+                key,
+                label: ESSAY_AXIS_SHORT_LABELS[key],
+                value: Math.round((avg / 10) * max * 10) / 10,
+                max,
+              };
             })
           : null;
-        // 面接の推移（40点換算・終わった回だけ）
-        const interviews = interviewsSnap.docs
+        const doneInterviews = interviewsSnap.docs
           .map((d) => d.data())
-          .filter((x) => x.status === "completed" && typeof x.scores?.total === "number")
+          .filter((x) => x.status === "completed" && typeof x.scores?.total === "number");
+        // 面接の指標の平均（直近10回・各回の合計に入る軸だけ。各10点）
+        const axisSums = new Map<InterviewAxisKey, number[]>();
+        for (const x of [...doneInterviews]
+          .sort((a, b) =>
+            String(passerIso(a.endedAt ?? a.createdAt)).localeCompare(
+              String(passerIso(b.endedAt ?? b.createdAt))
+            )
+          )
+          .slice(-10)) {
+          for (const ax of interviewAxisLayout(x.mode, x.scores)) {
+            const v = x.scores?.[ax.key];
+            if (!ax.inTotal || typeof v !== "number") continue;
+            axisSums.set(ax.key, [...(axisSums.get(ax.key) ?? []), v]);
+          }
+        }
+        const interviewAxes = axisSums.size
+          ? [...axisSums.entries()].map(([key, vals]) => ({
+              key,
+              label: INTERVIEW_AXIS_LABELS[key],
+              value: Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10,
+              max: 10,
+            }))
+          : null;
+        // 面接の推移（40点換算・終わった回だけ）
+        const interviews = doneInterviews
           .map((x) => ({
             at: passerIso(x.endedAt ?? x.completedAt ?? x.createdAt),
             score: Math.round(normalizedInterviewTotal(x.scores) * 10) / 10,
@@ -151,6 +186,7 @@ export async function GET(request: NextRequest) {
           interviewRank: interviewAgg.compositeRank,
           interviewScore: interviewAgg.compositeScore,
           axes,
+          interviewAxes,
           interviews,
           monthly,
           /** 合格ライン（50点換算）。グラフの破線 */

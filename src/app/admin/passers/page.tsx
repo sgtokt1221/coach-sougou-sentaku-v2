@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SkillRankBadge } from "@/components/skill-check/SkillRankBadge";
@@ -9,9 +10,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthSWR } from "@/lib/api/swr";
 import { ApiErrorBanner } from "@/components/admin/ApiErrorBanner";
 import type { PasserPass } from "@/lib/passers/passer-access";
-import type { EssayScoreAxis } from "@/lib/types/essay";
-import { ESSAY_AXIS_SHORT_LABELS } from "@/lib/essay/score-axes";
+import { cn } from "@/lib/utils";
 import { SCORE_TYPE_COLORS } from "@/components/charts/theme";
+
+interface AxisRow {
+  key: string;
+  label: string;
+  value: number;
+  max: number;
+}
 
 interface PasserRow {
   uid: string;
@@ -25,7 +32,8 @@ interface PasserRow {
   essayScore: number | null;
   interviewRank: SkillRank | null;
   interviewScore: number | null;
-  axes: { key: EssayScoreAxis; value: number; max: number }[] | null;
+  axes: AxisRow[] | null;
+  interviewAxes: AxisRow[] | null;
   interviews: { at: string; score: number }[];
   monthly: { month: string; essays: number; interviews: number }[];
   passLine: number | null;
@@ -94,21 +102,64 @@ function MonthlyBars({ rows }: { rows: PasserRow["monthly"] }) {
   );
 }
 
-function AxisBars({ axes }: { axes: NonNullable<PasserRow["axes"]> }) {
+function AxisBars({ axes, color }: { axes: AxisRow[]; color: string }) {
   return (
     <div className="space-y-1">
       {axes.map((a) => (
-        <div key={a.key} className="grid grid-cols-[3.5rem_minmax(0,1fr)_2rem] items-center gap-2">
-          <span className="text-muted-foreground text-[11px]">{ESSAY_AXIS_SHORT_LABELS[a.key]}</span>
+        <div key={a.key} className="grid grid-cols-[4.5rem_minmax(0,1fr)_2rem] items-center gap-2">
+          <span className="text-muted-foreground truncate text-[11px]">{a.label}</span>
           <div className="bg-background h-1.5 overflow-hidden rounded-full">
             <div
               className="h-full rounded-full"
-              style={{ width: `${(a.value / a.max) * 100}%`, background: SCORE_TYPE_COLORS.essay }}
+              style={{ width: `${(a.value / a.max) * 100}%`, background: color }}
             />
           </div>
           <span className="text-right text-xs font-bold tabular-nums">{a.value.toFixed(1)}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/** 小論文と面接の指標をタブで切り替える。カード全体がリンクなので、タブの押下は遷移させない */
+function PasserMetrics({ essay, interview }: { essay: AxisRow[] | null; interview: AxisRow[] | null }) {
+  const [tab, setTab] = useState<"essay" | "interview">("essay");
+  const rows = tab === "essay" ? essay : interview;
+  return (
+    <div>
+      <div className="mb-1.5 flex gap-1">
+        {(
+          [
+            ["essay", "小論文"],
+            ["interview", "面接"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={tab === k}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setTab(k);
+            }}
+            className={cn(
+              "cursor-pointer rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors",
+              tab === k ? "bg-foreground text-background" : "bg-background text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {rows ? (
+        <AxisBars
+          axes={rows}
+          color={tab === "essay" ? SCORE_TYPE_COLORS.essay : SCORE_TYPE_COLORS.interview}
+        />
+      ) : (
+        <p className="text-muted-foreground py-4 text-xs">まだありません</p>
+      )}
     </div>
   );
 }
@@ -144,7 +195,7 @@ export default function PassersPage() {
           <div className={`text-muted-foreground hidden gap-4 px-5 text-[11px] lg:grid ${ROW_GRID}`}>
             <span>合格者</span>
             <span>ランク</span>
-            <span>指標（直近10件の平均）</span>
+            <span>指標（直近10回の平均）</span>
             <span>点の推移</span>
             <span>月ごとの提出</span>
             <span />
@@ -178,7 +229,7 @@ export default function PassersPage() {
                 <RankStat label="小論文" rank={p.essayRank} score={p.essayScore} />
                 <RankStat label="面接" rank={p.interviewRank} score={p.interviewScore} />
               </div>
-              <div>{p.axes && <AxisBars axes={p.axes} />}</div>
+              <PasserMetrics essay={p.axes} interview={p.interviewAxes} />
               <div className="min-w-0">
                 {p.series.length + p.interviews.length > 1 && (
                   <PasserTrendChart essays={p.series} interviews={p.interviews} passLine={p.passLine} />
