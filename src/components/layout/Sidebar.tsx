@@ -27,7 +27,6 @@ import {
   FileBarChart,
   Crown,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { FeedbackBadge } from "@/components/student/FeedbackBadge";
@@ -382,38 +381,6 @@ export function Sidebar() {
           ))}
         </div>
       </nav>
-
-      {/* Footer */}
-      <div className="relative border-t border-sidebar-border">
-        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-sidebar/50 pointer-events-none"></div>
-        <div className="px-4 py-3 space-y-2">
-          {userProfile && (
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sidebar-primary text-[10px] font-medium text-sidebar-primary-foreground">
-                {userProfile.displayName?.charAt(0)?.toUpperCase() || userProfile.email?.charAt(0)?.toUpperCase() || "U"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-medium text-sidebar-foreground/70 truncate">
-                  {userProfile.displayName || userProfile.email}
-                </p>
-                {userProfile.role && (
-                  <span className="inline-block px-1.5 py-0.5 text-[9px] font-medium bg-sidebar-accent/50 text-sidebar-foreground/60 rounded">
-                    {userProfile.role}
-                  </span>
-                )}
-              </div>
-              <p className="text-[9px] text-sidebar-foreground/20 tracking-wide">
-                v1.0
-              </p>
-            </div>
-          )}
-          {!userProfile && (
-            <p className="text-[10px] text-sidebar-foreground/25 text-center tracking-wide">
-              coach for 総合型選抜 v1.0
-            </p>
-          )}
-        </div>
-      </div>
     </aside>
   );
 }
@@ -468,41 +435,6 @@ export function SidebarContent() {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="relative border-t mt-auto">
-        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-background/50 pointer-events-none"></div>
-        <div className="px-4 py-3 space-y-2">
-          {userProfile && (
-            <div className="flex items-center gap-2">
-              <Avatar className="size-6">
-                <AvatarImage src={userProfile.photoURL || undefined} alt={userProfile.displayName || ""} />
-                <AvatarFallback className="bg-primary text-[10px] font-medium text-primary-foreground">
-                  {userProfile.displayName?.charAt(0)?.toUpperCase() || userProfile.email?.charAt(0)?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-medium text-foreground/70 truncate">
-                  {userProfile.displayName || userProfile.email}
-                </p>
-                {userProfile.role && (
-                  <span className="inline-block px-1.5 py-0.5 text-[9px] font-medium bg-accent/50 text-muted-foreground rounded">
-                    {userProfile.role}
-                  </span>
-                )}
-              </div>
-              <p className="text-[9px] text-muted-foreground/40 tracking-wide">
-                v1.0
-              </p>
-            </div>
-          )}
-          {!userProfile && (
-            <p className="text-[10px] text-muted-foreground/40 text-center tracking-wide">
-              coach for 総合型選抜 v1.0
-            </p>
-          )}
         </div>
       </div>
     </div>
