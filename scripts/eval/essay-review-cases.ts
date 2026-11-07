@@ -228,6 +228,38 @@ const CONTENT_AXES: Axis[] = [
   "reasoningMaturity",
 ];
 
+/** 接続語・枕詞を置き換える（空文字なら抜く）。v39 の検証用 */
+function swapWords(text: string, pairs: [string, string][]): string {
+  return pairs.reduce((t, [from, to]) => {
+    if (!t.includes(from)) throw new Error(`基底答案に無い語: ${from}`);
+    return t.replace(from, to);
+  }, text);
+}
+
+const WITHOUT_CONNECTORS: [string, string][] = [
+  ["ただし、", ""],
+  ["もちろん、", ""],
+  ["だからこそ、", ""],
+  ["たとえば、", ""],
+  ["以上から、", ""],
+];
+
+const WRONG_CONNECTORS: [string, string][] = [
+  ["ただし、", "なぜなら、"],
+  ["もちろん、", "したがって、"],
+  ["だからこそ、", "たとえば、"],
+  ["たとえば、", "しかし、"],
+  ["以上から、", "一方で、"],
+];
+
+const EXTRA_CONNECTORS: [string, string][] = [
+  ["高校生や", "さらに、高校生や"],
+  ["移動できないことは、", "そして、移動できないことは、"],
+  ["通院できない", "また、通院できない"],
+  ["若い世帯が", "加えて、若い世帯が"],
+  ["赤字額だけを", "そのため、赤字額だけを"],
+];
+
 export const SYNTHETIC_CASES: SyntheticCase[] = [
   {
     id: "S0-base",
@@ -482,5 +514,24 @@ export const SYNTHETIC_CASES: SyntheticCase[] = [
       ]),
     },
     expect: [],
+  },
+  {
+    // v39: 接続語・枕詞の欠落と誤用は表現力を下げる。語を増やすだけでは上がらない
+    id: "N16-no-connectors",
+    label: "接続語・枕詞を抜いた",
+    input: { topic: TOPIC_S, wordLimit: 800, ocrText: swapWords(join(S0), WITHOUT_CONNECTORS) },
+    expect: [{ type: "axisBelow", axis: "expression", caseId: "S0-base" }],
+  },
+  {
+    id: "N17-wrong-connectors",
+    label: "接続語の誤用",
+    input: { topic: TOPIC_S, wordLimit: 800, ocrText: swapWords(join(S0), WRONG_CONNECTORS) },
+    expect: [{ type: "axisBelow", axis: "expression", caseId: "S0-base" }],
+  },
+  {
+    id: "N18-extra-connectors",
+    label: "接続語を足しただけ",
+    input: { topic: TOPIC_S, wordLimit: 800, ocrText: swapWords(join(S0), EXTRA_CONNECTORS) },
+    expect: [{ type: "totalNotAbove", caseId: "S0-base", margin: 0.5 }],
   },
 ];
