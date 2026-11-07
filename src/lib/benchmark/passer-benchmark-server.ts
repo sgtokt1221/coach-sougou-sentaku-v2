@@ -4,6 +4,8 @@
  */
 import type { Firestore } from "firebase-admin/firestore";
 import { MOCK_UNIVERSITIES } from "@/lib/matching/mockData";
+import { AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
+import { requestPasserBenchmarkRebuild } from "./passer-rebuild-request";
 import {
   PASSER_TIER_LABELS,
   TIER_OF_GROUP,
@@ -48,6 +50,15 @@ export async function loadPasserBenchmark(
   return value;
 }
 
+/** 作り直した直後に古いラインを見せないように、この実行環境の控えを捨てる */
+export function clearPasserBenchmarkCache(): void {
+  cache.clear();
+}
+
+/** 版の違いに気づいて作り直しを頼むのは、実行環境ごとに1時間に1回まで */
+const VERSION_REQUEST_MS = 60 * 60 * 1000;
+let lastVersionRequestAt = 0;
+
 /** 生徒の最初の答案の日時（ms） */
 export async function firstEssayAt(db: Firestore, uid: string): Promise<number | null> {
   const snap = await db
@@ -74,6 +85,14 @@ export async function allPasserBenchmarkViews(
   );
   const found = loaded.filter((x) => x.b);
   if (found.length === 0) return [];
+  const version = AI_PROMPT_VERSIONS.essayReview.promptVersion;
+  if (
+    found.some((x) => x.b!.promptVersion !== version) &&
+    Date.now() - lastVersionRequestAt >= VERSION_REQUEST_MS
+  ) {
+    lastVersionRequestAt = Date.now();
+    await requestPasserBenchmarkRebuild("prompt-version");
+  }
   const startAt =
     knownFirstEssayAt !== undefined ? knownFirstEssayAt : await firstEssayAt(db, uid);
   return found.map(({ tier, b }) => ({

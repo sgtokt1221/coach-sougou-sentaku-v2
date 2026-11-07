@@ -40,7 +40,7 @@ import {
   sentenceCheckFields,
   type EssayReviewCoreInput,
 } from "../src/lib/essay/review-core";
-import { reviewInputOf } from "./lib/essay-review-input";
+import { reviewInputOf } from "../src/lib/essay/review-input";
 import { AI_PROMPT_VERSIONS } from "../src/lib/ai/prompt-versions";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { pickFocus } from "../src/lib/essay/result-focus";

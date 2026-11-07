@@ -3,19 +3,22 @@
  *
  * 大学群をまとめた「段」ごとに1件だけ持つ（passedStudentData/{段}）。
  * 全塾で共有するので、個人を辿れる値（uid・名前・大学名・答案ID・1回ごとの点）は持たない。
- * 点は作ったときの採点の版（promptVersion）で採点し直したもの。版を上げたら作り直す
- * （scripts/build-passer-benchmark.ts）。
+ * 点は作ったときの採点の版（promptVersion）で採点し直したもの。受験結果が書かれたときと
+ * 版が変わったときに自動で作り直す（passer-rebuild.ts）。
  *
  * このファイルはクライアントからも読む純関数だけを置く。大学データを引く部分は
  * passer-benchmark-server.ts。
  */
 
-export type PasserTier = "mid" | "upper" | "top";
+export type PasserTier = "top" | "upper" | "mid" | "base" | "public" | "private";
 
 export const PASSER_TIER_LABELS: Record<PasserTier, string> = {
-  mid: "産近甲龍・日東駒専",
-  upper: "関関同立・MARCH",
   top: "旧帝大・早慶上智",
+  upper: "関関同立・MARCH",
+  mid: "産近甲龍・日東駒専",
+  base: "成成明獨・摂神追桃",
+  public: "国公立",
+  private: "その他の私立",
 };
 
 /** 大学群（University.group）→ 段 */
@@ -26,6 +29,11 @@ export const TIER_OF_GROUP: Record<string, PasserTier> = {
   march: "upper",
   kyutei: "top",
   soukeijochi: "top",
+  seiseimeidoku: "base",
+  sesshintsuitou: "base",
+  national: "public",
+  public: "public",
+  private: "private",
 };
 
 export interface PasserTrajectoryPoint {
@@ -102,6 +110,27 @@ export function passerColumnsAt(
     out[passerColumnOf(v.tier)] = benchmarkAt(v, monthsSince(v.startAt, ts!));
   }
   return out;
+}
+
+/** 1回の実行で採点し直してよい答案の上限。超えたら費用を守るため採点せずに止まる */
+export const MAX_RESCORE_PER_RUN = 500;
+
+export function exceedsRescoreLimit(pendingCount: number): boolean {
+  return pendingCount > MAX_RESCORE_PER_RUN;
+}
+
+/** 今の版の点がまだ無い答案を選ぶ。本文が無い答案と、この実行で失敗した答案は除く */
+export function pendingRescoreIds(
+  targets: { id: string; hasText: boolean }[],
+  cachedVersions: Map<string, string>,
+  version: string,
+  failedIds: ReadonlySet<string>
+): string[] {
+  return targets
+    .filter(
+      (t) => t.hasText && cachedVersions.get(t.id) !== version && !failedIds.has(t.id)
+    )
+    .map((t) => t.id);
 }
 
 export function median(values: number[]): number {

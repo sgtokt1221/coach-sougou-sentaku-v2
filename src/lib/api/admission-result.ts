@@ -1,4 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
+import { requestPasserBenchmarkRebuild } from "@/lib/benchmark/passer-rebuild-request";
 
 /** 合格/進学先 1 校分の選択 */
 export interface AdmissionPick {
@@ -88,4 +89,5 @@ export async function recordAdmissionResults(
   batch.set(adminDb.doc(`users/${uid}`), profileUpdate, { merge: true });
 
   await batch.commit();
+  await requestPasserBenchmarkRebuild("exam-result");
 }

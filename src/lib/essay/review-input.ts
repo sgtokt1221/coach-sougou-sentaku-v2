@@ -1,13 +1,13 @@
 /**
  * 保存済みの答案から、本番の添削と同じ入力（設問・出題資料・学部AP）を組み立てる。
- * 採点し直すスクリプト（rescore-essays / build-passer-benchmark）で共用する。
+ * 採点し直す処理（rescore-essays / 合格者ラインの作り直し）で共用する。
  * 弱点リストと前回の答案は呼び出し側で決める。
  */
-import { adminDb } from "../../src/lib/firebase/admin";
-import { prepareAdmissionPolicy } from "../../src/lib/ai/admission-policy";
-import { resolveQuestionSource } from "../../src/lib/essay/lecture-info";
-import { isPartialEssay } from "../../src/lib/essay/derive-weakness-issues";
-import type { EssayReviewCoreInput } from "../../src/lib/essay/review-core";
+import { adminDb } from "@/lib/firebase/admin";
+import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { resolveQuestionSource } from "@/lib/essay/lecture-info";
+import { isPartialEssay } from "@/lib/essay/derive-weakness-issues";
+import type { EssayReviewCoreInput } from "@/lib/essay/review-core";
 
 export async function resolveAdmissionPolicy(
   universityId: string | undefined,

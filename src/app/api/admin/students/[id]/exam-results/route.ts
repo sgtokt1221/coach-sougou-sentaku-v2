@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 import { adminDb } from "@/lib/firebase/admin";
+import { requestPasserBenchmarkRebuild } from "@/lib/benchmark/passer-rebuild-request";
 import type { ExamResult, ExamResultInput } from "@/lib/types/exam-result";
 
 /**
@@ -170,6 +171,8 @@ export async function POST(
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+
+    await requestPasserBenchmarkRebuild("exam-result");
 
     const newResult: ExamResult = {
       id: docRef.id,

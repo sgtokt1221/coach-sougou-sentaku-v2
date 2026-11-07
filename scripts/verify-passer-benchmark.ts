@@ -5,9 +5,12 @@
 import {
   benchmarkAt,
   combinePassers,
+  exceedsRescoreLimit,
+  MAX_RESCORE_PER_RUN,
   median,
   monthsSince,
   passerColumnsAt,
+  pendingRescoreIds,
   summarizePasser,
   TIER_OF_GROUP,
 } from "../src/lib/benchmark/passer-benchmark";
@@ -63,7 +66,26 @@ eq("段 産近甲龍", TIER_OF_GROUP.sankinkohryu, "mid");
 eq("段 関関同立", TIER_OF_GROUP.kankandouritsu, "upper");
 eq("段 MARCH", TIER_OF_GROUP.march, "upper");
 eq("段 旧帝大", TIER_OF_GROUP.kyutei, "top");
-eq("段 対象外の群", TIER_OF_GROUP.seiseimeidoku, undefined);
+eq("段 成成明獨", TIER_OF_GROUP.seiseimeidoku, "base");
+eq("段 摂神追桃", TIER_OF_GROUP.sesshintsuitou, "base");
+eq("段 国立", TIER_OF_GROUP.national, "public");
+eq("段 公立", TIER_OF_GROUP.public, "public");
+eq("段 その他の私立", TIER_OF_GROUP.private, "private");
+
+const targets = [
+  { id: "a", hasText: true },
+  { id: "b", hasText: true },
+  { id: "c", hasText: false },
+  { id: "d", hasText: true },
+  { id: "e", hasText: true },
+];
+eq(
+  "採点 今の版の控えと本文なしと失敗は除く",
+  pendingRescoreIds(targets, new Map([["a", "v39"], ["b", "v38"]]), "v39", new Set(["e"])),
+  ["b", "d"]
+);
+eq("上限ちょうどは止めない", exceedsRescoreLimit(MAX_RESCORE_PER_RUN), false);
+eq("上限を超えたら止める", exceedsRescoreLimit(MAX_RESCORE_PER_RUN + 1), true);
 
 const views = [
   { tier: "mid" as const, label: "", level: 30, trajectory: [{ month: 0, score: 22 }], startAt: t0 },

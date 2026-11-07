@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole, scopeByOrganization } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { requestPasserBenchmarkRebuild } from "@/lib/benchmark/passer-rebuild-request";
 import type { ExamResult, ExamResultInput } from "@/lib/types/exam-result";
 
 /**
@@ -105,6 +106,7 @@ export async function PUT(
     if (body.notes !== undefined) updateData.notes = body.notes;
 
     await resultRef.update(updateData);
+    await requestPasserBenchmarkRebuild("exam-result");
 
     const updated = await resultRef.get();
     const data = updated.data()!;
@@ -196,6 +198,7 @@ export async function DELETE(
     }
 
     await resultRef.delete();
+    await requestPasserBenchmarkRebuild("exam-result");
 
     return NextResponse.json({ success: true });
   } catch (error) {

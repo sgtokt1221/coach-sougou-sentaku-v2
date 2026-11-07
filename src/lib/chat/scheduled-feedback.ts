@@ -4,6 +4,7 @@ import {
   type CoachFeedbackPayload,
 } from "@/lib/chat/coach-feedback";
 import {
+  appBaseUrl,
   deleteTask,
   enqueueHttpTask,
   taskNameFor,
@@ -27,13 +28,6 @@ export const SCHEDULE_MAX_DAYS = 30;
 const SCHEDULE_MIN_MS = 60 * 1000;
 
 const DELIVER_PATH = "/api/cron/scheduled-feedback";
-
-function baseUrl(): string {
-  return (
-    process.env.APP_BASE_URL?.trim() ||
-    "https://coach-app--coach-sougou-sentaku.asia-east1.hosted.app"
-  );
-}
 
 function scheduledCol(db: FirebaseFirestore.Firestore, studentId: string) {
   return db.collection(`users/${studentId}/scheduledFeedback`);
@@ -102,7 +96,7 @@ export async function createScheduledFeedback(
   try {
     await enqueueHttpTask({
       name: taskNameFor(`${opts.studentId}-${ref.id}`),
-      url: `${baseUrl()}${DELIVER_PATH}`,
+      url: `${appBaseUrl()}${DELIVER_PATH}`,
       scheduleTime: opts.scheduledAt,
       body: { studentId: opts.studentId, scheduledId: ref.id },
       headers: { "x-cron-secret": process.env.CRON_SECRET ?? "" },

@@ -14,6 +14,14 @@ function queuePath(): string | null {
   return process.env.CLOUD_TASKS_QUEUE?.trim() || null;
 }
 
+/** タスクの宛先にする、このアプリの URL */
+export function appBaseUrl(): string {
+  return (
+    process.env.APP_BASE_URL?.trim() ||
+    "https://coach-app--coach-sougou-sentaku.asia-east1.hosted.app"
+  );
+}
+
 export function isCloudTasksConfigured(): boolean {
   return Boolean(queuePath() && process.env.CRON_SECRET);
 }
