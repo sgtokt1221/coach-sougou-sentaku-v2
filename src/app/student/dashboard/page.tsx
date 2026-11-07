@@ -60,7 +60,7 @@ export default function StudentDashboard() {
   const { data: rank, error: rankError } =
     useAuthSWR<StudentRankResponse>("/api/student/rank");
   const { data: passerData } = useAuthSWR<{
-    benchmark: PasserBenchmarkView | null;
+    benchmarks: PasserBenchmarkView[];
   }>("/api/student/passer-benchmark");
   // 取れなかったときに「まだ提出がありません」と出すと、提出0件と見分けがつかない
   const rankEmptyMessage = rankError
@@ -262,7 +262,7 @@ export default function StudentDashboard() {
                 essayData={essayTrend}
                 interviewData={interviewTrend}
                 height={220}
-                benchmark={passerData?.benchmark}
+                benchmarks={passerData?.benchmarks}
               />
             )}
           </CardContent>

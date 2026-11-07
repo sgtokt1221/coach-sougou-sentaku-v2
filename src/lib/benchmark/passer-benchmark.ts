@@ -10,16 +10,22 @@
  * passer-benchmark-server.ts。
  */
 
-export type PasserTier = "mid";
+export type PasserTier = "mid" | "upper" | "top";
 
 export const PASSER_TIER_LABELS: Record<PasserTier, string> = {
   mid: "産近甲龍・日東駒専",
+  upper: "関関同立・MARCH",
+  top: "旧帝大・早慶上智",
 };
 
 /** 大学群（University.group）→ 段 */
 export const TIER_OF_GROUP: Record<string, PasserTier> = {
   sankinkohryu: "mid",
   nittoukomasen: "mid",
+  kankandouritsu: "upper",
+  march: "upper",
+  kyutei: "top",
+  soukeijochi: "top",
 };
 
 export interface PasserTrajectoryPoint {
@@ -43,6 +49,7 @@ export interface PasserBenchmark {
 
 /** 画面へ渡す形（人数は出さない） */
 export interface PasserBenchmarkView {
+  tier: PasserTier;
   label: string;
   level: number;
   trajectory: PasserTrajectoryPoint[];
@@ -74,6 +81,27 @@ export function benchmarkAt(
     if (p.month <= month) value = p.score;
   }
   return value;
+}
+
+/** グラフの行に持たせる列の名前（段ごとに1列） */
+export type PasserColumn = `passer_${PasserTier}`;
+
+export function passerColumnOf(tier: PasserTier): PasserColumn {
+  return `passer_${tier}`;
+}
+
+/** その時刻での各段の合格者の点。書き始めや時刻が分からない段は入れない */
+export function passerColumnsAt(
+  views: PasserBenchmarkView[] | null | undefined,
+  ts: number | undefined
+): Partial<Record<PasserColumn, number>> {
+  const out: Partial<Record<PasserColumn, number>> = {};
+  if (!Number.isFinite(ts)) return out;
+  for (const v of views ?? []) {
+    if (v.startAt === null) continue;
+    out[passerColumnOf(v.tier)] = benchmarkAt(v, monthsSince(v.startAt, ts!));
+  }
+  return out;
 }
 
 export function median(values: number[]): number {

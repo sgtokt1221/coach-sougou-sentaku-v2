@@ -1,6 +1,6 @@
 import { WITHDRAW_REASONS } from "@/lib/types/withdrawal";
 import { disableStudentAccount } from "@/lib/api/account-disable";
-import { passerBenchmarkViewFor } from "@/lib/benchmark/passer-benchmark-server";
+import { allPasserBenchmarkViews } from "@/lib/benchmark/passer-benchmark-server";
 import { NextRequest, NextResponse } from "next/server";
 import { essayKindOf } from "@/lib/essay/essay-kind";
 import { resolveLastActivity } from "@/lib/api/last-activity";
@@ -202,12 +202,11 @@ export async function GET(
     const latePromise = Promise.all([
       resolveLastActivity(adminDb, id, { essays: essayRows, interviews: interviewRows }),
       // 合格者ライン（答案は新しい順に全件読んであるので、最初の答案は末尾）
-      passerBenchmarkViewFor(
+      allPasserBenchmarkViews(
         adminDb,
         id,
-        targetUnis,
         firstEssay?.toDate?.()?.getTime() ?? null
-      ).catch(() => null),
+      ).catch(() => []),
       // スキル指標 = 直近10件の提出の平均。生徒一覧と同じ式・同じ入力で算出する。
       computeEssayAggregate(id, essayRows),
       computeInterviewAggregate(id, interviewRows),
@@ -546,7 +545,7 @@ export async function GET(
      * やっても更新されなかった。数える取り組みは lib/api/last-activity.ts に
      * まとめ、生徒一覧と同じ判定を通す。
      */
-    const [lastActivity, passerBenchmark, essayAggregate, interviewAggregate, pushStatus] =
+    const [lastActivity, passerBenchmarks, essayAggregate, interviewAggregate, pushStatus] =
       await latePromise;
     const lastActivityAt = lastActivity?.at ?? null;
 
@@ -594,7 +593,7 @@ export async function GET(
       essays,
       essayScoreTrend,
       interviewScoreTrend,
-      passerBenchmark,
+      passerBenchmarks,
       ...(essayCategoryAverages ? { essayCategoryAverages } : {}),
       ...(essayStatsSummary ? { essayStatsSummary } : {}),
       ...(interviewStatsSummary ? { interviewStatsSummary } : {}),

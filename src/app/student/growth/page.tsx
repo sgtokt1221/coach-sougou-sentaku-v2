@@ -205,7 +205,7 @@ export default function GrowthPage() {
     }[];
   }>("/api/essay/history?userId=current");
   const { data: passerData } = useAuthSWR<{
-    benchmark: PasserBenchmarkView | null;
+    benchmarks: PasserBenchmarkView[];
   }>("/api/student/passer-benchmark");
   const { data: interviewData, isLoading: loadingInterviews } = useAuthSWR<{
     interviews: InterviewHistoryItem[];
@@ -475,7 +475,7 @@ export default function GrowthPage() {
                   <ScoresTrendChart
                     essayData={essaySeries}
                     interviewData={interviewTrendData}
-                    benchmark={passerData?.benchmark}
+                    benchmarks={passerData?.benchmarks}
                   />
                 )}
                 {trendTab === "essay" &&
@@ -486,7 +486,7 @@ export default function GrowthPage() {
                   ) : (
                     <ScoresTrendChart
                       essayData={essaySeries}
-                      benchmark={passerData?.benchmark}
+                      benchmarks={passerData?.benchmarks}
                     />
                   ))}
                 {trendTab === "interview" &&

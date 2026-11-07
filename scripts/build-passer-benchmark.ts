@@ -120,8 +120,8 @@ async function main() {
 
   // 等号の条件を付けないので collection group のインデックスは要らない
   const results = await db.collectionGroup("examResults").get();
-  /** uid → { 段, 合格を登録した日 }（同じ人が複数合格したら遅い方の日まで） */
-  const passers = new Map<string, { tier: PasserTier; until: number }>();
+  /** uid → { 合格した段, 合格を登録した日 }（同じ人が複数合格したら全部の段に数え、遅い方の日まで） */
+  const passers = new Map<string, { tiers: Set<PasserTier>; until: number }>();
   for (const r of results.docs) {
     const x = r.data();
     if (x.status !== "passed") continue;
@@ -130,7 +130,10 @@ async function main() {
     if (!uid || !tier) continue;
     const until = toMs(x.createdAt) ?? Date.now();
     const prev = passers.get(uid);
-    passers.set(uid, { tier, until: prev ? Math.max(prev.until, until) : until });
+    passers.set(uid, {
+      tiers: new Set([...(prev?.tiers ?? []), tier]),
+      until: prev ? Math.max(prev.until, until) : until,
+    });
   }
   console.log(
     `合格者 ${passers.size} 人（採点 ${USE_STORED ? "保存済みの点" : VERSION}）` +
@@ -139,7 +142,7 @@ async function main() {
 
   const byTier = new Map<PasserTier, PasserSummary[]>();
   let n = 0;
-  for (const [uid, { tier, until }] of passers) {
+  for (const [uid, { tiers, until }] of passers) {
     n++;
     const snap = await db.collection("essays").where("userId", "==", uid).get();
     const targets = snap.docs
@@ -182,14 +185,16 @@ async function main() {
     }
     // 名前は出さない（ログにも残さない）
     console.log(
-      `合格者${n}（${tier}）: 答案 ${points.length} 件` +
+      `合格者${n}（${[...tiers].join("・")}）: 答案 ${points.length} 件` +
         (summary
           ? ` / 直近10件の中央値 ${summary.recentMedian} / 月ごと ${summary.monthly
               .map((m) => `${m.month}:${m.score}`)
               .join(" ")}`
           : "")
     );
-    if (summary) byTier.set(tier, [...(byTier.get(tier) ?? []), summary]);
+    if (summary) {
+      for (const tier of tiers) byTier.set(tier, [...(byTier.get(tier) ?? []), summary]);
+    }
   }
 
   for (const [tier, summaries] of byTier) {

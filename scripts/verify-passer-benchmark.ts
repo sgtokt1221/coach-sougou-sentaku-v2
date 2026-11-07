@@ -7,7 +7,9 @@ import {
   combinePassers,
   median,
   monthsSince,
+  passerColumnsAt,
   summarizePasser,
+  TIER_OF_GROUP,
 } from "../src/lib/benchmark/passer-benchmark";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -56,6 +58,22 @@ eq("combine 水準は平均を丸める", c.level, 28);
 eq("combine 月ごとの平均", c.trajectory, [{ month: 0, score: 24 }, { month: 1, score: 28 }]);
 eq("combine 人数", c.passerCount, 2);
 eq("combine 空", combinePassers([]), null);
+
+eq("段 産近甲龍", TIER_OF_GROUP.sankinkohryu, "mid");
+eq("段 関関同立", TIER_OF_GROUP.kankandouritsu, "upper");
+eq("段 MARCH", TIER_OF_GROUP.march, "upper");
+eq("段 旧帝大", TIER_OF_GROUP.kyutei, "top");
+eq("段 対象外の群", TIER_OF_GROUP.seiseimeidoku, undefined);
+
+const views = [
+  { tier: "mid" as const, label: "", level: 30, trajectory: [{ month: 0, score: 22 }], startAt: t0 },
+  { tier: "upper" as const, label: "", level: 36, trajectory: [{ month: 0, score: 28 }], startAt: t0 },
+];
+eq("列 段ごとに同じ時期の点", passerColumnsAt(views, t0), { passer_mid: 22, passer_upper: 28 });
+eq("列 推移より後は水準", passerColumnsAt(views, t0 + 60 * DAY), { passer_mid: 30, passer_upper: 36 });
+eq("列 時刻なし", passerColumnsAt(views, undefined), {});
+eq("列 書き始めが不明", passerColumnsAt([{ ...views[0], startAt: null }], t0), {});
+eq("列 ラインなし", passerColumnsAt(null, t0), {});
 
 if (failed) {
   console.error(`\n${failed} 件失敗`);

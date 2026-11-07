@@ -124,7 +124,7 @@ export interface StudentDetail {
   essayScoreTrend?: ScoreTrendPoint[];
   interviewScoreTrend?: InterviewScoreTrendPoint[];
   /** 志望校の段の合格者ライン。無ければ null */
-  passerBenchmark?: PasserBenchmarkView | null;
+  passerBenchmarks?: PasserBenchmarkView[];
   /** 直近 essays の 5 軸平均 (0-10)。スキル俯瞰レーダー用 */
   essayCategoryAverages?: {
     structure: number;

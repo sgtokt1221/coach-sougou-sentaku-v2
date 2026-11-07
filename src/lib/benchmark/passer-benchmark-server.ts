@@ -62,7 +62,30 @@ export async function firstEssayAt(db: Firestore, uid: string): Promise<number |
   return d && !Number.isNaN(d.getTime()) ? d.getTime() : null;
 }
 
-/** 画面へ渡す合格者ライン。志望校に段が無い・ラインが無ければ null */
+/** グラフに重ねる合格者ライン。志望校に関係なく、ラインのある段を全部返す */
+export async function allPasserBenchmarkViews(
+  db: Firestore,
+  uid: string,
+  knownFirstEssayAt?: number | null
+): Promise<PasserBenchmarkView[]> {
+  const tiers = Object.keys(PASSER_TIER_LABELS) as PasserTier[];
+  const loaded = await Promise.all(
+    tiers.map(async (tier) => ({ tier, b: await loadPasserBenchmark(db, tier) }))
+  );
+  const found = loaded.filter((x) => x.b);
+  if (found.length === 0) return [];
+  const startAt =
+    knownFirstEssayAt !== undefined ? knownFirstEssayAt : await firstEssayAt(db, uid);
+  return found.map(({ tier, b }) => ({
+    tier,
+    label: PASSER_TIER_LABELS[tier],
+    level: b!.level,
+    trajectory: b!.trajectory,
+    startAt,
+  }));
+}
+
+/** 志望校の段の合格者ライン（アラートの比較用）。志望校に段が無い・ラインが無ければ null */
 export async function passerBenchmarkViewFor(
   db: Firestore,
   uid: string,
@@ -76,6 +99,7 @@ export async function passerBenchmarkViewFor(
   const startAt =
     knownFirstEssayAt !== undefined ? knownFirstEssayAt : await firstEssayAt(db, uid);
   return {
+    tier,
     label: PASSER_TIER_LABELS[tier],
     level: b.level,
     trajectory: b.trajectory,
