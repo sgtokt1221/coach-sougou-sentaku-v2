@@ -52,6 +52,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  MessageSquare,
   Activity,
   Calendar,
   Bell,
@@ -593,6 +594,7 @@ function AdminStudentDetailPageInner() {
 
   // Essay detail state
   const [essayDetailOpen, setEssayDetailOpen] = useState(false);
+  const [essayCoachOpen, setEssayCoachOpen] = useState(false);
   const [essayDetail, setEssayDetail] = useState<Essay | null>(null);
   /** 答案から積み上げるFB本文。複数箇所を1通にまとめるため親で持つ */
   const [essayFbText, setEssayFbText] = useState("");
@@ -808,7 +810,6 @@ function AdminStudentDetailPageInner() {
   const [editCertScore, setEditCertScore] = useState("");
   const [saving, setSaving] = useState(false);
   const [unlockingRealtime, setUnlockingRealtime] = useState(false);
-
 
   async function handleSendResetEmail() {
     if (!detail?.profile.email) {
@@ -1779,36 +1780,47 @@ function AdminStudentDetailPageInner() {
                   </DialogDescription>
                 )}
               </div>
-              {/* 閉じずに前後の答案へ移る（一覧は新しい順なので、前＝古い方） */}
-              {essayNav && essayNav.count > 1 && (
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!essayNav.olderId || essayLoading}
-                    onClick={() =>
-                      essayNav.olderId && openEssayDetail(essayNav.olderId)
-                    }
-                  >
-                    <ChevronLeft className="size-4" />
-                    前の答案
-                  </Button>
-                  <span className="text-muted-foreground px-1 text-xs tabular-nums">
-                    {essayNav.position} / {essayNav.count}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!essayNav.newerId || essayLoading}
-                    onClick={() =>
-                      essayNav.newerId && openEssayDetail(essayNav.newerId)
-                    }
-                  >
-                    次の答案
-                    <ChevronRight className="size-4" />
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!essayDetail?.coachThreads?.length}
+                  onClick={() => setEssayCoachOpen(true)}
+                >
+                  <MessageSquare className="size-4" />
+                  AI履歴 {essayDetail?.coachThreads?.length ?? 0}
+                </Button>
+                {/* 閉じずに前後の答案へ移る（一覧は新しい順なので、前＝古い方） */}
+                {essayNav && essayNav.count > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!essayNav.olderId || essayLoading}
+                      onClick={() =>
+                        essayNav.olderId && openEssayDetail(essayNav.olderId)
+                      }
+                    >
+                      <ChevronLeft className="size-4" />
+                      前の答案
+                    </Button>
+                    <span className="text-muted-foreground px-1 text-xs tabular-nums">
+                      {essayNav.position} / {essayNav.count}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!essayNav.newerId || essayLoading}
+                      onClick={() =>
+                        essayNav.newerId && openEssayDetail(essayNav.newerId)
+                      }
+                    >
+                      次の答案
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </DialogHeader>
 
@@ -2037,10 +2049,6 @@ function AdminStudentDetailPageInner() {
                       />
                     </>
                   )}
-                  {/* この問題を書いていたときのAIコーチとのやり取り。答案だけ見ても
-                  生徒がどこで詰まったか分からないため、講評の後に置く。 */}
-                  <Separator />
-                  <EssayCoachConversation threads={essayDetail.coachThreads} />
                 </div>
               </div>
             ) : (
@@ -2048,6 +2056,18 @@ function AdminStudentDetailPageInner() {
                 エッセイデータの取得に失敗しました
               </div>
             )}
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
+
+      {/* この問題を書いていたときのAIコーチとのやり取り */}
+      <Dialog open={essayCoachOpen} onOpenChange={setEssayCoachOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>AIコーチとのやり取り</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <EssayCoachConversation threads={essayDetail?.coachThreads} />
           </DialogBody>
         </DialogContent>
       </Dialog>
@@ -2071,7 +2091,6 @@ function AdminStudentDetailPageInner() {
             viewerUid={user.uid}
           />
         )}
-
     </div>
   );
 }

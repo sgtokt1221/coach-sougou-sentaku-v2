@@ -35,7 +35,7 @@ export function CoachConversationList({
   emptyText,
 }: {
   items: CoachConversationItem[] | undefined;
-  heading: string;
+  heading?: string;
   emptyText: string;
 }) {
   const [openIds, setOpenIds] = useState<Record<string, boolean>>(() =>
@@ -44,15 +44,17 @@ export function CoachConversationList({
 
   return (
     <div className="space-y-2">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <MessageSquare className="size-4" />
-        {heading}
-        {items && items.length > 0 && (
-          <span className="text-xs font-normal text-muted-foreground">
-            {items.length}件
-          </span>
-        )}
-      </h3>
+      {heading && (
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <MessageSquare className="size-4" />
+          {heading}
+          {items && items.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              {items.length}件
+            </span>
+          )}
+        </h3>
+      )}
 
       {!items || items.length === 0 ? (
         <p className="text-xs text-muted-foreground">{emptyText}</p>

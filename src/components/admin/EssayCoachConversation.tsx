@@ -48,7 +48,6 @@ export function EssayCoachConversation({
   return (
     <CoachConversationList
       items={items}
-      heading="AIコーチとのやり取り"
       emptyText="この答案に対応するAIコーチの会話は見つかりませんでした。"
     />
   );
