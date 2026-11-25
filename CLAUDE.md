@@ -124,6 +124,8 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:8581 GCLOUD_PROJECT=demo-coach npx tsx scripts
 
 `src/lib/firebase/admin` を通すスクリプトは `GCLOUD_PROJECT` を見ず `NEXT_PUBLIC_FIREBASE_PROJECT_ID` で名前空間を決める。`--env-file=.env.local` だけだと本番のIDになり同じ沈黙失敗になるので、`NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-coach` を前に付ける（`--env-file` は既にある環境変数を上書きしない）。
 
+`dev:emu` を動かしたまま `npm run build` を流さない。同じ `.next` の Turbopack キャッシュを取り合い、dev サーバーがエラーを出さずに応答しなくなる（ページが返らず、ログインしても入れないように見える）。ビルドの前に dev を止め、後で立て直す。
+
 エミュレータのデータは `.emulator-data/` に残る（gitignore 済み）。
 AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので実APIに出る。
 
