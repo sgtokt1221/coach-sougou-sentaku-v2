@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeStudentById } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Session, SessionSubmission } from "@/lib/types/session";
 import { assertSessionAccess } from "@/lib/api/session-auth";
@@ -44,7 +44,10 @@ export async function GET(
         return NextResponse.json({ error: "権限がありません" }, { status: 403 });
       }
     } else {
-      const denied = await assertSessionAccess(adminDb, session, { uid, role });
+      let denied = await assertSessionAccess(adminDb, session, { uid, role });
+      if (denied && session.studentId) {
+        denied = await scopeStudentById({ uid, role }, session.studentId, { allowAssignedTeacher: true });
+      }
       if (denied) return denied;
     }
 

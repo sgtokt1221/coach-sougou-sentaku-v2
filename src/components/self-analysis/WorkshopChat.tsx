@@ -133,6 +133,8 @@ export function WorkshopChat({
 
         if (!res.ok) throw new Error();
         const data = await res.json();
+        // ツアー（/tour）では書き込み系が空の {} で返るので、空の吹き出しを出さない
+        if (typeof data.aiQuestion !== "string") throw new Error();
 
         const aiMsg: ChatMessage = {
           role: "assistant",

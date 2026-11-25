@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Session } from "@/lib/types/session";
 import { shouldMarkEnded } from "@/lib/types/session";
 import { generateSessionSummary } from "@/lib/ai/generate-session-summary";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeStudentById } from "@/lib/api/auth";
 import { assertSessionAccess } from "@/lib/api/session-auth";
 import { sanitizeForStudent } from "@/lib/api/session-sanitize";
 
@@ -53,8 +53,12 @@ export async function GET(
       return NextResponse.json(sanitizeForStudent(session));
     }
 
-    // 職員は ID さえ分かれば他塾の面談も読めた。編集と同じ範囲に限る。
-    const denied = await assertSessionAccess(adminDb, session, { uid, role });
+    // 職員は ID さえ分かれば他塾の面談も読めた。編集できる人か、その生徒の担当範囲
+    // （担当講師を含む）の人だけが読める。
+    let denied = await assertSessionAccess(adminDb, session, { uid, role });
+    if (denied && session.studentId) {
+      denied = await scopeStudentById({ uid, role }, session.studentId, { allowAssignedTeacher: true });
+    }
     if (denied) return denied;
 
     return NextResponse.json(session);
