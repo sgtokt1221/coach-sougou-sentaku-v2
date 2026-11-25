@@ -100,6 +100,7 @@ export function buildProgress(params: {
             total: total.total,
             max: total.max,
             percentage: total.percentage,
+            axes: Object.fromEntries(layout.axes.map((a) => [a.key, a.score])),
           },
     items: [...judgedItems, ...params.language],
   };

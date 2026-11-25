@@ -10,6 +10,7 @@ import { TeacherShiftGrid } from "@/components/admin/TeacherShiftGrid";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { TeacherShift, ShiftSlot } from "@/lib/types/teacher-shift";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 export default function TeacherSchedulePage() {
   const { user } = useAuth();
@@ -234,8 +235,8 @@ export default function TeacherSchedulePage() {
       {/* シフト入力グリッド */}
       {loading ? (
         <Card>
-          <CardContent className="flex items-center justify-center p-8">
-            <div className="text-center">読み込み中...</div>
+          <CardContent>
+            <LogoLoader mode="area" size="sm" />
           </CardContent>
         </Card>
       ) : (

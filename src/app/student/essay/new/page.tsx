@@ -77,6 +77,7 @@ import { ESSAY_FORMS, formStepsOf } from "@/lib/types/essay-form";
 import { useAutosave } from "@/hooks/useAutosave";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /** レポートモードで選べる分野（正本は ESSAY_FIELDS）。 */
 const REPORT_FIELDS = ESSAY_FIELDS;
@@ -3263,12 +3264,12 @@ export default function EssayNewPage() {
                 {/* Recording UI */}
                 <div className="flex flex-col items-center gap-3 py-4">
                   {isDictating ? (
-                    <>
-                      <Loader2 className="text-primary size-10 animate-spin" />
-                      <p className="text-muted-foreground text-sm">
-                        音声を認識中...
-                      </p>
-                    </>
+                    <LogoLoader
+                      mode="area"
+                      size="sm"
+                      className="py-0"
+                      title="音声を認識中"
+                    />
                   ) : isRecording ? (
                     <>
                       <button

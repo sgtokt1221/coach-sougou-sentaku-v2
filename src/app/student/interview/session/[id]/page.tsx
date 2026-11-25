@@ -59,7 +59,7 @@ import {
   INDIVIDUAL_INTERVIEW_FINAL_SECONDS,
   INDIVIDUAL_INTERVIEW_WRAP_UP_SECONDS,
 } from "@/lib/ai/prompts/interview";
-import { FluidLoader } from "@/components/shared/FluidLoader";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 import { FullHeightPage } from "@/components/layout/FullHeightPage";
 import VoiceAnalyzer, {
   refineWithTranscription,
@@ -888,7 +888,8 @@ export default function InterviewSessionPage() {
   return (
     <FullHeightPage className="w-full">
       {/* 採点中ローディング */}
-      <FluidLoader
+      <LogoLoader
+        mode="overlay"
         visible={isEnding}
         title="AI が採点中"
         stages={[
@@ -899,7 +900,6 @@ export default function InterviewSessionPage() {
           "最終スコアを算出しています...",
         ]}
         stageInterval={2200}
-        subtitle="通常 10〜20 秒かかります"
       />
 
       {/* 面接開始前の身だしなみチェック（音声面接の新規開始時のみ） */}

@@ -745,6 +745,7 @@ export default function DocumentEditorPage() {
             return questions;
           }}
           practiceHref="/student/interview/new"
+          digest
         />
       ) : null,
   };
@@ -1097,9 +1098,11 @@ function EditorPanel({
   // AIの書き換えや下書き復元で本文を丸ごと差し替えるため、
   // ブラウザ標準の取り消しでは戻れない。履歴をアプリ側で持つ
   const history = useTextHistory(content, setContent);
+  // 添削を見るときは、ダイジェストと詳細のカードが自分の面を持つので外の枠を消す
+  const reading = !!reviewView && view === "review";
   return (
-    <Card>
-      <CardContent className="space-y-3 p-4">
+    <Card className={reading ? "border-0 bg-transparent shadow-none" : undefined}>
+      <CardContent className={reading ? "space-y-4 p-0" : "space-y-3 p-4"}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           {toolbar ?? <span />}
           <UndoRedoButtons
@@ -1128,9 +1131,7 @@ function EditorPanel({
           </div>
         )}
         {reviewView && view === "review" ? (
-          <div className="min-h-[clamp(16rem,45dvh,28rem)] rounded-md border p-3 lg:min-h-[400px]">
-            {reviewView}
-          </div>
+          <div>{reviewView}</div>
         ) : (
           <textarea
             className="bg-background focus:ring-ring min-h-[clamp(16rem,45dvh,28rem)] w-full resize-y rounded-md border p-3 text-base focus:ring-2 focus:outline-none lg:min-h-[400px] lg:text-sm"

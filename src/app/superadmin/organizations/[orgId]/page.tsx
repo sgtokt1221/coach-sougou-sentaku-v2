@@ -10,6 +10,7 @@ import { Loader2, Save, UserPlus, X, Crown } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface OrgDetail {
   id: string;
@@ -118,9 +119,7 @@ export default function OrganizationDetailPage() {
 
   if (isLoading)
     return (
-      <div className="p-6">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
+      <LogoLoader mode="area" className="min-h-[60vh]" />
     );
   if (!data) return <div className="p-6">組織が見つかりません</div>;
 

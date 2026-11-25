@@ -23,6 +23,7 @@ import {
   type ContentMode,
   type InterviewContentItem,
 } from "@/lib/types/interview-content";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 // スキルチェックは廃止したので skill_check は扱わない（型とデータは残してある）
 const MODES: ContentMode[] = [
@@ -203,7 +204,7 @@ export default function InterviewContentPage() {
       <Card>
         <CardContent className="pt-6">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">読み込み中…</p>
+            <LogoLoader mode="area" />
           ) : items.length === 0 ? (
             <p className="text-sm text-muted-foreground">項目がありません</p>
           ) : (

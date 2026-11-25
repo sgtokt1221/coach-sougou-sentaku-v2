@@ -50,6 +50,7 @@ import { useAutoGrowTextarea } from "@/hooks/useAutoGrowTextarea";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
 import { ScheduleTimeRow } from "@/components/chat/ScheduleSend";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /** 非 general タイプに付けるラベル */
 const TYPE_LABEL: Partial<Record<FeedbackType, string>> = {
@@ -738,9 +739,7 @@ export function ChatThread({
             会話の欄そのものを中央寄せの幅に収める（入力欄と同じ幅） */}
           <div ref={contentRef} className="mx-auto w-full max-w-3xl space-y-3">
             {loading ? (
-              <p className="text-muted-foreground py-8 text-center text-sm">
-                読み込み中...
-              </p>
+              <LogoLoader mode="area" size="sm" />
             ) : messages.length === 0 ? (
               <p className="text-muted-foreground py-8 text-center text-sm">
                 {emptyText}

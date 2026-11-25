@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles } from "lucide-react";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 export default function Home() {
   const { user, userProfile, loading } = useAuth();
@@ -27,10 +27,5 @@ export default function Home() {
     }
   }, [user, userProfile, loading, router]);
 
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <Sparkles className="h-10 w-10 animate-pulse text-primary" />
-      <p className="text-muted-foreground">読み込み中...</p>
-    </div>
-  );
+  return <LogoLoader mode="screen" />;
 }

@@ -235,6 +235,8 @@ export interface DocumentReviewProgress {
     total: number;
     max: number;
     percentage: number;
+    /** 前回の軸ごとの点（0-10、採点しない軸は null）。チャートに前回の形を重ねる。2026-11-26 から */
+    axes?: Record<string, number | null>;
   } | null;
   items: DocumentProgressItem[];
 }

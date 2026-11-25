@@ -35,6 +35,7 @@ import { getRotatedLogicDrillType, pickLogicDrillItem } from "@/lib/logic-drill/
 import { TourNextButton } from "@/components/student/TourNextButton";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /** "YYYY-MM-DD"（ローカル日付）。SSRとの齟齬を避けクライアントで確定する。 */
 function todayStr(): string {
@@ -654,7 +655,7 @@ function LogicDrillInner() {
 
 export default function LogicDrillPage() {
   return (
-    <Suspense fallback={<div className="p-6"><Loader2 className="size-5 animate-spin" /></div>}>
+    <Suspense fallback={<LogoLoader mode="area" className="min-h-[60vh]" />}>
       <LogicDrillInner />
     </Suspense>
   );

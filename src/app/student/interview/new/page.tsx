@@ -26,7 +26,7 @@ import {
   Plus,
   History,
 } from "lucide-react";
-import { FluidLoader } from "@/components/shared/FluidLoader";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
@@ -361,12 +361,12 @@ export default function InterviewNewPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4 px-4 py-5 lg:space-y-6 lg:px-6 lg:py-8">
       {/* 面接開始ローディングオーバーレイ */}
-      <FluidLoader
+      <LogoLoader
+        mode="overlay"
         visible={isLoading}
         title="面接を準備中"
         stages={loadingMessages}
         stageInterval={1800}
-        subtitle="通常 3〜5 秒かかります"
       />
 
       {activeTab === "new" && (

@@ -5,6 +5,7 @@ import { ChevronRight, Sprout } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuthSWR } from "@/lib/api/swr";
 import type { SelfAnalysis } from "@/lib/types/self-analysis";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface SectionProps {
   title: string;
@@ -64,7 +65,7 @@ export function SelfAnalysisReference() {
   );
 
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">読み込み中...</div>;
+    return <LogoLoader mode="area" size="sm" />;
   }
 
   if (!data) {

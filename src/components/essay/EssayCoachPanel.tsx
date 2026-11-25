@@ -42,6 +42,7 @@ import {
   type FacultyEntry,
 } from "@/data/faculty-topics/registry";
 import { stripHighlights } from "@/lib/topics/highlightParser";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /** Faculty.academicField から学部別ネタインプットの登録IDへのマッピング */
 const ACADEMIC_FIELD_TO_TOPIC_FACULTY: Record<string, string> = {
@@ -477,7 +478,7 @@ function NetaReference({
       {/* 本体 */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         {(isLoading && universityId && !effectiveFacultyId) || topicLoading ? (
-          <div className="text-muted-foreground p-4 text-sm">読み込み中...</div>
+          <LogoLoader mode="area" size="sm" />
         ) : !topicData ? (
           <div className="text-muted-foreground p-4 text-sm">
             上のセレクタから学部を選ぶと、その学部のネタインプットが表示されます。

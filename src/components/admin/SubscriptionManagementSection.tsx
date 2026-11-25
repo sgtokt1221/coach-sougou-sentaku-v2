@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { CreditCard, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CreditCard, CheckCircle2, XCircle } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { useAuthSWR } from "@/lib/api/swr";
 import type {
@@ -11,6 +11,7 @@ import type {
   StandardSubscription,
   DocumentPackage,
 } from "@/lib/types/subscription";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface SubscriptionStatus {
   subscriptionPlan: "free" | "standard" | "document_package";
@@ -115,9 +116,8 @@ export function SubscriptionManagementSection({ studentId }: Props) {
             機能スイッチ
           </CardTitle>
         </CardHeader>
-        <CardContent className="py-6 text-center text-sm text-muted-foreground">
-          <Loader2 className="mx-auto mb-2 size-4 animate-spin" />
-          読み込み中...
+        <CardContent>
+          <LogoLoader mode="area" size="sm" />
         </CardContent>
       </Card>
     );

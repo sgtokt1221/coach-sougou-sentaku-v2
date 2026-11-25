@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, School } from "lucide-react";
+import { School } from "lucide-react";
 import { useAuthSWR } from "@/lib/api/swr";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface SchoolStat {
   school: string;
@@ -24,9 +25,7 @@ export default function AnalyticsBySchoolPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
+      <LogoLoader mode="area" className="min-h-64" />
     );
   }
 

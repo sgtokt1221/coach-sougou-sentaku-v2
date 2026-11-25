@@ -20,6 +20,10 @@ import {
 import type { Segment } from "@/lib/essay/feedback-anchors";
 import { documentScoreLayout, documentTotal } from "@/lib/documents/score-axes";
 import {
+  DocumentAxisEvidence,
+  DocumentReviewDigest,
+} from "@/components/documents/DocumentReviewDigest";
+import {
   type DocumentApMapItem,
   type DocumentFeedback,
   type DocumentInterviewQuestion,
@@ -139,6 +143,7 @@ export function DocumentReviewView({
   onApply,
   onGenerateQuestions,
   practiceHref,
+  digest = false,
 }: {
   /** 書類の種類。点の軸の名前が種類で変わる */
   documentType?: string;
@@ -153,6 +158,11 @@ export function DocumentReviewView({
   onGenerateQuestions?: () => Promise<DocumentInterviewQuestion[] | null>;
   /** 面接練習へのリンク（生徒だけ） */
   practiceHref?: string;
+  /**
+   * 先頭にダイジェスト（ランク・点・チャート・前回の課題・今回の課題）を出し、
+   * 詳細（本文と指摘・軸ごとの点・AP・面接）を下に並べる。生徒の編集画面だけ
+   */
+  digest?: boolean;
 }) {
   const [questions, setQuestions] = useState<DocumentInterviewQuestion[]>(
     feedback.interviewQuestions ?? []
@@ -171,6 +181,8 @@ export function DocumentReviewView({
     [reviewedText, feedback, questions]
   );
   const [selected, setSelected] = useState<string[] | null>(null);
+  /** 本文の印を1つのまとまりだけに絞る（ダイジェストのときだけ出す） */
+  const [filter, setFilter] = useState<DocumentFeedbackGroup | "all">("all");
   const rootRef = useRef<HTMLDivElement | null>(null);
   const sideRef = useRef<HTMLDivElement | null>(null);
   const isWide = useIsWide(rootRef);
@@ -246,96 +258,8 @@ export function DocumentReviewView({
     previousTotal.version === currentLayout.version &&
     previousTotal.max === current.max;
 
-  return (
-    <div ref={rootRef} className="@container">
-      <div className="@3xl:grid @3xl:grid-cols-[minmax(0,1fr)_19rem] @3xl:items-start @3xl:gap-5">
-        <p className="text-[15px] leading-8 whitespace-pre-wrap">
-          {model.segments.map((s) => (
-            <SegmentText
-              key={`${s.start}-${s.end}`}
-              segment={s}
-              text={reviewedText.slice(s.start, s.end)}
-              groupOf={(k) => model.itemByKey.get(k)?.group}
-              active={!!selected && sameKeys(selected, s.keys)}
-              onSelect={setSelected}
-            />
-          ))}
-        </p>
-
-        <div
-          ref={sideRef}
-          className="mt-6 space-y-5 @3xl:sticky @3xl:top-4 @3xl:mt-0 @3xl:max-h-[calc(100dvh-8rem)] @3xl:overflow-y-auto"
-        >
-          {selected && isWide && (
-            <div className="bg-muted/40 space-y-3 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">選んだ箇所</p>
-                <button
-                  type="button"
-                  onClick={() => setSelected(null)}
-                  aria-label="閉じる"
-                  className="text-muted-foreground hover:text-foreground p-1"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-              {itemList(selected)}
-            </div>
-          )}
-
-          {progress && (progressItems.length > 0 || comparable) && (
-            <section className="space-y-2">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="text-sm font-semibold">前回から</p>
-                {comparable && (
-                  <p className="text-sm tabular-nums">
-                    {previousTotal!.total}
-                    <span className="text-muted-foreground mx-1">→</span>
-                    <span className="font-semibold">{current.total}</span>
-                    <span className="text-muted-foreground">/{current.max}</span>
-                  </p>
-                )}
-              </div>
-              {progressItems.length > 0 && (
-                <ul className="space-y-2">
-                  {progressItems.map((p, i) => {
-                    const style = PROGRESS_STATUS[p.status];
-                    return (
-                      <li key={i} className="bg-muted/40 rounded-lg p-3">
-                        <p className="flex items-start gap-2">
-                          <span
-                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${style.className}`}
-                          >
-                            {style.label}
-                          </span>
-                          <span className="text-sm leading-snug">
-                            {p.label}
-                          </span>
-                        </p>
-                        {p.note && (
-                          <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
-                            {p.note}
-                          </p>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          )}
-
-          {(feedback.priorityImprovement || feedback.overallFeedback) && (
-            <section className="space-y-1.5 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
-              <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
-                {feedback.priorityImprovement ? "今回の課題" : "総合評価"}
-              </p>
-              <p className="text-sm leading-relaxed">
-                {feedback.priorityImprovement ?? feedback.overallFeedback}
-              </p>
-            </section>
-          )}
-
+  const apAndInterview = (
+    <>
           {(feedback.apMap?.length ?? 0) > 0 ? (
             <section className="space-y-2">
               <p className="flex items-center gap-1.5 text-sm font-semibold">
@@ -436,10 +360,180 @@ export function DocumentReviewView({
             </section>
           )}
 
+    </>
+  );
+
+  const groupCounts = GROUPS.map((g) => ({
+    ...g,
+    count: [...model.itemByKey.values()].filter((it) => it.group === g.id)
+      .length,
+  })).filter((g) => g.count > 0);
+
+  return (
+    <div ref={rootRef} className="@container">
+      {digest && (
+        <div className="mb-6 space-y-6">
+          <DocumentReviewDigest
+            documentType={documentType}
+            feedback={feedback}
+            currentContent={currentContent ?? ""}
+            onApply={onApply}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold">本文と指摘</h2>
+            {groupCounts.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                {[{ id: "all" as const, label: "すべて", count: model.itemByKey.size }, ...groupCounts].map(
+                  (g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setFilter(g.id)}
+                      aria-pressed={filter === g.id}
+                      className={`min-h-11 rounded-full px-4 text-sm font-bold transition-colors ${
+                        filter === g.id
+                          ? "bg-foreground text-background"
+                          : "bg-muted text-foreground hover:bg-muted/70"
+                      }`}
+                    >
+                      {g.label} {g.count}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      <div className="@3xl:grid @3xl:grid-cols-[minmax(0,1fr)_19rem] @3xl:items-start @3xl:gap-5">
+        <p
+          className={
+            digest
+              ? "bg-card rounded-2xl p-5 text-base leading-8 whitespace-pre-wrap shadow-sm @3xl:p-7"
+              : "text-[15px] leading-8 whitespace-pre-wrap"
+          }
+        >
+          {model.segments.map((s) => {
+            const keys =
+              filter === "all"
+                ? s.keys
+                : s.keys.filter(
+                    (k) => model.itemByKey.get(k)?.group === filter
+                  );
+            return (
+              <SegmentText
+                key={`${s.start}-${s.end}`}
+                segment={keys === s.keys ? s : { ...s, keys }}
+                text={reviewedText.slice(s.start, s.end)}
+                groupOf={(k) => model.itemByKey.get(k)?.group}
+                active={!!selected && keys.length > 0 && sameKeys(selected, keys)}
+                onSelect={setSelected}
+              />
+            );
+          })}
+        </p>
+
+        <div
+          ref={sideRef}
+          className="mt-6 space-y-5 @3xl:sticky @3xl:top-4 @3xl:mt-0 @3xl:max-h-[calc(100dvh-8rem)] @3xl:overflow-y-auto"
+        >
+          {selected && isWide && (
+            <div className="bg-muted/40 space-y-3 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">選んだ箇所</p>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  aria-label="閉じる"
+                  className="text-muted-foreground hover:text-foreground p-1"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              {itemList(selected)}
+            </div>
+          )}
+
+          {!digest && progress && (progressItems.length > 0 || comparable) && (
+            <section className="space-y-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="text-sm font-semibold">前回から</p>
+                {comparable && (
+                  <p className="text-sm tabular-nums">
+                    {previousTotal!.total}
+                    <span className="text-muted-foreground mx-1">→</span>
+                    <span className="font-semibold">{current.total}</span>
+                    <span className="text-muted-foreground">/{current.max}</span>
+                  </p>
+                )}
+              </div>
+              {progressItems.length > 0 && (
+                <ul className="space-y-2">
+                  {progressItems.map((p, i) => {
+                    const style = PROGRESS_STATUS[p.status];
+                    return (
+                      <li key={i} className="bg-muted/40 rounded-lg p-3">
+                        <p className="flex items-start gap-2">
+                          <span
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${style.className}`}
+                          >
+                            {style.label}
+                          </span>
+                          <span className="text-sm leading-snug">
+                            {p.label}
+                          </span>
+                        </p>
+                        {p.note && (
+                          <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                            {p.note}
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {!digest &&
+            (feedback.priorityImprovement || feedback.overallFeedback) && (
+            <section className="space-y-1.5 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
+              <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+                {feedback.priorityImprovement ? "今回の課題" : "総合評価"}
+              </p>
+              <p className="text-sm leading-relaxed">
+                {feedback.priorityImprovement ?? feedback.overallFeedback}
+              </p>
+            </section>
+          )}
+
+          {!digest && apAndInterview}
+
           {model.unanchored.length > 0 && (
             <section className="space-y-2">
               <p className="text-sm font-semibold">全体への指摘</p>
               {itemList(model.unanchored.map((i) => i.key))}
+            </section>
+          )}
+
+          {digest && !selected && model.marked.length > 0 && (
+            <section className="bg-card space-y-1 rounded-2xl p-3 shadow-sm">
+              {model.marked
+                .filter((it) => filter === "all" || it.group === filter)
+                .map((it) => (
+                  <button
+                    key={it.key}
+                    type="button"
+                    onClick={() => focusItem(it)}
+                    className="hover:bg-muted flex min-h-11 w-full items-start gap-2.5 rounded-lg px-2 py-2 text-left text-sm leading-snug"
+                  >
+                    <span
+                      className={`mt-1.5 size-2 shrink-0 rounded-full ${DOT_STYLE[it.group]}`}
+                    />
+                    <span>{itemLabel(it, feedback, questions)}</span>
+                  </button>
+                ))}
             </section>
           )}
         </div>
@@ -461,8 +555,40 @@ export function DocumentReviewView({
           </SheetContent>
         </Sheet>
       </div>
+
+      {digest && (
+        <div className="mt-8 space-y-6">
+          <DocumentAxisEvidence documentType={documentType} feedback={feedback} />
+          <div className="grid items-start gap-4 @3xl:grid-cols-2 [&>section]:bg-card [&>section]:rounded-2xl [&>section]:p-5 [&>section]:shadow-sm">
+            {apAndInterview}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+/** 指摘の一覧に出す一行 */
+function itemLabel(
+  item: DocumentFeedbackItem,
+  feedback: DocumentFeedback,
+  questions: DocumentInterviewQuestion[]
+): string {
+  const cut = (t: string, n = 48) => (t.length > n ? `${t.slice(0, n)}…` : t);
+  switch (item.kind) {
+    case "language": {
+      const c = feedback.languageCorrections?.[item.index];
+      return c ? cut(c.reason || c.suggestion) : "";
+    }
+    case "improvement": {
+      const d = feedback.improvementDetails?.[item.index];
+      return d ? cut(d.problem) : "";
+    }
+    case "ap":
+      return feedback.apMap?.[item.index]?.element ?? "";
+    case "interview":
+      return cut(questions[item.index]?.question ?? "");
+  }
 }
 
 function sameKeys(a: string[], b: string[]): boolean {

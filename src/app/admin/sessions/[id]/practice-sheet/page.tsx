@@ -3,13 +3,14 @@
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Printer } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuthSWR } from "@/lib/api/swr";
 import { resolveUsage } from "@/lib/growth/practice-questions-helpers";
 import type { Session } from "@/lib/types/session";
 import type { PracticeQuestion } from "@/lib/types/growth-report";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 function formatDate(iso?: string): string {
   if (!iso) return "-";
@@ -47,10 +48,7 @@ export default function PracticeSheetPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" />
-          問題用紙を読み込んでいます...
-        </div>
+        <LogoLoader mode="area" className="min-h-[60vh]" title="問題用紙を読み込んでいます" />
       }
     >
       <Body />
@@ -93,10 +91,7 @@ function Body() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 size-4 animate-spin" />
-        問題用紙を読み込んでいます...
-      </div>
+      <LogoLoader mode="area" className="min-h-[60vh]" title="問題用紙を読み込んでいます" />
     );
   }
 

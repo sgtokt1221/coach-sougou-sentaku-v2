@@ -2,6 +2,7 @@
 
 import { useAuthSWR } from "@/lib/api/swr";
 import type { University } from "@/lib/types/university";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /**
  * 志望校・学部のアドミッション・ポリシー(AP)を表示する参照タブ。
@@ -29,7 +30,7 @@ export function APReference({
     );
   }
   if (isLoading) {
-    return <div className="p-4 text-sm text-muted-foreground">読み込み中...</div>;
+    return <LogoLoader mode="area" size="sm" />;
   }
   const faculty = data?.faculties?.find((f) => f.id === facultyId);
   if (!faculty) {

@@ -10,6 +10,7 @@ import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /** 同意項目（すべて必須チェック）。文面は法務レビュー前のドラフト。 */
 const CONSENT_ITEMS = [
@@ -95,9 +96,7 @@ export default function ResearchConsentPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      </div>
+      <LogoLoader mode="area" className="min-h-[60vh]" />
     );
   }
 

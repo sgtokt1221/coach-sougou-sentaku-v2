@@ -20,6 +20,7 @@ import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import type { OrganizationListItem } from "@/lib/types/organization";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 export default function SuperadminOrganizationsPage() {
   const router = useRouter();
@@ -189,11 +190,7 @@ export default function SuperadminOrganizationsPage() {
       )}
 
       {isLoading ? (
-        <Card>
-          <CardContent className="flex items-center justify-center p-8">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
-          </CardContent>
-        </Card>
+        <LogoLoader mode="area" />
       ) : (data?.items ?? []).length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">

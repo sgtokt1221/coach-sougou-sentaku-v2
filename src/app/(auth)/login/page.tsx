@@ -16,6 +16,7 @@ import {
 import { Loader2, ArrowRight, Mail, ChevronDown } from "lucide-react";
 import UniversityMarquee from "@/components/shared/UniversityMarquee";
 import FeatureSlider from "@/components/shared/FeatureSlider";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 type Mode = "login" | "signup" | "reset";
 
@@ -139,15 +140,7 @@ export default function LoginPage() {
   }
 
   if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-vertical.svg" alt="coach for 総合型選抜" className="h-24 animate-pulse-soft" />
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
+    return <LogoLoader mode="screen" />;
   }
 
   // ── Shared form JSX (used by both mobile & desktop) ──

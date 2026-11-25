@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, X, ChevronDown, ChevronUp, Check, FileText, Users, ClipboardList } from "lucide-react";
 import { SegmentControl } from "@/components/shared/SegmentControl";
 import type { University } from "@/lib/types/university";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 const SELECTION_TYPE_LABELS: Record<string, string> = {
   documents: "書類審査",
@@ -97,9 +98,7 @@ export function UniversitySelectStep({ selected, onChange }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
+      <LogoLoader mode="area" />
     );
   }
 

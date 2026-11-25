@@ -51,6 +51,7 @@ export function ResultHero({
   next,
   chips,
   change,
+  radarOuterRadius,
 }: {
   rank: ScoreRank;
   total: number;
@@ -62,6 +63,8 @@ export function ResultHero({
   chips: { label: string; tone: "good" | "warn" | "bad" }[];
   /** 書き直しの前回と今回の合計 */
   change?: { before: number; after: number } | null;
+  /** 軸名が長いとき（書類）に、頂点の名前が切れないようチャートを小さく描く */
+  radarOuterRadius?: string;
 }) {
   const delta = change
     ? Math.round((change.after - change.before) * 10) / 10
@@ -139,7 +142,7 @@ export function ResultHero({
       </div>
 
       <div className="grid gap-1">
-        <AxisRadar axes={axes} />
+        <AxisRadar axes={axes} outerRadius={radarOuterRadius} />
         {axes.some((a) => typeof a.previous === "number") && (
           <div className="text-muted-foreground flex justify-center gap-4 text-xs">
             <span className="flex items-center gap-1.5">
@@ -158,13 +161,19 @@ export function ResultHero({
 }
 
 /** 軸ごとの点のレーダー。頂点に軸名と点（0-10）を並べる */
-export function AxisRadar({ axes }: { axes: RadarAxis[] }) {
+export function AxisRadar({
+  axes,
+  outerRadius = "72%",
+}: {
+  axes: RadarAxis[];
+  outerRadius?: string;
+}) {
   const reduce = useReducedMotion();
   const hasPrevious = axes.some((a) => typeof a.previous === "number");
   return (
     <div className="h-[230px]">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={axes} outerRadius="72%">
+        <RadarChart data={axes} outerRadius={outerRadius}>
           <PolarGrid gridType="polygon" stroke="#e2e8f0" />
           <PolarAngleAxis
             dataKey="short"

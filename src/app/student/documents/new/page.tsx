@@ -51,6 +51,7 @@ import { statementSectionTitles } from "@/lib/documents/statement-titles";
 import { useAutosave } from "@/hooks/useAutosave";
 import { toast } from "sonner";
 import type { Activity } from "@/lib/types/activity";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface UniversityOption {
   universityId: string;
@@ -1318,18 +1319,12 @@ export default function NewDocumentPage() {
           )}
 
           {generating && (
-            <div
-              className="bg-muted space-y-3 rounded-xl px-4 py-12 text-center"
-              role="status"
-            >
-              <Loader2 className="text-primary mx-auto size-8 animate-spin" />
-              <p className="text-base font-medium">AIが下書きを書いています…</p>
-              {writingMode === "free" && (
-                <p className="text-muted-foreground text-sm">
-                  書き終わると編集画面に移ります。このままお待ちください。
-                </p>
-              )}
-            </div>
+            <LogoLoader
+              mode="area"
+              size="sm"
+              className="bg-muted rounded-xl px-4 py-12"
+              title="AIが下書きを書いています"
+            />
           )}
 
           {draftResult && (

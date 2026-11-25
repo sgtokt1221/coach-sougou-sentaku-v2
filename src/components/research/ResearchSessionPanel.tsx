@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import type { ResearchEvalResult } from "@/lib/ai/prompts/research";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface SessionItem {
   id: string;
@@ -159,7 +160,7 @@ export function ResearchSessionPanel({ embedded = false }: ResearchSessionPanelP
   // 埋め込み時、読込中や未受講では何も出さない（通常生徒のセッション画面を汚さない）
   if (loading) {
     if (embedded) return null;
-    return <Loader2 className="size-5 animate-spin text-muted-foreground" />;
+    return <LogoLoader mode="area" size="sm" />;
   }
   if (!gate?.researchEnrolled) {
     if (embedded) return null;

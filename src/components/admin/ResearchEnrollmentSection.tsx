@@ -11,9 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Compass, Loader2 } from "lucide-react";
+import { Compass } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 type ConsentStatus = "none" | "pending" | "granted" | "revoked";
 type ResearchPlan = "weekly" | "monthly";
@@ -102,10 +103,7 @@ export function ResearchEnrollmentSection({
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            読み込み中...
-          </div>
+          <LogoLoader mode="area" size="sm" />
         ) : !data ? (
           <p className="text-sm text-muted-foreground">取得できませんでした</p>
         ) : !data.researchEnrolled ? (

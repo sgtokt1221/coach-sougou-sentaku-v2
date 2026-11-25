@@ -1,12 +1,12 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { CallRoom } from "@/components/call/CallRoom";
 import { CallLessonRecorder } from "@/components/call/CallLessonRecorder";
 import { authFetch } from "@/lib/api/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { CallView } from "@/lib/types/call";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /**
  * 通話ページ。役割を問わず同じ URL を開く。
@@ -48,12 +48,7 @@ export default function CallPage({
   }, [callId, user, authLoading]);
 
   if (authLoading || (!call && !error)) {
-    return (
-      <div className="flex h-dvh items-center justify-center gap-2">
-        <Loader2 className="size-4 animate-spin" />
-        <span className="text-muted-foreground text-sm">読み込み中...</span>
-      </div>
-    );
+    return <LogoLoader mode="area" className="h-dvh" />;
   }
 
   if (error || !call) {

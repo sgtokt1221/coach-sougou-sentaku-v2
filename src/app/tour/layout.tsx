@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { TutorialBanner } from "@/components/tutorial/TutorialBanner";
 import { TutorialDriverHost } from "@/components/tutorial/TutorialDriverHost";
 import { getAppLayoutMode } from "@/lib/ui/app-layout-mode";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /**
  * /tour/* 全体のレイアウト。
@@ -40,11 +41,7 @@ export default function TourLayout({ children }: { children: ReactNode }) {
   }, []);
 
   if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        チュートリアルを準備中…
-      </div>
-    );
+    return <LogoLoader mode="screen" title="チュートリアルを準備中" />;
   }
 
   return (

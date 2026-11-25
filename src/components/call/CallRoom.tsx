@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LiveKitRoom, VideoConference } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/api/client";
 import { useCallRealtime } from "@/lib/hooks/useCallRealtime";
@@ -12,6 +11,7 @@ import { CallEnded } from "@/components/call/CallEnded";
 import { RecordingBar } from "@/components/call/RecordingBar";
 import { RecordingConsentModal } from "@/components/call/RecordingConsentModal";
 import type { Call, CallView } from "@/lib/types/call";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 /** 接続に失敗しても諦めるまでの回数 */
 const MAX_CONNECT_ATTEMPTS = 3;
@@ -136,14 +136,7 @@ export function CallRoom({
   }
 
   if (phase === "loading" || !token || !serverUrl) {
-    return (
-      <div className="flex h-full items-center justify-center gap-2 p-6">
-        <Loader2 className="size-4 animate-spin" />
-        <span className="text-muted-foreground text-sm">
-          通話に接続しています...
-        </span>
-      </div>
-    );
+    return <LogoLoader mode="area" className="h-full p-6" title="通話に接続しています" />;
   }
 
   const rec = (current as Call).recording;

@@ -5,6 +5,7 @@ import { Calendar, Save } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { ScheduleGrid } from "@/components/admin/ScheduleGrid";
 import type { TeacherAvailability } from "@/lib/types/schedule";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 function slotKey(day: number, time: string) {
   return `${day}-${time}`;
@@ -112,9 +113,7 @@ export default function AvailabilityPage() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
+      <LogoLoader mode="area" className="min-h-64" />
     );
   }
 

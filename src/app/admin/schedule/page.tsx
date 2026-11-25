@@ -9,6 +9,7 @@ import type {
   StudentPreference,
   Assignment,
 } from "@/lib/types/schedule";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 export default function SchedulePage() {
   const [teachers, setTeachers] = useState<TeacherAvailability[]>([]);
@@ -132,9 +133,7 @@ export default function SchedulePage() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
+      <LogoLoader mode="area" className="min-h-64" />
     );
   }
 

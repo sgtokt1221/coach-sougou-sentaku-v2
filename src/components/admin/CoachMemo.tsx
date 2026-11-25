@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { authFetch } from "@/lib/api/client";
 import { COMPOSER_SUBMIT_HINT, isComposerSubmitKey } from "@/lib/ui/composer-keys";
 import type { AdminFeedback } from "@/lib/types/feedback";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface CoachMemoProps {
   studentId: string;
@@ -98,7 +99,7 @@ export function CoachMemo({ studentId }: CoachMemoProps) {
 
         {/* Memo list */}
         {loading ? (
-          <p className="text-xs text-muted-foreground">読み込み中...</p>
+          <LogoLoader mode="area" size="sm" />
         ) : memos.length > 0 ? (
           <div className="space-y-2 border-t pt-3">
             {memos.map((memo) => (

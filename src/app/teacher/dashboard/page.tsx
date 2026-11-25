@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/api/client";
 import { NotificationPermissionBanner } from "@/components/notifications/NotificationPermissionBanner";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface TodaySession {
   id: string;
@@ -125,7 +126,7 @@ export default function TeacherDashboard() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="py-8 text-center">読み込み中...</div>
+            <LogoLoader mode="area" size="sm" />
           ) : todaySessions.length === 0 ? (
             <div className="text-muted-foreground py-8 text-center">
               本日のセッションはありません

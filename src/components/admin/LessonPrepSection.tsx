@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { authFetch } from "@/lib/api/client";
 import type { LessonPrepPlan } from "@/lib/types/session";
 import type { PracticeQuestion } from "@/lib/types/growth-report";
+import { LogoLoader } from "@/components/shared/StartupLoader";
 
 interface Props {
   sessionId: string;
@@ -231,10 +232,7 @@ export function LessonPrepSection({
           </div>
         )}
         {busy === "generating" && !plan && (
-          <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
-            <Loader2 className="size-5 animate-spin" />
-            生成中...
-          </div>
+          <LogoLoader mode="area" size="sm" title="台本を生成中" />
         )}
         {plan && !editing && (
           <div className="space-y-4">
