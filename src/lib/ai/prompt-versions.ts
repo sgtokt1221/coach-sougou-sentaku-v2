@@ -429,7 +429,10 @@ export const AI_PROMPT_VERSIONS = {
     //     - 全体講評とAPの補足をやめ、総合した「今回の課題」を最後の欄に置いた。
     //       改善点は内容だけ最大3件、文の直しは赤ペンだけ
     //     - 自己分析・活動実績は出どころ付きの素材の候補として示すだけにし、例文に入れない
-    promptVersion: "document-review-v10",
+    // v11（2026-11-25）: 決まり文句を減らす。大学との対応で「シラバス・オープンキャンパスで
+    //     確かめて書く」を促さず、固有名が無いことだけで下げない。今回の課題を「引っかかる」で
+    //     始めない。例文を空にするのは、本文に無い事実が要る指摘だけにする
+    promptVersion: "document-review-v11",
     // output-v4: 軸のキーを coherence/insight/fit/plan/readability に変え、
     //            overallFeedback・apSpecificNotes をやめ、priorityImprovement を最後に足した
     schemaVersion: "document-review-output-v4",
