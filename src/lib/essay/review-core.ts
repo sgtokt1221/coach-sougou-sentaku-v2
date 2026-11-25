@@ -109,6 +109,14 @@ export interface EssayReviewTelemetry {
    * ここでしか数えられない。
    */
   droppedLanguageCorrections: number;
+  /**
+   * サーバーの上限をかける前にモデルが付けた点と、軸ごとの上限。保存はしない（評価で、
+   * 点が上限で決まったのかモデルの判断なのかを分けるため。2026-11-26）
+   */
+  rawScores: Record<EssayScoreAxis, number>;
+  caps: Record<EssayScoreAxis, number>;
+  /** 表現力の上限を決めた数（別の上限の案を、AI を呼ばずに試算するため） */
+  expressionInputs: { grammarErrors: number; typos: number; over80: number; over100: boolean };
 }
 
 export class EssayReviewParseError extends Error {
@@ -386,7 +394,7 @@ ${input.ocrText}
   );
   /**
    * 1文ずつの点検の結果を点に反映する。ルーブリックの段と一致させている
-   * （表現力4点 = 助詞の誤りや主述のねじれが複数ある）。本体は崩れた文を
+   * （表現力4点 = 助詞の誤りや主述のねじれが3か所以上、5点 = 2か所）。本体は崩れた文を
    * 見落としたまま 7点を付けることがあった。
    */
   const grammarErrorCount = countGrammarErrors(sentenceCheck);
@@ -411,7 +419,17 @@ ${input.ocrText}
   // 表現は「何を書いたか」に依らず読める。ずれていても6点までは認める
   const expressionCap = Math.min(
     offTopic ? 6 : 10,
-    grammarErrorCount >= 4 ? 3 : grammarErrorCount >= 2 ? 4 : grammarErrorCount === 1 ? 6 : 10,
+    // 1文違うだけで2段動かないよう、1段ずつ下げる（v41）。崩れた文の数は回によって1文ほど揺れ、
+    // 「1文なら6・2文なら4」の段差が同じ答案の合計を動かしていた
+    grammarErrorCount >= 5
+      ? 3
+      : grammarErrorCount >= 3
+        ? 4
+        : grammarErrorCount === 2
+          ? 5
+          : grammarErrorCount === 1
+            ? 6
+            : 10,
     over100 ? 4 : over80 >= 2 ? 5 : 10,
     typoCount >= 3 ? 5 : 10,
     nearBlank ? 2 : 10
@@ -579,6 +597,26 @@ ${input.ocrText}
       durationMs,
       droppedLanguageCorrections:
         parsed.feedback.languageCorrections.length - reviewCorrections.length,
+      rawScores: {
+        structure: parsed.scores.structure,
+        logic: parsed.scores.logic,
+        expression: parsed.scores.expression,
+        responsiveness: parsed.scores.responsiveness,
+        reasoningMaturity: parsed.scores.reasoningMaturity,
+      },
+      caps: {
+        structure: structureCap,
+        logic: logicCap,
+        expression: expressionCap,
+        responsiveness: responsivenessCap,
+        reasoningMaturity: maturityCap,
+      },
+      expressionInputs: {
+        grammarErrors: grammarErrorCount,
+        typos: typoCount,
+        over80,
+        over100,
+      },
     },
   };
 }

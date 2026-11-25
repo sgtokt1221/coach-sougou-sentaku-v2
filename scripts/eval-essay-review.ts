@@ -334,6 +334,10 @@ interface ResultRow {
     improvements: string[];
     corrections: string[];
     droppedCorrections: number;
+    /** 上限をかける前の点と軸ごとの上限（v40 以降の行だけ） */
+    rawScores?: Record<string, number>;
+    caps?: Record<string, number>;
+    expressionInputs?: { grammarErrors: number; typos: number; over80: number; over100: boolean };
     knowledge: {
       score: number;
       errors: { claim: string; severity: string; inText: boolean }[];
@@ -409,6 +413,9 @@ function toRow(
       ].filter(Boolean),
       corrections: (feedback.languageCorrections ?? []).map((x) => x.original),
       droppedCorrections: telemetry.droppedLanguageCorrections,
+      rawScores: telemetry.rawScores,
+      caps: telemetry.caps,
+      expressionInputs: telemetry.expressionInputs,
       knowledge:
         typeof scores.knowledgeAccuracy === "number"
           ? { score: scores.knowledgeAccuracy, errors: knowledgeErrors }
@@ -686,6 +693,25 @@ function summarize(knownCases?: EvalCase[]) {
       ` / 所要 中央値 ${lat[Math.floor(lat.length / 2)].toFixed(0)}秒・最大 ${lat[lat.length - 1].toFixed(0)}秒`,
     ""
   );
+
+  // 上限（どの軸の点が、モデルの判断でなくサーバーの上限で決まったか）
+  const withRaw = rows.filter((r) => r.meta.rawScores && r.meta.caps);
+  if (withRaw.length > 0) {
+    lines.push("## 上限（モデルの点 → 保存した点）", "");
+    lines.push("| 軸 | 上限で下げた回 | モデルの点の分布 | 保存した点の分布 |", "| --- | --- | --- | --- |");
+    const hist = (xs: number[]) => {
+      const m = new Map<number, number>();
+      for (const x of xs) m.set(x, (m.get(x) ?? 0) + 1);
+      return [...m].sort((a, b) => a[0] - b[0]).map(([k, v]) => `${k}:${v}`).join(" ");
+    };
+    for (const a of ["structure", "logic", "expression", "responsiveness", "reasoningMaturity"]) {
+      const raw = withRaw.map((r) => r.meta.rawScores![a]);
+      const saved = withRaw.map((r) => (r.meta.scores as Record<string, number | null>)[a] ?? NaN);
+      const fired = withRaw.filter((r) => r.meta.rawScores![a] > r.meta.caps![a]).length;
+      lines.push(`| ${a} | ${fired}/${withRaw.length} | ${hist(raw)} | ${hist(saved)} |`);
+    }
+    lines.push("");
+  }
 
   // 再現性
   lines.push("## 再現性（同じ答案の揺れ）", "");
