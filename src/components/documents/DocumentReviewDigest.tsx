@@ -1,7 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ResultHero, type RadarAxis } from "@/components/essay/result/ResultParts";
+import {
+  ResultHero,
+  type RadarAxis,
+} from "@/components/essay/result/ResultParts";
 import { charDiff } from "@/lib/text/char-diff";
 import { applyCorrection } from "@/lib/documents/feedback-anchors";
 import { axisPoints, getRankFromPercentage } from "@/lib/score-rank";
@@ -103,7 +106,8 @@ export function DocumentReviewDigest({
   if (typeof feedback.fillRate === "number") {
     chips.push({
       label: `字数 ${feedback.fillRate}%`,
-      tone: feedback.fillRate >= 90 && feedback.fillRate <= 100 ? "good" : "warn",
+      tone:
+        feedback.fillRate >= 90 && feedback.fillRate <= 100 ? "good" : "warn",
     });
   }
   const apMap = feedback.apMap ?? [];
@@ -122,10 +126,16 @@ export function DocumentReviewDigest({
       )
     : [];
   const first = feedback.improvementDetails?.[0];
-  const firstApplied =
-    first?.example && first.location
-      ? applyCorrection(currentContent, first.location, first.example)
-      : null;
+  // 書き換え例が元の文を含む（書き足すだけ）ときに限り、本文へ入れられるようにする。
+  // 改善点の location は文の一部の引用や別の箇所のことが多く、そのまま置き換えると
+  // 本文の文が消える（v10〜v11 の評価で、1件目に例のある 120件中68件がそうだった）
+  const firstInsertable =
+    !!first?.example &&
+    !!first.location &&
+    first.example.includes(first.location.replace(/。$/, ""));
+  const firstApplied = firstInsertable
+    ? applyCorrection(currentContent, first!.location, first!.example!)
+    : null;
   const priority = feedback.priorityImprovement ?? feedback.overallFeedback;
 
   return (
@@ -200,30 +210,41 @@ export function DocumentReviewDigest({
                 {feedback.priorityImprovement ? "今回の課題" : "総合評価"}
               </h2>
               <p className="text-[15px] leading-7">{priority}</p>
-              {first?.example && (
+              {feedback.priorityImprovement && first?.example && (
                 <div className="bg-card space-y-2 rounded-xl p-4">
-                  <p className="text-sm leading-relaxed">
-                    {charDiff(first.location, first.example).map((part, i) =>
-                      part.type === "same" ? (
-                        <span key={i}>{part.text}</span>
-                      ) : part.type === "del" ? (
-                        <span
-                          key={i}
-                          className="text-muted-foreground line-through decoration-rose-500"
-                        >
-                          {part.text}
-                        </span>
-                      ) : (
-                        <span
-                          key={i}
-                          className="rounded bg-emerald-100 px-0.5 dark:bg-emerald-950/60"
-                        >
-                          {part.text}
-                        </span>
-                      )
-                    )}
-                  </p>
-                  {onApply && (
+                  {!firstInsertable ? (
+                    <>
+                      <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                        書き換え例
+                      </p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {first.example}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm leading-relaxed">
+                      {charDiff(first.location, first.example).map((part, i) =>
+                        part.type === "same" ? (
+                          <span key={i}>{part.text}</span>
+                        ) : part.type === "del" ? (
+                          <span
+                            key={i}
+                            className="text-muted-foreground line-through decoration-rose-500"
+                          >
+                            {part.text}
+                          </span>
+                        ) : (
+                          <span
+                            key={i}
+                            className="rounded bg-emerald-100 px-0.5 dark:bg-emerald-950/60"
+                          >
+                            {part.text}
+                          </span>
+                        )
+                      )}
+                    </p>
+                  )}
+                  {onApply && firstInsertable && (
                     <div className="flex justify-end">
                       <Button
                         size="sm"
@@ -267,7 +288,10 @@ export function DocumentAxisEvidence({
           const quote = feedback.scoreEvidence?.[a.key]?.[0];
           const isHeadroom = a.key === headroom;
           return (
-            <div key={a.key} className="bg-card space-y-2 rounded-2xl p-4 shadow-sm">
+            <div
+              key={a.key}
+              className="bg-card space-y-2 rounded-2xl p-4 shadow-sm"
+            >
               <div className="flex items-baseline justify-between gap-2">
                 <span
                   className={`font-bold ${isHeadroom ? "text-amber-700 dark:text-amber-400" : ""}`}
@@ -278,7 +302,10 @@ export function DocumentAxisEvidence({
                   <span className="text-lg font-bold">
                     {axisPoints(a.score as number, a.weight).toFixed(1)}
                   </span>
-                  <span className="text-muted-foreground text-sm"> / {a.weight}</span>
+                  <span className="text-muted-foreground text-sm">
+                    {" "}
+                    / {a.weight}
+                  </span>
                 </span>
               </div>
               <div className="bg-muted h-2 rounded-full">

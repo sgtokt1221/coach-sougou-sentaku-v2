@@ -241,10 +241,13 @@ export function DocumentReviewView({
               documentScoreLayout(
                 {
                   apAlignmentScore: progress.previousScores.apAlignment,
-                  structureScore: progress.previousScores.structure ?? undefined,
-                  originalityScore: progress.previousScores.originality ?? undefined,
+                  structureScore:
+                    progress.previousScores.structure ?? undefined,
+                  originalityScore:
+                    progress.previousScores.originality ?? undefined,
                   learningPlanScore: progress.previousScores.learningPlan,
-                  expressionScore: progress.previousScores.expression ?? undefined,
+                  expressionScore:
+                    progress.previousScores.expression ?? undefined,
                 },
                 documentType
               )
@@ -260,106 +263,103 @@ export function DocumentReviewView({
 
   const apAndInterview = (
     <>
-          {(feedback.apMap?.length ?? 0) > 0 ? (
-            <section className="space-y-2">
-              <p className="flex items-center gap-1.5 text-sm font-semibold">
-                <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
-                APとの対応
-              </p>
-              <ul className="space-y-2">
-                {feedback.apMap!.map((a, i) => {
-                  const item = model.itemByKey.get(`ap:${i}`);
-                  const linked = !!item && item.spans.length > 0;
-                  const style = AP_STATUS[a.status];
-                  return (
-                    <li key={i} className="bg-muted/40 rounded-lg p-3">
-                      <button
-                        type="button"
-                        disabled={!linked}
-                        onClick={() => item && focusItem(item)}
-                        className="flex w-full items-start gap-2 text-left enabled:cursor-pointer"
-                      >
-                        <span
-                          className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${style.className}`}
-                        >
-                          {style.label}
-                        </span>
-                        <span className="text-sm leading-snug font-medium">
-                          {a.element}
-                        </span>
-                      </button>
-                      {a.advice && (
-                        <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
-                          {a.advice}
-                        </p>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ) : (
-            feedback.apSpecificNotes && (
-              <section className="space-y-1.5">
-                <p className="flex items-center gap-1.5 text-sm font-semibold">
-                  <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
-                  AP
-                </p>
-                <p className="text-sm leading-relaxed">
-                  {feedback.apSpecificNotes}
-                </p>
-              </section>
-            )
-          )}
-
-          {(questions.length > 0 || onGenerateQuestions) && (
-            <section className="space-y-2">
-              <p className="flex items-center gap-1.5 text-sm font-semibold">
-                <span
-                  className={`size-2 rounded-full ${DOT_STYLE.interview}`}
-                />
-                面接で聞かれそうなこと
-              </p>
-              {questions.length > 0 ? (
-                <ul className="space-y-2">
-                  {questions.map((q, i) => {
-                    const item = model.itemByKey.get(`interview:${i}`);
-                    return (
-                      <li key={i}>
-                        <button
-                          type="button"
-                          disabled={!item || item.spans.length === 0}
-                          onClick={() => item && focusItem(item)}
-                          className="bg-muted/40 w-full rounded-lg p-3 text-left text-sm leading-snug font-medium enabled:cursor-pointer"
-                        >
-                          {q.question}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={generate}
-                  disabled={generating}
-                >
-                  {generating && (
-                    <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+      {(feedback.apMap?.length ?? 0) > 0 ? (
+        <section className="space-y-2">
+          <p className="flex items-center gap-1.5 text-sm font-semibold">
+            <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
+            APとの対応
+          </p>
+          <ul className="space-y-2">
+            {feedback.apMap!.map((a, i) => {
+              const item = model.itemByKey.get(`ap:${i}`);
+              const linked = !!item && item.spans.length > 0;
+              const style = AP_STATUS[a.status];
+              return (
+                <li key={i} className="bg-muted/40 rounded-lg p-3">
+                  <button
+                    type="button"
+                    disabled={!linked}
+                    onClick={() => item && focusItem(item)}
+                    className="flex w-full items-start gap-2 text-left enabled:cursor-pointer"
+                  >
+                    <span
+                      className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${style.className}`}
+                    >
+                      {style.label}
+                    </span>
+                    <span className="text-sm leading-snug font-medium">
+                      {a.element}
+                    </span>
+                  </button>
+                  {a.advice && (
+                    <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">
+                      {a.advice}
+                    </p>
                   )}
-                  {generating ? "作っています…" : "作る"}
-                </Button>
-              )}
-              {questions.length > 0 && practiceHref && (
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href={practiceHref}>模擬面接で練習する</Link>
-                </Button>
-              )}
-            </section>
-          )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : (
+        feedback.apSpecificNotes && (
+          <section className="space-y-1.5">
+            <p className="flex items-center gap-1.5 text-sm font-semibold">
+              <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
+              AP
+            </p>
+            <p className="text-sm leading-relaxed">
+              {feedback.apSpecificNotes}
+            </p>
+          </section>
+        )
+      )}
 
+      {(questions.length > 0 || onGenerateQuestions) && (
+        <section className="space-y-2">
+          <p className="flex items-center gap-1.5 text-sm font-semibold">
+            <span className={`size-2 rounded-full ${DOT_STYLE.interview}`} />
+            面接で聞かれそうなこと
+          </p>
+          {questions.length > 0 ? (
+            <ul className="space-y-2">
+              {questions.map((q, i) => {
+                const item = model.itemByKey.get(`interview:${i}`);
+                return (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      disabled={!item || item.spans.length === 0}
+                      onClick={() => item && focusItem(item)}
+                      className="bg-muted/40 w-full rounded-lg p-3 text-left text-sm leading-snug font-medium enabled:cursor-pointer"
+                    >
+                      {q.question}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={generate}
+              disabled={generating}
+            >
+              {generating && (
+                <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+              )}
+              {generating ? "作っています…" : "作る"}
+            </Button>
+          )}
+          {questions.length > 0 && practiceHref && (
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <Link href={practiceHref}>模擬面接で練習する</Link>
+            </Button>
+          )}
+        </section>
+      )}
     </>
   );
 
@@ -383,23 +383,28 @@ export function DocumentReviewView({
             <h2 className="text-lg font-bold">本文と指摘</h2>
             {groupCounts.length > 1 && (
               <div className="flex flex-wrap gap-2">
-                {[{ id: "all" as const, label: "すべて", count: model.itemByKey.size }, ...groupCounts].map(
-                  (g) => (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => setFilter(g.id)}
-                      aria-pressed={filter === g.id}
-                      className={`min-h-11 rounded-full px-4 text-sm font-bold transition-colors ${
-                        filter === g.id
-                          ? "bg-foreground text-background"
-                          : "bg-muted text-foreground hover:bg-muted/70"
-                      }`}
-                    >
-                      {g.label} {g.count}
-                    </button>
-                  )
-                )}
+                {[
+                  {
+                    id: "all" as const,
+                    label: "すべて",
+                    count: model.itemByKey.size,
+                  },
+                  ...groupCounts,
+                ].map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => setFilter(g.id)}
+                    aria-pressed={filter === g.id}
+                    className={`min-h-11 rounded-full px-4 text-sm font-bold transition-colors ${
+                      filter === g.id
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-foreground hover:bg-muted/70"
+                    }`}
+                  >
+                    {g.label} {g.count}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -426,7 +431,9 @@ export function DocumentReviewView({
                 segment={keys === s.keys ? s : { ...s, keys }}
                 text={reviewedText.slice(s.start, s.end)}
                 groupOf={(k) => model.itemByKey.get(k)?.group}
-                active={!!selected && keys.length > 0 && sameKeys(selected, keys)}
+                active={
+                  !!selected && keys.length > 0 && sameKeys(selected, keys)
+                }
                 onSelect={setSelected}
               />
             );
@@ -463,7 +470,9 @@ export function DocumentReviewView({
                     {previousTotal!.total}
                     <span className="text-muted-foreground mx-1">→</span>
                     <span className="font-semibold">{current.total}</span>
-                    <span className="text-muted-foreground">/{current.max}</span>
+                    <span className="text-muted-foreground">
+                      /{current.max}
+                    </span>
                   </p>
                 )}
               </div>
@@ -498,15 +507,15 @@ export function DocumentReviewView({
 
           {!digest &&
             (feedback.priorityImprovement || feedback.overallFeedback) && (
-            <section className="space-y-1.5 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
-              <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
-                {feedback.priorityImprovement ? "今回の課題" : "総合評価"}
-              </p>
-              <p className="text-sm leading-relaxed">
-                {feedback.priorityImprovement ?? feedback.overallFeedback}
-              </p>
-            </section>
-          )}
+              <section className="space-y-1.5 rounded-lg bg-amber-50 p-3 dark:bg-amber-950/30">
+                <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+                  {feedback.priorityImprovement ? "今回の課題" : "総合評価"}
+                </p>
+                <p className="text-sm leading-relaxed">
+                  {feedback.priorityImprovement ?? feedback.overallFeedback}
+                </p>
+              </section>
+            )}
 
           {!digest && apAndInterview}
 
@@ -558,8 +567,11 @@ export function DocumentReviewView({
 
       {digest && (
         <div className="mt-8 space-y-6">
-          <DocumentAxisEvidence documentType={documentType} feedback={feedback} />
-          <div className="grid items-start gap-4 @3xl:grid-cols-2 [&>section]:bg-card [&>section]:rounded-2xl [&>section]:p-5 [&>section]:shadow-sm">
+          <DocumentAxisEvidence
+            documentType={documentType}
+            feedback={feedback}
+          />
+          <div className="[&>section]:bg-card grid items-start gap-4 @3xl:grid-cols-2 [&>section]:rounded-2xl [&>section]:p-5 [&>section]:shadow-sm">
             {apAndInterview}
           </div>
         </div>
