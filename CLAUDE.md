@@ -162,6 +162,8 @@ AI呼び出しは .env.local の ANTHROPIC_API_KEY をそのまま使うので�
 - `apphosting.yaml` で存在しない Secret Manager の secret を参照すると、**デプロイ自体が落ちて本番が更新されない**。鍵を先に作ってから参照を足す（新機能の env はコメントで置いておく）
 - App Hosting から secret を読む権限は `firebase apphosting:secrets:grantaccess <名前> --backend coach-app` で付ける。`gcloud` で `secretAccessor` だけ付けても `viewer` が足りず、ビルドが `Error resolving secret version` で落ちる
 
+- 出願書類はトップレベルの `documents` にある。`users/{uid}/documents` は使われておらず、読むと黙って0件になる（期限通知・生徒一覧の進捗など6か所で踏んでいた）。
+- API ルートの中で Firestore を読むときは `adminDb` を使う。クライアント SDK（`@/lib/firebase/config`）はサーバーで未ログイン扱いになり、ルールに拒否されて catch のモックや空に落ちる（エラーは出ない）。画面から API を呼ぶときは素の `fetch` でなく `authFetch` を使う（トークンが付かず別人扱いになる）。
 - AI添削・生成の API ルートには `maxDuration` を必ず設定する。extended thinking は effort medium を既定にする。
 - `messages.parse` の max_tokens は thinking と本文で共有される。文書系は12000-16384、単純な機能は2000-4096。
 - 弱点DB（`users/*/weaknesses`）の読み書きは必ず `src/lib/growth/weakness-store.ts` を通す（手書きすると統合元の文書が残って提出のたびに回数が水増しされ、`archivedAt` も保存されない。本番で1.29倍になっていた）。正規ラベルは読み直しても自分に戻ること（`verify-weakness-records.ts` が validate:data で検査）。点検は `scripts/audit-weaknesses.ts`。表示・集計で弱点の軸を出すときは `weaknessCategoryOf()`、表示の群は `weaknessGroupOf()` を使う（`categorizeWeakness(area)` だけで分類し直すと「反対意見への配慮」等が黙って「その他」に落ちる）。添削結果の判定欄から弱点を作るのは `deriveWeaknessIssues` だけにする（書き込み・作り直し・集計・表示の全部が通る）。
