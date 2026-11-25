@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { orgFieldsFollowingManager } from "@/lib/api/organization-scope";
 import { logActivity } from "@/lib/firebase/activity-log";
 
 export async function POST(request: Request) {
@@ -26,17 +27,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    // 担当 admin の organizationId を生徒にも継承
-    const adminDocBefore = await adminDb.doc(`users/${adminUid}`).get();
-    const adminOrgId = adminDocBefore.data()?.organizationId ?? null;
+    // 所属は担当者に追従させる（担当者に所属が無ければ消す。古い塾から見え続けないように）
+    const orgFields = await orgFieldsFollowingManager(adminDb, adminUid);
 
     const batch = adminDb.batch();
     for (const uid of studentUids) {
       const updates: Record<string, unknown> = {
         managedBy: adminUid,
+        ...orgFields,
         updatedAt: new Date(),
       };
-      if (adminOrgId) updates.organizationId = adminOrgId;
       batch.update(adminDb.doc(`users/${uid}`), updates);
     }
     await batch.commit();

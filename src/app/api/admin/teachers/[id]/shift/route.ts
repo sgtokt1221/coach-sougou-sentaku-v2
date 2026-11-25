@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { isSameOrgStaff } from "@/lib/api/organization-scope";
 import type { TeacherShift } from "@/lib/types/teacher-shift";
 
 export async function GET(
@@ -33,6 +34,10 @@ export async function GET(
         { error: "他の講師のシフトは閲覧できません" },
         { status: 403 }
       );
+    }
+    // 管理者は他塾の講師のシフトも閲覧できた
+    if (!(await isSameOrgStaff(adminDb, { uid, role }, id))) {
+      return NextResponse.json({ error: "他塾の講師です" }, { status: 403 });
     }
 
     const shiftDoc = await adminDb
@@ -76,6 +81,10 @@ export async function PUT(
         { error: "他の講師のシフトは編集できません" },
         { status: 403 }
       );
+    }
+    // 管理者は他塾の講師のシフトも編集できた
+    if (!(await isSameOrgStaff(adminDb, { uid, role }, id))) {
+      return NextResponse.json({ error: "他塾の講師です" }, { status: 403 });
     }
 
     const { month, slots, status } = body;

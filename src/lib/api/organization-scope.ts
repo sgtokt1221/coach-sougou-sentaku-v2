@@ -1,4 +1,4 @@
-import type { Firestore } from "firebase-admin/firestore";
+import { FieldValue, type Firestore } from "firebase-admin/firestore";
 
 /**
  * 組織(塾)単位のデータ共有スコープ用ヘルパ。
@@ -73,10 +73,12 @@ export async function getOrgMemberAdminUids(
  */
 export async function orgFieldsFollowingManager(
   adminDb: Firestore,
-  managerUid: string,
-): Promise<{ organizationId?: string }> {
-  const orgId = await getUserOrgId(adminDb, managerUid);
-  return orgId ? { organizationId: orgId } : {};
+  managerUid: string | null | undefined,
+): Promise<{ organizationId: string | FieldValue }> {
+  // 担当者に所属が無い（または担当を外す）ときは消す。残すと元の塾から見え続ける。
+  // update() 専用（set() に混ぜると FieldValue.delete() が拒否される）
+  const orgId = managerUid ? await getUserOrgId(adminDb, managerUid) : undefined;
+  return { organizationId: orgId ?? FieldValue.delete() };
 }
 
 /**
@@ -143,4 +145,22 @@ export async function getOrgScopedStudentIds(
     snap.docs.forEach((d) => ids.add(d.id));
   }
   return Array.from(ids);
+}
+
+/**
+ * 職員（講師・管理者）の情報を読む・書く前に、相手が同じ塾かを確かめる。
+ * 本部と本人は常に可。所属の無い側があれば不可（他塾に見せない方に倒す）。
+ * 戻り値が true なら許可。
+ */
+export async function isSameOrgStaff(
+  adminDb: Firestore,
+  requester: { uid: string; role: string },
+  targetUid: string,
+): Promise<boolean> {
+  if (requester.role === "superadmin" || requester.uid === targetUid) return true;
+  const [mine, theirs] = await Promise.all([
+    getUserOrgId(adminDb, requester.uid),
+    getUserOrgId(adminDb, targetUid),
+  ]);
+  return !!mine && mine === theirs;
 }

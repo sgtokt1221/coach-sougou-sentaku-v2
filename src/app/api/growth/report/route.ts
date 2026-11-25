@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeStudentById } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { GrowthReport } from "@/lib/types/analytics";
 
@@ -50,6 +50,11 @@ export async function GET(request: NextRequest) {
     // student は自分自身のレポートのみ取得可。admin/teacher/superadmin は明示の userId 必要
     const userId =
       auth.role === "student" ? auth.uid : (queryUserId ?? auth.uid);
+    // 職員は塾の区別なく、どの生徒の AI レポートも作れた
+    if (userId !== auth.uid) {
+      const denied = await scopeStudentById(auth, userId, { allowAssignedTeacher: true });
+      if (denied) return denied;
+    }
 
     // ユーザー固有データ取得
     let scoreTrend = "(データなし)";

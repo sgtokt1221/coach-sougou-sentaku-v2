@@ -53,6 +53,10 @@ export async function GET(
       return NextResponse.json(sanitizeForStudent(session));
     }
 
+    // 職員は ID さえ分かれば他塾の面談も読めた。編集と同じ範囲に限る。
+    const denied = await assertSessionAccess(adminDb, session, { uid, role });
+    if (denied) return denied;
+
     return NextResponse.json(session);
   } catch (error) {
     console.error("Failed to fetch session:", error);
@@ -90,6 +94,10 @@ export async function PATCH(
       auth,
     );
     if (denied) return denied;
+    // 誰の・どの塾の面談かを決める項目は書き換えさせない（他塾の生徒へ付け替えられた）
+    for (const key of ["id", "studentId", "createdByAdminId", "organizationId", "createdAt"]) {
+      delete updates[key];
+    }
     const updatePayload: Record<string, unknown> = { ...updates, updatedAt: new Date().toISOString() };
 
     // セッション完了時にサマリーを自動生成。材料がメモしか無いので、メモがあり

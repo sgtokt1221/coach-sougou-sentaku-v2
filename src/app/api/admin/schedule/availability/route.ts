@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { getStaffOrgFilter, isSameOrgStaff } from "@/lib/api/organization-scope";
 import type { TeacherAvailability, TimeSlot } from "@/lib/types/schedule";
 
 export async function GET(request: NextRequest) {
@@ -23,8 +24,14 @@ export async function GET(request: NextRequest) {
 
     const availability: TeacherAvailability[] = [];
 
+    // 全塾の講師の名前と空きを返していた。自塾の講師だけにする（本部は全部）
+    const orgFilter = await getStaffOrgFilter(adminDb, auth.uid, auth.role);
+
     for (const teacherDoc of teachersSnapshot.docs) {
       const teacherData = teacherDoc.data();
+      if (orgFilter.scoped && (!orgFilter.organizationId || teacherData.organizationId !== orgFilter.organizationId)) {
+        continue;
+      }
       const availDoc = await adminDb
         .doc(`users/${teacherDoc.id}/availability/current`)
         .get();
@@ -63,6 +70,11 @@ export async function PUT(request: NextRequest) {
 
     if (!adminDb) {
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+    }
+
+    // 管理者は他塾の講師の空きも書き換えられた
+    if (!(await isSameOrgStaff(adminDb, auth, targetId))) {
+      return NextResponse.json({ error: "他塾の講師です" }, { status: 403 });
     }
 
     await adminDb.doc(`users/${targetId}/availability/current`).set(

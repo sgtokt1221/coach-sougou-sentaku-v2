@@ -67,7 +67,14 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
   const updates: Record<string, unknown> = {};
-  if (body.role) updates.role = body.role;
+  if (body.role) {
+    // 任意の文字列を role に入れられ、本部（superadmin）にも確認なしで上げられた。
+    // 画面の選択肢（管理者・講師）だけを受ける
+    if (body.role !== "admin" && body.role !== "teacher") {
+      return NextResponse.json({ error: "変更できないロールです" }, { status: 400 });
+    }
+    updates.role = body.role;
+  }
   if (body.displayName) updates.displayName = body.displayName;
   updates.updatedAt = new Date();
 

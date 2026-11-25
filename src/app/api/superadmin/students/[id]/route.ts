@@ -2,6 +2,7 @@ import { disableStudentAccount } from "@/lib/api/account-disable";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
+import { orgFieldsFollowingManager } from "@/lib/api/organization-scope";
 import { normalizedEssayTotal } from "@/lib/types/essay";
 
 export async function GET(
@@ -113,23 +114,21 @@ export async function PATCH(
     return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
   }
 
-  // managedBy 変更時はその admin の organizationId を生徒にも継承
+  // managedBy 変更時は所属も担当者に追従させる。以前は担当者が管理者以外・所属無し・
+  // 担当を外したときに organizationId が古いまま残り、元の塾から見え続けた
   if (body.managedBy !== undefined) {
     updates.managedBy = body.managedBy;
-    if (body.managedBy) {
-      const adminDocSnap = await adminDb.doc(`users/${body.managedBy}`).get();
-      if (adminDocSnap.exists && adminDocSnap.data()?.role === "admin") {
-        const orgId = adminDocSnap.data()?.organizationId;
-        if (typeof orgId === "string") {
-          updates.organizationId = orgId;
-        }
-      }
-    }
+    Object.assign(updates, await orgFieldsFollowingManager(adminDb, body.managedBy));
   }
 
   try {
     await adminDb.doc(`users/${id}`).update(updates);
-    return NextResponse.json({ success: true, uid: id, ...updates });
+    // 所属を消したときの FieldValue.delete() は応答に載せず null で返す
+    const res: Record<string, unknown> = { success: true, uid: id, ...updates };
+    if ("organizationId" in updates && typeof updates.organizationId !== "string") {
+      res.organizationId = null;
+    }
+    return NextResponse.json(res);
   } catch {
     return NextResponse.json({ error: "更新に失敗しました" }, { status: 500 });
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeByOrganization } from "@/lib/api/auth";
+import { getAssignedTeacherIds } from "@/lib/api/teacher-scope";
 
 /**
  * GET /api/interview/[id]
@@ -31,13 +32,30 @@ export async function GET(
         if (interviewDoc.exists) {
           const data = interviewDoc.data()!;
           const isOwner =
-            !data.userId || data.userId === uid || uid === "dev-user";
-          const isStaff = role !== "student";
-          if (!isOwner && !isStaff) {
-            return NextResponse.json(
-              { error: "権限がありません" },
-              { status: 403 }
-            );
+            (!!data.userId && data.userId === uid) || uid === "dev-user";
+          if (!isOwner) {
+            // 職員なら他塾の面接も読めた。担当範囲（scopeByOrganization）に限る。
+            // 持ち主の無い回（本番 0 件）は本部だけ。
+            let denied: NextResponse | null =
+              role === "superadmin"
+                ? null
+                : NextResponse.json({ error: "権限がありません" }, { status: 403 });
+            if (role !== "student" && role !== "superadmin" && data.userId) {
+              const studentSnap = await adminDb.doc(`users/${data.userId}`).get();
+              const sd = studentSnap.data() ?? {};
+              denied = await scopeByOrganization({
+                requesterUid: uid,
+                requesterRole: role,
+                studentUid: data.userId,
+                studentData: {
+                  managedBy: sd.managedBy,
+                  organizationId: sd.organizationId,
+                  assignedTeacherIds: getAssignedTeacherIds(sd),
+                },
+                allowAssignedTeacher: true,
+              });
+            }
+            if (denied) return denied;
           }
           return NextResponse.json({ id: interviewDoc.id, ...data });
         }

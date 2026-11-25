@@ -105,3 +105,36 @@ export async function scopeByOrganization(opts: {
 
   return NextResponse.json({ error: "担当外の生徒です" }, { status: 403 });
 }
+
+/**
+ * 生徒 uid だけ分かっているときの scopeByOrganization。生徒の users を読んで判定する。
+ * 生徒が見つからなければ 404。戻り値 null なら許可。
+ */
+export async function scopeStudentById(
+  requester: { uid: string; role: string },
+  studentUid: string,
+  opts: { allowAssignedTeacher?: boolean } = {},
+): Promise<NextResponse | null> {
+  if (requester.role === "superadmin" || requester.uid === studentUid) return null;
+  const { adminDb } = await import("@/lib/firebase/admin");
+  if (!adminDb) {
+    return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+  }
+  const snap = await adminDb.doc(`users/${studentUid}`).get();
+  if (!snap.exists) {
+    return NextResponse.json({ error: "生徒が見つかりません" }, { status: 404 });
+  }
+  const sd = snap.data() ?? {};
+  const { getAssignedTeacherIds } = await import("@/lib/api/teacher-scope");
+  return scopeByOrganization({
+    requesterUid: requester.uid,
+    requesterRole: requester.role,
+    studentUid,
+    studentData: {
+      managedBy: sd.managedBy,
+      organizationId: sd.organizationId,
+      assignedTeacherIds: getAssignedTeacherIds(sd),
+    },
+    allowAssignedTeacher: opts.allowAssignedTeacher,
+  });
+}

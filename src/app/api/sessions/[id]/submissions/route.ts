@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
-import { SessionSubmission } from "@/lib/types/session";
+import type { Session, SessionSubmission } from "@/lib/types/session";
+import { assertSessionAccess } from "@/lib/api/session-auth";
 import { FieldValue } from "firebase-admin/firestore";
 
 // GET - List submissions for a session
@@ -26,6 +27,25 @@ export async function GET(
         { error: "Firebase Admin SDK is not initialized" },
         { status: 500 }
       );
+    }
+
+    // 以前は ID さえ分かれば誰でも（他塾でも）答案を読めた。
+    // 生徒は参加者だけ、職員は面談の編集と同じ範囲に限る。
+    const sessionSnap = await adminDb.doc(`sessions/${sessionId}`).get();
+    if (!sessionSnap.exists) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+    const session = { ...sessionSnap.data(), id: sessionSnap.id } as Session;
+    if (role === "student") {
+      const isParticipant =
+        session.studentId === uid ||
+        (Array.isArray(session.participantIds) && session.participantIds.includes(uid));
+      if (!isParticipant) {
+        return NextResponse.json({ error: "権限がありません" }, { status: 403 });
+      }
+    } else {
+      const denied = await assertSessionAccess(adminDb, session, { uid, role });
+      if (denied) return denied;
     }
 
     // Fetch submissions ordered by vote count desc

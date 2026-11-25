@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { stripe, isStripeConfigured } from "@/lib/stripe/config";
-import { requireRole } from "@/lib/api/auth";
+import { requireRole, scopeStudentById } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 
 export async function POST(request: Request) {
@@ -32,6 +32,12 @@ export async function POST(request: Request) {
       }
     } catch {
       // No body provided, use authenticated user's own ID
+    }
+
+    // 職員は他塾の生徒の決済ポータルも開けた。課金は担当講師には触らせない
+    if (targetUserId !== userId) {
+      const denied = await scopeStudentById(auth, targetUserId);
+      if (denied) return denied;
     }
 
     if (!adminDb) {

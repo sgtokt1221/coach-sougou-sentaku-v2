@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { isSameOrgStaff } from "@/lib/api/organization-scope";
 import { adminDb } from "@/lib/firebase/admin";
 
 interface TeacherProfile {
@@ -41,6 +42,11 @@ export async function GET(
         { error: "講師が見つかりません" },
         { status: 404 }
       );
+    }
+
+    // 他塾の講師・管理者と、その担当生徒の名前・メールまで読めた
+    if (!(await isSameOrgStaff(adminDb, authResult, id))) {
+      return NextResponse.json({ error: "講師が見つかりません" }, { status: 404 });
     }
 
     const teacherData = teacherDoc.data()!;

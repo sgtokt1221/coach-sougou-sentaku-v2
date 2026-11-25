@@ -50,6 +50,11 @@ export async function GET(
     }
 
     const data = interviewDoc.data()!;
+    // 生徒 id の確認だけで面接 id を照合していなかったため、自分の生徒の id を
+    // 付ければ他塾の面接も読めた
+    if (data.userId !== id) {
+      return NextResponse.json({ error: "面接データが見つかりません" }, { status: 404 });
+    }
 
     return NextResponse.json({
       id: interviewDoc.id,
