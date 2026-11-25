@@ -47,6 +47,7 @@ import {
 } from "@/lib/templates/document-templates";
 import { useAuthSWR } from "@/lib/api/swr";
 import { authFetch } from "@/lib/api/client";
+import { statementSectionTitles } from "@/lib/documents/statement-titles";
 import { useAutosave } from "@/hooks/useAutosave";
 import { toast } from "sonner";
 import type { Activity } from "@/lib/types/activity";
@@ -655,20 +656,13 @@ export default function NewDocumentPage() {
       const sections =
         writingMode === "free"
           ? [{ id: "free", title: "本文", content: data.draft }]
-          : [
-              { id: "intro", title: "導入", content: data.structure.intro },
-              { id: "body", title: "志望理由", content: data.structure.body },
-              {
-                id: "strengths",
-                title: "自己の強みと貢献",
-                content: data.structure.strengths,
-              },
-              {
-                id: "conclusion",
-                title: "将来への展開",
-                content: data.structure.conclusion,
-              },
-            ];
+          : (["intro", "body", "strengths", "conclusion"] as const).map(
+              (id) => ({
+                id,
+                title: statementSectionTitles(documentType)[id],
+                content: data.structure[id],
+              })
+            );
       setDraftResult({
         draft: data.draft,
         sections,

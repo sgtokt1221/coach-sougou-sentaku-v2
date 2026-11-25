@@ -200,14 +200,15 @@ export async function POST(request: NextRequest) {
       }
 
       const target = body.targetWordCount || 800;
-      const limit = Math.round(target * 1.1);
-      // 生徒が設定した字数の90〜110%に合わせる（超えれば縮め、足りなければ伸ばす）
+      const limit = Math.round(target);
+      // 生徒が設定した字数の90〜100%に合わせる（超えれば縮め、足りなければ伸ばす）
       const structure = await fitStatementToTarget(
         client,
         { ...response.parsed_output.structure },
         target,
         normalizeStudentEmphasis(body.emphasis),
-        documentType
+        documentType,
+        AI_MODEL_STATEMENT
       );
       const draft = joinStatementStructure(structure);
       /**

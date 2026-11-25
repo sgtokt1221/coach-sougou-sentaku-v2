@@ -1,5 +1,31 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
+/**
+ * 字数合わせの書き直しに使う既定のモデル。書類では本体と同じモデルを渡す
+ * （渡さないと、志望理由書の最終の文の一部を下位のモデルが書いていた）。
+ */
+const DEFAULT_FIT_MODEL = "claude-sonnet-4-6";
+
+/**
+ * 応答から本文（text ブロック）を取り出す。
+ * Sonnet 5 以降は指定しなくても先頭に thinking ブロックを付けることがあり、
+ * content[0] だけを読むと本文を空として捨てる（エラーは出ない）。
+ */
+export function responseText(resp: { content: Array<{ type: string }> }): string {
+  const block = resp.content.find((b) => b.type === "text") as
+    | { type: "text"; text: string }
+    | undefined;
+  return block?.text ?? "";
+}
+
+/**
+ * 字数合わせは短い書き直しなので思考させない。Sonnet 5 以降は既定で考え込み、
+ * 200字の圧縮に17秒・思考2,000トークンかかっていた。4.6 には付けない（従来どおり）。
+ */
+function fitOptions(model: string): Record<string, unknown> {
+  return model === DEFAULT_FIT_MODEL ? {} : { output_config: { effort: "low" } };
+}
+
 /** Claude 応答テキストの前後空白とコードフェンス（```）を取り除く。 */
 export function cleanAiText(raw: string): string {
   return raw
@@ -24,7 +50,8 @@ export async function fitToCharLimit(
   client: Anthropic,
   text: string,
   limit: number,
-  maxRetries = 2
+  maxRetries = 2,
+  model = DEFAULT_FIT_MODEL
 ): Promise<string> {
   let result = text;
   const placeholders = [...text.matchAll(/【[^】]+】/g)].map(
@@ -33,7 +60,8 @@ export async function fitToCharLimit(
   for (let i = 0; i < maxRetries && result.length > limit; i++) {
     try {
       const resp = await client.messages.create({
-        model: "claude-sonnet-4-6",
+        ...fitOptions(model),
+        model,
         max_tokens: 8192,
         system: `次の文章を、意味・自然さ・段落構成を保ったまま、必ず${limit}字以内に収まるよう書き直してください。
 - 入力にない事実、数値、固有名詞を追加しないこと
@@ -44,7 +72,7 @@ export async function fitToCharLimit(
         messages: [{ role: "user", content: result }],
       });
       const compressed = cleanAiText(
-        resp.content[0]?.type === "text" ? resp.content[0].text : ""
+        responseText(resp)
       );
       const preservesPlaceholders = placeholders.every((placeholder) =>
         compressed.includes(placeholder)
@@ -82,13 +110,15 @@ export async function expandToCharTarget(
   min: number,
   max: number,
   context = "",
-  maxRetries = 2
+  maxRetries = 2,
+  model = DEFAULT_FIT_MODEL
 ): Promise<string> {
   let result = text;
   for (let i = 0; i < maxRetries && result.length < min; i++) {
     try {
       const resp = await client.messages.create({
-        model: "claude-sonnet-4-6",
+        ...fitOptions(model),
+        model,
         max_tokens: 8192,
         system: `次の文章を、意味・主張・段落構成を保ったまま、${min}字以上${max}字以内に書き足してください。
 ${context ? `この文章の役割: ${context}\n` : ""}- 入力にない出来事・活動・数値・固有名詞・役職・成果を追加しないこと（体験を作らない）
@@ -101,7 +131,7 @@ ${context ? `この文章の役割: ${context}\n` : ""}- 入力にない出来�
         messages: [{ role: "user", content: result }],
       });
       const expanded = cleanAiText(
-        resp.content[0]?.type === "text" ? resp.content[0].text : ""
+        responseText(resp)
       );
       const addsPlaceholder =
         PLACEHOLDER_PATTERN.test(expanded) && !PLACEHOLDER_PATTERN.test(text);
@@ -115,9 +145,13 @@ ${context ? `この文章の役割: ${context}\n` : ""}- 入力にない出来�
   return result;
 }
 
-/** 目標字数の幅。生徒が設定した字数の90%〜110%に収める */
+/**
+ * 目標字数の幅。生徒が設定した字数の90%〜100%に収める。
+ * 以前は110%までにしていたが、添削は100%を超えると全軸を5点以下に抑えるため、
+ * アプリが作った下書きが添削で必ず C 止まりになっていた。出願書類の字数は上限として扱う。
+ */
 export function charRangeFor(target: number): { min: number; max: number } {
-  return { min: Math.round(target * 0.9), max: Math.round(target * 1.1) };
+  return { min: Math.round(target * 0.9), max: Math.round(target) };
 }
 
 /** 超えていれば縮め、足りなければ伸ばして、min〜max に収める */
@@ -126,14 +160,15 @@ export async function fitToCharRange(
   text: string,
   min: number,
   max: number,
-  context = ""
+  context = "",
+  model = DEFAULT_FIT_MODEL
 ): Promise<string> {
-  if (text.length > max) return fitToCharLimit(client, text, max);
+  if (text.length > max) return fitToCharLimit(client, text, max, 2, model);
   if (text.length < min) {
-    const expanded = await expandToCharTarget(client, text, min, max, context);
+    const expanded = await expandToCharTarget(client, text, min, max, context, 2, model);
     // 伸ばしすぎたら上限に収める
     return expanded.length > max
-      ? fitToCharLimit(client, expanded, max)
+      ? fitToCharLimit(client, expanded, max, 2, model)
       : expanded;
   }
   return text;

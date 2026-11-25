@@ -446,12 +446,16 @@ export const AI_PROMPT_VERSIONS = {
     //     生徒が登録した具体的な場面・数値が下書きに一切入らなかった。
     // v4: 空欄（【原体験を入力】）を残さず完全な文章にし、字数を設定の90〜110%に合わせる。
     //     以前は「材料が足りなければ短いままで構わない」として、設定より大きく短くなっていた。
-    promptVersion: "statement-draft-v4",
+    // v5: 字数の上限を100%にした（添削は100%超を全軸5点以下にするため、作った下書きが C 止まりだった）。
+    //     志望理由書の段の役割を添削の4軸に合わせ、「自己の強み」の段を「入学後の学び」にした。
+    //     AP の言い換え・賛辞・自己申告の強みを避けるよう明記。字数合わせも本体と同じモデルで行う。
+    promptVersion: "statement-draft-v5",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
     // v3: 骨子（要素と問い）ではなく、段ごとの完全な本文を返す。字数を設定の90〜110%に合わせる。
-    promptVersion: "template-draft-v3",
+    // v4: 字数の上限を100%にし、字数合わせを本体と同じモデルで行う。
+    promptVersion: "template-draft-v4",
     schemaVersion: "template-draft-output-v3",
   },
   storyCheck: {

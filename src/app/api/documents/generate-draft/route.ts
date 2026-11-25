@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
     );
     /**
      * 各段の本文を、生徒が設定した字数に合わせる。
-     * 段ごとに目安（設定字数を段の数で割った字数）の90〜110%に収め、足りなければ
+     * 段ごとに目安（設定字数を段の数で割った字数）の90〜100%に収め、足りなければ
      * 事実を足さずに考えを展開して伸ばし、超えていれば縮める。
      * 以前は本文を返さず骨子（要素と問い）だけを返し、本人が書く形にしていた。
      */
@@ -187,7 +187,8 @@ export async function POST(request: NextRequest) {
               max,
               emphasis
                 ? `${s.title}（${s.description}）。生徒の希望（この方向で書く）: ${emphasis}`
-                : `${s.title}（${s.description}）`
+                : `${s.title}（${s.description}）`,
+              generationModel
             )
           : "";
         return {

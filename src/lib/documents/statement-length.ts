@@ -28,7 +28,7 @@ export function joinStatementStructure(structure: StatementStructure): string {
 }
 
 /**
- * 志望理由書の4セクションを、生徒が設定した字数（targetWordCount）の90〜110%に合わせる。
+ * 志望理由書の4セクションを、生徒が設定した字数（targetWordCount）の90〜100%に合わせる（添削は100%超を減点するので上限は100%）。
  *
  * - 超えていれば、各セクションを長さの比で縮める（以前からの動き）。
  * - 足りなければ、目安の字数に届かないセクションだけを、事実を足さずに考えを展開して伸ばす。
@@ -44,11 +44,13 @@ export async function fitStatementToTarget(
   /** 生徒の希望（熱く書いてほしい点・方向性）。伸ばすときに方向がぶれないよう渡す */
   emphasis = "",
   /** 書類の種類。伸ばすときに渡す段の役割（伸ばす方向がぶれないようにする） */
-  documentType = "志望理由書"
+  documentType = "志望理由書",
+  /** 字数合わせの書き直しに使うモデル。本体と同じものを渡す */
+  model?: string
 ): Promise<StatementStructure> {
   const kind = statementKindOf(documentType);
   const structure = { ...input };
-  const limit = Math.round(target * 1.1);
+  const limit = Math.round(target);
   let draft = joinStatementStructure(structure);
   // 1回の圧縮で収まらないことがある（本番で上限を超えたまま 500 になった）。2周まで回す
   for (let round = 0; round < 2 && draft.length > limit; round++) {
@@ -65,7 +67,7 @@ export async function fitStatementToTarget(
           20,
           Math.floor(contentBudget * (text.length / originalLength))
         );
-        return [key, await fitToCharLimit(client, text, sectionLimit)] as const;
+        return [key, await fitToCharLimit(client, text, sectionLimit, 2, model)] as const;
       })
     );
     for (const [key, text] of compressed)
@@ -79,7 +81,7 @@ export async function fitStatementToTarget(
       ).map(async (key) => {
         const text = structure[key] ?? "";
         // 段落の区切り（空行 2字×3）は本文の字数に入るので、先に引いてから配る。
-        // 引かずに各段を目安の110%まで伸ばすと、合計が上限を数字ぶん超えた
+        // 引かずに各段を目安の上限まで伸ばすと、合計が上限を数字ぶん超えた
         const desired =
           ((target - SEPARATOR_CHARS) * STATEMENT_SECTION_RATIOS[key]) / 100;
         const { min, max } = charRangeFor(desired);
@@ -93,7 +95,8 @@ export async function fitStatementToTarget(
             max,
             emphasis
               ? `${kind.name}の「${kind.sections[key]}」の段。生徒の希望（この方向で書く）: ${emphasis}`
-              : `${kind.name}の「${kind.sections[key]}」の段`
+              : `${kind.name}の「${kind.sections[key]}」の段`,
+            model
           ),
         ] as const;
       })

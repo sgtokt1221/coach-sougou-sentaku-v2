@@ -8,8 +8,10 @@ import {
   charRangeFor,
   cleanAiText,
   fitToCharRange,
+  responseText,
 } from "@/lib/ai/fit-char-limit";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
+import { selectDocumentModel } from "@/lib/ai/prompt-versions";
 import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 
 /**
@@ -131,8 +133,10 @@ export async function POST(
     });
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8192,
+      // 生成・添削と同じモデル（志望理由書は上位モデル）
+      model: selectDocumentModel(data?.type),
+      // Sonnet 5 は思考と本文で max_tokens を分け合うので、本文全文が切れないよう広めに取る
+      max_tokens: 16000,
       system: systemPrompt,
       messages: [
         {
@@ -154,8 +158,7 @@ export async function POST(
       );
     }
 
-    const rawText =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const rawText = responseText(response);
     let rewritten = cleanAiText(rawText);
     if (!rewritten) {
       console.error("Empty rewrite response:", rawText);
@@ -183,7 +186,8 @@ export async function POST(
         rewritten,
         min,
         max,
-        `${data?.type ?? "出願書類"}の本文`
+        `${data?.type ?? "出願書類"}の本文`,
+        selectDocumentModel(data?.type)
       );
     }
 
