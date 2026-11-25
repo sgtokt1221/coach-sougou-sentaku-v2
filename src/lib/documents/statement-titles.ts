@@ -7,7 +7,7 @@ export type StatementSectionId = "intro" | "body" | "strengths" | "conclusion";
 
 const TITLES: Record<string, Record<StatementSectionId, string>> = {
   志望理由書: {
-    intro: "経験と問い",
+    intro: "志望の結論ときっかけ",
     body: "なぜこの学問・この大学か",
     strengths: "入学後の学び",
     conclusion: "将来への展開",

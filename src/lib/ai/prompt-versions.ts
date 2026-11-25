@@ -462,7 +462,7 @@ export const AI_PROMPT_VERSIONS = {
     // v5: 字数の上限を100%にした（添削は100%超を全軸5点以下にするため、作った下書きが C 止まりだった）。
     //     志望理由書の段の役割を添削の4軸に合わせ、「自己の強み」の段を「入学後の学び」にした。
     //     AP の言い換え・賛辞・自己申告の強みを避けるよう明記。字数合わせも本体と同じモデルで行う。
-    promptVersion: "statement-draft-v5",
+    promptVersion: "statement-draft-v6",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
