@@ -215,6 +215,27 @@ function sentenceCount(s: string): number {
  * 最後に、本文の範囲が前の赤ペンと重なるものを落とす（1つの文に直しを2つ並べると、
  * 片方を「本文に入れる」ともう片方の原文が本文から消えて入れられなくなる）。
  */
+/**
+ * 元の直し（original → suggestion）で足した部分が新しい直し先に残っているか。
+ * 足していない（消しただけの）直しは、消した部分が新しい直し先から消えているかで見る。
+ */
+function rewriteKeepsFix(original: string, suggestion: string, rewrite: string): boolean {
+  let pre = 0;
+  while (pre < original.length && pre < suggestion.length && original[pre] === suggestion[pre]) pre++;
+  let suf = 0;
+  while (
+    suf < original.length - pre &&
+    suf < suggestion.length - pre &&
+    original[original.length - 1 - suf] === suggestion[suggestion.length - 1 - suf]
+  )
+    suf++;
+  const added = suggestion.slice(pre, suggestion.length - suf).replace(/[。、\s]/g, "");
+  const removed = original.slice(pre, original.length - suf).replace(/[。、\s]/g, "");
+  if (added) return rewrite.includes(added);
+  if (removed) return !rewrite.includes(removed);
+  return false;
+}
+
 export function mergeNaturalness(
   corrections: LanguageCorrection[],
   items: NaturalnessItem[] | null,
@@ -238,14 +259,15 @@ export function mergeNaturalness(
       // 差し替えると「二つに分ける」という理由に、分けていない文が付いた（2026-10-12）
       if (sentenceCount(it.rewrite) < sentenceCount(hit.suggestion)) continue;
       // 既存の赤ペンが文の一部だけを引用しているときは、文全体の直しに広げる
+      // 誤りの説明は、新しい直し先がその直しを含んでいるときだけつなげる。含まない直し先に
+      // つなぐと「『利用することが』と補う」の理由に「節度ある利用」の直しが付いた（2026-11-26）。
+      // 言い回しの赤ペンは前の理由が別の言い換え語を名指ししており、つながない（2026-10-23）
+      const keepPrev =
+        (hit.type === "grammar" || hit.type === "typo") &&
+        rewriteKeepsFix(hit.original, hit.suggestion, it.rewrite);
       hit.original = it.original;
       hit.suggestion = it.rewrite;
-      // 誤りの説明は直し先が変わっても生きるのでつなげる。言い回しの赤ペンは前の理由が
-      // 別の言い換え語を名指ししており、「『回答』が適切」の理由に「提案」の直しが付いた（2026-10-23）
-      hit.reason =
-        hit.type === "grammar" || hit.type === "typo"
-          ? `${hit.reason} ${it.problem}`.trim()
-          : it.problem;
+      hit.reason = keepPrev ? `${hit.reason} ${it.problem}`.trim() : it.problem;
       continue;
     }
     added.push({

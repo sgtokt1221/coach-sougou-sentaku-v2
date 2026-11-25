@@ -94,6 +94,33 @@ const hintsOf = (text: string, writer: "essay" | "document" = "essay") =>
   assert.equal(merged[0].original, "私が反対する理由は、すごく費用がかかる。");
   assert.match(merged[0].reason, /理由を受けていない。.*すごく/);
   assert.equal(merged[1].type, "redundancy");
+  // 新しい直し先が元の文法の直しを含まないときは、元の理由をつながない
+  {
+    const t2 = "スマートフォンは節度を守ることが大切だ。";
+    const m2 = mergeNaturalness(
+      [
+        {
+          location: "",
+          original: "スマートフォンは節度を守ることが大切だ",
+          suggestion: "スマートフォンは利用することが節度を守ることが大切だ",
+          type: "grammar",
+          reason: "「利用することが」と補う。",
+        },
+      ],
+      [
+        {
+          original: "スマートフォンは節度を守ることが大切だ。",
+          location: "第1段落 1文目",
+          kind: "spoken",
+          problem: "主語と述語が噛み合わない。",
+          rewrite: "スマートフォンは節度ある利用が大切だ。",
+        },
+      ],
+      t2,
+      16
+    );
+    assert.equal(m2[0].reason, "主語と述語が噛み合わない。");
+  }
   // 判定に失敗（null）したら元の赤ペンのまま
   assert.equal(mergeNaturalness(merged, null, text, 16).length, 2);
   // 上限で切る
