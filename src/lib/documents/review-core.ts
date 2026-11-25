@@ -85,6 +85,8 @@ export interface DocumentReviewInput {
   selfAnalysis?: unknown;
   activities?: unknown[];
   targetWordCount?: number;
+  /** 評価スクリプトでモデルを比べるときだけ渡す。本番の経路は渡さない（書類の種類で決める） */
+  model?: string;
   /** 前回の添削。本文が変わっていれば、前回の指摘が直ったかを判定する */
   previous?: {
     feedback: Partial<DocumentFeedback>;
@@ -147,7 +149,7 @@ export async function runDocumentReview(
   const { content, admissionPolicy } = input;
   const startedAt = Date.now();
   const hasAdmissionPolicy = admissionPolicy.length > 0;
-  const reviewModel = selectDocumentModel(input.documentType);
+  const reviewModel = input.model ?? selectDocumentModel(input.documentType);
   /**
    * 字数はサーバーで確定して渡す（モデルに数えさせると集計とずれる）。
    * 空白を除いた文字数で数える。小論文側の calculateFillRate と同じ考え方。

@@ -15,7 +15,7 @@ import { StatementDraftOutputSchema } from "@/lib/ai/schemas/statement";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
 import {
-  AI_MODEL_STATEMENT,
+  AI_MODEL_STATEMENT_DRAFT,
   AI_PROMPT_VERSIONS,
 } from "@/lib/ai/prompt-versions";
 import type { AiGenerationMetadata } from "@/lib/types/ai";
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic({ apiKey });
       const response = await client.messages.parse({
-        model: AI_MODEL_STATEMENT,
+        model: AI_MODEL_STATEMENT_DRAFT,
         // 拡張思考が有効なモデルでは max_tokens を thinking と本文で分け合う。
         // 4096 だと思考だけで使い切って本文が0トークンになり、
         // parsed_output が空のまま stop_reason=max_tokens で失敗していた。
@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
         target,
         normalizeStudentEmphasis(body.emphasis),
         documentType,
-        AI_MODEL_STATEMENT
+        AI_MODEL_STATEMENT_DRAFT
       );
       const draft = joinStatementStructure(structure);
       /**
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
         improvementSuggestions: response.parsed_output.improvementSuggestions,
         aiMetadata: {
           ...AI_PROMPT_VERSIONS.statementDraft,
-          model: AI_MODEL_STATEMENT,
+          model: AI_MODEL_STATEMENT_DRAFT,
         },
       };
     }

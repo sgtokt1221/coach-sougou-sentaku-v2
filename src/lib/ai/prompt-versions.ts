@@ -39,6 +39,19 @@ export function selectDocumentModel(documentType: unknown): string {
   return documentType === "志望理由書" ? AI_MODEL_STATEMENT : AI_MODEL_SONNET;
 }
 
+/**
+ * 志望理由書・自己推薦書の下書きを書くモデル（添削とは別）。
+ * 2026-11-25 の比較（scripts/eval-statement-draft.ts、3人×2回、添削 sonnet-5 で採点）:
+ *   sonnet-5 合計61.7% / sonnet-5-5 58.8%（字数超過 2/6 で頭打ち）/ opus-5-5 68.2%、生成は opus が最速（22秒）。
+ * 添削は sonnet-5 のまま（5.5 系は良い見本を低めに付け、方向テストが 18/21 に落ちた）。
+ */
+export const AI_MODEL_STATEMENT_DRAFT = "claude-opus-5-5";
+
+/** 下書き生成のモデル。志望理由書だけ上位モデル、他の書類は標準モデル */
+export function selectDraftModel(documentType: unknown): string {
+  return documentType === "志望理由書" ? AI_MODEL_STATEMENT_DRAFT : AI_MODEL_SONNET;
+}
+
 export const AI_PROMPT_VERSIONS = {
   essayReview: {
     // v3: 字数指示の矛盾を解消し、充足率をサーバー計算値として渡すようにした。

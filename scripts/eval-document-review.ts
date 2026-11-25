@@ -3,6 +3,7 @@
  *
  *   npx tsx --env-file=.env.local scripts/eval-document-review.ts --reps=3 --variant=v10 [--ids=D4-gap,D5-bridged] [--concurrency=4]
  *   npx tsx scripts/eval-document-review.ts --summarize --variant=v10
+ *   --model=claude-sonnet-5-5 で添削のモデルを差し替えて比べる（省略時は書類の種類で決まる本番のモデル）
  *
  * 出力: .claude/hillclimb/document-review/<variant>/ に results.jsonl・traces/・summary.md
  * 書類の版を上げる前に回し、方向テストが落ちないことを確かめる（小論文の
@@ -25,6 +26,7 @@ const VARIANT = opt("variant") ?? "baseline";
 const CONCURRENCY = Number(opt("concurrency") ?? 4);
 const IDS = opt("ids")?.split(",");
 const SUMMARIZE = process.argv.includes("--summarize");
+const MODEL = opt("model");
 const OUT = `.claude/hillclimb/document-review/${VARIANT}`;
 
 interface Row {
@@ -115,6 +117,45 @@ function check(e: DocExpectation, rows: Row[], all: Row[]): { ok: boolean; detai
   }
 }
 
+/**
+ * 定型句の出方（trace から数える）。プロンプトの文言がそのまま写る・同じ書き出しが並ぶと、
+ * どの書類にも同じ助言が付き、生徒が読まなくなる。
+ */
+function boilerplateLines(): string[] {
+  const files = readdirSync(`${OUT}/traces`).filter((f) => f.endsWith(".json"));
+  let syllabus = 0;
+  let hikkakari = 0;
+  let sameAxes = 0;
+  let scored = 0;
+  let details = 0;
+  let emptyExample = 0;
+  for (const f of files) {
+    const t = JSON.parse(readFileSync(`${OUT}/traces/${f}`, "utf8"));
+    const text = JSON.stringify([t.priorityImprovement, t.improvements, t.improvementDetails]);
+    if (/シラバス|オープンキャンパス/.test(text)) syllabus++;
+    if (text.includes("引っかか")) hikkakari++;
+    const axes = [t.coherenceScore, t.insightScore, t.fitScore, t.planScore, t.readabilityScore].filter(
+      (v): v is number => typeof v === "number"
+    );
+    if (!t.incomplete && axes.length) {
+      scored++;
+      if (new Set(axes).size === 1) sameAxes++;
+    }
+    for (const d of t.improvementDetails ?? []) {
+      details++;
+      if (!String(d.example ?? "").trim()) emptyExample++;
+    }
+  }
+  return [
+    "## 定型句",
+    "",
+    `- 「シラバス／オープンキャンパス」: ${syllabus}/${files.length}本`,
+    `- 「引っかか…」: ${hikkakari}/${files.length}本`,
+    `- 例文が空の改善点: ${emptyExample}/${details}件`,
+    `- 全軸が同じ点: ${sameAxes}/${scored}本`,
+  ];
+}
+
 function summarize(): void {
   const rows: Row[] = readFileSync(`${OUT}/results.jsonl`, "utf8")
     .split("\n")
@@ -143,7 +184,9 @@ function summarize(): void {
       lines.push(`| ${c.id} | ${e.kind} | ${r.ok ? "○" : "×"} ${r.detail} |`);
     }
   }
-  lines.push("", `方向テスト: **${pass}/${total}** 通過`, "", "## 今回の課題（1回目）", "");
+  lines.push("", `方向テスト: **${pass}/${total}** 通過`, "");
+  lines.push(...boilerplateLines());
+  lines.push("", "## 今回の課題（1回目）", "");
   for (const c of DOC_CASES) {
     const r = rows.find((x) => x.id === c.id && x.rep === 0);
     if (r) lines.push(`- **${c.id}**: ${r.priority}`);
@@ -172,6 +215,7 @@ async function main(): Promise<void> {
           activities: [],
           targetWordCount: c.input.targetWordCount,
           previous: null,
+          model: MODEL,
         });
         writeFileSync(`${OUT}/traces/${c.id}_rep${rep}.json`, JSON.stringify(feedback, null, 2));
         const row = toRow(c, rep, feedback, telemetry.durationMs, telemetry.usage);

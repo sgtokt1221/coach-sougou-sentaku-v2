@@ -16,7 +16,7 @@ import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
 import {
   AI_PROMPT_VERSIONS,
-  selectDocumentModel,
+  selectDraftModel,
 } from "@/lib/ai/prompt-versions";
 
 // 生成に加えて字数超過時の圧縮リライトが走るため、既定の実行時間では足りない。
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey });
-    const generationModel = selectDocumentModel(body.documentType);
+    const generationModel = selectDraftModel(body.documentType);
 
     const emphasis = normalizeStudentEmphasis(body.emphasis);
     const systemPrompt = buildTemplateDraftPrompt(
