@@ -354,7 +354,10 @@ ${input.ocrText}
    * 口頭試問型は小問ごとに字数があり、合計の字数で判定できないので外す。
    */
   const lengthApplies = input.questionType !== "oral_exam";
-  const blankCap = lengthApplies && fillRate != null && fillRate < 50 ? 3 : 10;
+  // 25%未満は論として読める分量が無い。表現力も含めて全軸を2点以下にする。1文だけの答案に
+  // 表現力7点が付き、白紙同然の答案が19点になっていた（v40 の検証 N1、2026-11-26）
+  const nearBlank = lengthApplies && fillRate != null && fillRate < 25;
+  const blankCap = nearBlank ? 2 : lengthApplies && fillRate != null && fillRate < 50 ? 3 : 10;
   const shortCap = Math.min(
     blankCap,
     !lengthApplies || fillRate == null ? 10 : fillRate < 70 ? 5 : fillRate < 80 ? 6 : 10
@@ -410,7 +413,8 @@ ${input.ocrText}
     offTopic ? 6 : 10,
     grammarErrorCount >= 4 ? 3 : grammarErrorCount >= 2 ? 4 : grammarErrorCount === 1 ? 6 : 10,
     over100 ? 4 : over80 >= 2 ? 5 : 10,
-    typoCount >= 3 ? 5 : 10
+    typoCount >= 3 ? 5 : 10,
+    nearBlank ? 2 : 10
   );
 
   /**
