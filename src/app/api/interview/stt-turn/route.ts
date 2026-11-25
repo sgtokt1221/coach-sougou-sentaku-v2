@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 import { recordAiTrace } from "@/lib/ai/trace";
 
@@ -42,6 +43,9 @@ async function transcribe(
 }
 
 export async function POST(request: NextRequest) {
+  // 認証なしで有料の AI を呼べた
+  const auth = await requireRole(request, ["student", "teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await request.json();
     const audioWavBase64: string = typeof body.audioWavBase64 === "string" ? body.audioWavBase64 : "";

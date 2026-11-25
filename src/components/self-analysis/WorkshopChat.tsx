@@ -8,6 +8,7 @@ import { SELF_ANALYSIS_STEPS } from "@/lib/types/self-analysis";
 import type { ChatMessage } from "@/lib/types/self-analysis";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
+import { authFetch } from "@/lib/api/client";
 
 interface WorkshopChatProps {
   step: number;
@@ -119,7 +120,7 @@ export function WorkshopChat({
           content: m.content,
         }));
 
-        const res = await fetch("/api/self-analysis/workshop", {
+        const res = await authFetch("/api/self-analysis/workshop", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

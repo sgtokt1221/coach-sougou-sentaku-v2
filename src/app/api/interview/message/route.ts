@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   buildIndividualTimeCue,
@@ -17,6 +18,9 @@ import { verifyAuthToken, adminDb } from "@/lib/firebase/admin";
 export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
+  // 認証なしで有料の AI を呼べた
+  const auth = await requireRole(request, ["student", "teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await request.json();
     const {

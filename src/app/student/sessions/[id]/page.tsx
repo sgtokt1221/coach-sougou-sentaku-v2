@@ -210,7 +210,7 @@ export default function StudentSessionDetailPage() {
     try {
       // Load user's essays for submission selection
       const essaysRes = await authFetch(
-        `/api/essay/history?userId=${userProfile?.uid}`
+        "/api/essay/history?userId=current"
       );
       if (essaysRes.ok) {
         const essaysData = await essaysRes.json();
@@ -235,7 +235,7 @@ export default function StudentSessionDetailPage() {
     } catch (error) {
       console.error("Failed to load group review data:", error);
     }
-  }, [id, userProfile?.uid]);
+  }, [id]);
 
   const handleSubmitEssay = async () => {
     if (!selectedEssayId) return;

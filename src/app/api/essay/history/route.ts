@@ -22,14 +22,11 @@ const HISTORY_FIELDS = [
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    let userId = searchParams.get("userId");
-
-    // "current" は「現在のログインユーザー」のエイリアス。トークン / dev role から解決する。
-    // 旧実装は !userId のみチェックしていて、"current" のままだと後段の
-    // where("userId", "==", "current") で hit せず 0 件返却するバグがあった。
-    if (!userId || userId === "current") {
-      userId = null;
+    // 履歴は常にログイン中の本人のもの。以前は userId に他人の uid を渡すと
+    // トークン無しでその人の履歴（大学・テーマ・点・日時）を返していた。
+    // userId=current は旧来の呼び方として受けるだけで、値は見ない。
+    let userId: string | null = null;
+    {
       const authHeader = request.headers.get("Authorization");
       if (authHeader?.startsWith("Bearer ")) {
         try {

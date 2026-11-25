@@ -23,11 +23,15 @@ async function resolveUserId(
   request: NextRequest,
   rawId: string
 ): Promise<string | null> {
-  if (rawId !== "me") return rawId;
+  // "me" 以外の uid を受け取ってそのまま使うと、トークン無しで他人の自己分析を
+  // 読む・上書き・リセットできた。本人の uid と一致するときだけ通す。
+  // 職員が生徒の自己分析を見るのは /api/admin/students/{id}/self-analysis。
   try {
     const { verifyAuthToken } = await import("@/lib/firebase/admin");
     const decoded = await verifyAuthToken(request);
-    if (decoded?.uid) return decoded.uid;
+    if (decoded?.uid) {
+      return rawId === "me" || rawId === decoded.uid ? decoded.uid : null;
+    }
   } catch {}
   if (process.env.NODE_ENV === "development") return "dev-user";
   return null;
@@ -126,7 +130,7 @@ export async function POST(request: NextRequest) {
       ] as const;
 
       const update: Record<string, unknown> = {
-        userId: body.userId,
+        userId: resolvedId,
         updatedAt: FieldValue.serverTimestamp(),
       };
       if (!existing) update.createdAt = FieldValue.serverTimestamp();

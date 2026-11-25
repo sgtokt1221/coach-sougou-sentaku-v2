@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 
 async function extractFromPptx(buffer: Buffer): Promise<{ text: string; slideCount: number }> {
   const JSZip = (await import("jszip")).default;
@@ -127,6 +128,9 @@ async function extractFromImage(base64: string, mediaType: string): Promise<{ te
 }
 
 export async function POST(request: NextRequest) {
+  // 認証なしで有料の AI を呼べた
+  const auth = await requireRole(request, ["student", "teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await request.json();
     const { fileBase64, fileName, mimeType } = body as {

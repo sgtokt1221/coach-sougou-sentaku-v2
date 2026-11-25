@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildSelfAnalysisPrompt } from "@/lib/ai/prompts/self-analysis";
+import { requireRole } from "@/lib/api/auth";
 
 interface WorkshopRequest {
   step: number;
@@ -12,6 +13,9 @@ interface WorkshopRequest {
 
 
 export async function POST(request: NextRequest) {
+  // 認証なしで Claude を呼べた（課金が誰でも発生する）
+  const auth = await requireRole(request, ["student", "teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body: WorkshopRequest = await request.json();
     const { step, message, history, previousStepsData, forceComplete } = body;
@@ -39,9 +43,8 @@ export async function POST(request: NextRequest) {
     let targetApText: string | undefined;
     if (step === 7) {
       try {
-        const { verifyAuthToken, adminDb } = await import("@/lib/firebase/admin");
-        const auth = await verifyAuthToken(request);
-        if (auth?.uid && adminDb) {
+        const { adminDb } = await import("@/lib/firebase/admin");
+        if (auth.uid !== "dev-user" && adminDb) {
           const userSnap = await adminDb.doc(`users/${auth.uid}`).get();
           const targets = (userSnap.data()?.targetUniversities ?? []) as string[];
           if (targets.length) {

@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import type { Activity, ActivityOptimization } from "@/lib/types/activity";
 import { ACTIVITY_CATEGORY_LABELS } from "@/lib/types/activity";
 import { authFetch } from "@/lib/api/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAutosave } from "@/hooks/useAutosave";
 import { usePersistentDraft } from "@/hooks/usePersistentDraft";
 import { DraftSaveIndicator } from "@/components/shared/DraftSaveIndicator";
@@ -45,6 +46,8 @@ export default function ActivityDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  // ログイン状態が戻る前に読むとトークンが付かず 401 になる
+  const { user } = useAuth();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
   const [description, setDescription] = useState("");
@@ -76,7 +79,7 @@ export default function ActivityDetailPage({
   useEffect(() => {
     async function fetchActivity() {
       try {
-        const res = await fetch(`/api/activities/${id}`);
+        const res = await authFetch(`/api/activities/${id}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         setActivity(data.activity);
@@ -88,8 +91,9 @@ export default function ActivityDetailPage({
         setLoading(false);
       }
     }
+    if (!user) return;
     fetchActivity();
-  }, [id]);
+  }, [id, user]);
 
   const selectedUniData = universities.find((u) => u.id === selectedUni);
   const faculties = selectedUniData?.faculties ?? [];
@@ -135,7 +139,7 @@ export default function ActivityDetailPage({
 
     setOptimizing(true);
     try {
-      const res = await fetch(`/api/activities/${id}/optimize`, {
+      const res = await authFetch(`/api/activities/${id}/optimize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

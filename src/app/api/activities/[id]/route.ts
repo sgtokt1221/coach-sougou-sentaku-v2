@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb, verifyAuthToken } from "@/lib/firebase/admin";
 
+/**
+ * 活動は users/{uid}/activities にあるので、持ち主はトークンの uid だけで決まる。
+ * 以前は本番でもトークンが無いと "dev-user" に落ちていた（詳細画面が素の fetch
+ * だったため、本番では毎回「見つかりません」になっていた）。
+ */
+async function ownerUid(request: NextRequest): Promise<string | null> {
+  const uid = await verifyAuthToken(request).then((r) => r?.uid).catch(() => null);
+  if (uid) return uid;
+  return process.env.NODE_ENV === "development" ? "dev-user" : null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -12,8 +23,10 @@ export async function GET(
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    const uid = await verifyAuthToken(request).then(r => r?.uid).catch(() => null)
-      ?? "dev-user";
+    const uid = await ownerUid(request);
+    if (!uid) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
     const docSnap = await adminDb.doc(`users/${uid}/activities/${id}`).get();
     if (!docSnap.exists) {
@@ -38,8 +51,10 @@ export async function PUT(
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    const uid = await verifyAuthToken(request).then(r => r?.uid).catch(() => null)
-      ?? "dev-user";
+    const uid = await ownerUid(request);
+    if (!uid) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
     const body = await request.json();
     const updates = {
@@ -68,8 +83,10 @@ export async function DELETE(
       return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
     }
 
-    const uid = await verifyAuthToken(request).then(r => r?.uid).catch(() => null)
-      ?? "dev-user";
+    const uid = await ownerUid(request);
+    if (!uid) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
     const docSnap = await adminDb.doc(`users/${uid}/activities/${id}`).get();
     if (!docSnap.exists) {

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 import { buildWhisperPrompt } from "@/lib/interview/whisper-context";
 import { AI_MODEL_FAST } from "@/lib/ai/prompt-versions";
 
 export async function POST(request: NextRequest) {
+  // 認証なしで有料の AI を呼べた
+  const auth = await requireRole(request, ["student", "teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await request.json();
     const { sessionId, audioBase64, mimeType, messages: existingMessages, mode, universityContext, presentationContent, elapsedSeconds } = body;

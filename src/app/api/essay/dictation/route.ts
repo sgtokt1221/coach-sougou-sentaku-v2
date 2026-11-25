@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 
 const FILLERS = [
   "えーと", "ええと", "えっと",
@@ -26,6 +27,9 @@ function removeFillers(text: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  // 認証なしで有料の AI を呼べた
+  const auth = await requireRole(request, ["student", "teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { audioBase64, mimeType } = await request.json();
 

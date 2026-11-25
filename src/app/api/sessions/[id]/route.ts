@@ -122,9 +122,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // 認証なしで誰でも ID 指定で消せた。編集(PATCH)と同じく自塾の担当/管理者だけに限る。
+  const auth = await requireRole(request, ["admin", "teacher", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
+
   const { id } = await params;
 
   const { adminDb } = await import("@/lib/firebase/admin");
@@ -133,7 +137,18 @@ export async function DELETE(
   }
 
   try {
-    await adminDb.doc(`sessions/${id}`).delete();
+    const ref = adminDb.doc(`sessions/${id}`);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+    const denied = await assertSessionAccess(
+      adminDb,
+      { ...snap.data(), id: snap.id } as Session,
+      auth,
+    );
+    if (denied) return denied;
+    await ref.delete();
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error("Failed to delete session:", error);

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 import type { Transcription } from "@/lib/types/interview";
 
 export async function POST(request: NextRequest) {
+  // 認証なしで有料の AI を呼べた
+  const auth = await requireRole(request, ["student", "teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const { audioBase64, mimeType, language } = await request.json();
     if (!audioBase64) {

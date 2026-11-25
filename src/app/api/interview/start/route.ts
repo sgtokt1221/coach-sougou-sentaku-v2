@@ -80,6 +80,10 @@ export async function POST(request: NextRequest) {
       const devRole = request.headers.get("X-Dev-Role");
       if (devRole) userId = "dev-user";
     }
+    // トークン無しでも AI を呼んで面接を始められた（課金が誰でも発生する）
+    if (!userId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
     if (!universityId || !facultyId || !mode) {
       return NextResponse.json(

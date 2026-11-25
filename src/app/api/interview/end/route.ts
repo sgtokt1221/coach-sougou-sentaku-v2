@@ -72,6 +72,11 @@ export async function POST(request: NextRequest) {
       const devRole = request.headers.get("X-Dev-Role");
       if (devRole) userId = "dev-user";
     }
+    // トークン無しだと持ち主の確認が飛ばされ、他人の面接を採点し直して
+    // userId を null で上書きできた（AI の費用もかかる）
+    if (!userId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
     if (!sessionId || !messages || duration === undefined) {
       return NextResponse.json(

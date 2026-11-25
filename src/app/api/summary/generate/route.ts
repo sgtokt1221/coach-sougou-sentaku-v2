@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireRole } from "@/lib/api/auth";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Transcription } from "@/lib/types/interview";
 import type { SessionSummary } from "@/lib/types/session";
 import { buildSummaryPrompt } from "@/lib/ai/prompts/summary";
 
 export async function POST(request: NextRequest) {
+  // 認証なしで有料の AI を呼べた
+  const auth = await requireRole(request, ["teacher", "admin", "superadmin"]);
+  if (auth instanceof NextResponse) return auth;
   try {
     const body = await request.json();
     const {

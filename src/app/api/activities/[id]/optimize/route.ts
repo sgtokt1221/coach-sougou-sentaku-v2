@@ -44,32 +44,35 @@ export async function POST(
       return NextResponse.json({ optimization: mockOptimization });
     }
 
-    // Fetch admission policy from Firestore
-    let admissionPolicy = "（AP未設定）";
-    try {
-      const { db } = await import("@/lib/firebase/config");
-      if (db) {
-        const { doc, getDoc } = await import("firebase/firestore");
-        const uniDoc = await getDoc(doc(db, "universities", universityId));
-        if (uniDoc.exists()) {
-          const uniData = uniDoc.data();
-          const faculty = uniData.faculties?.find(
-            (f: { id: string; admissionPolicy?: string }) => f.id === facultyId
-          );
-          if (faculty?.admissionPolicy) {
-            admissionPolicy = faculty.admissionPolicy;
-          }
-        }
-      }
-    } catch {
-      // Firestore not available
+    // 以前は AP をクライアント SDK で、活動を自分の API への素の fetch で読んでいた。
+    // どちらもサーバーでは未ログイン扱いになり、AP 未設定・空の活動のまま AI を呼んでいた。
+    const { adminDb, verifyAuthToken } = await import("@/lib/firebase/admin");
+    const uid =
+      (await verifyAuthToken(request).then((r) => r?.uid).catch(() => null)) ??
+      (process.env.NODE_ENV === "development" ? "dev-user" : null);
+    if (!uid || !adminDb) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    // Fetch activity description
-    const activityRes = await fetch(new URL(`/api/activities/${id}`, request.url));
-    const activityData = await activityRes.json();
-    const activityDesc = activityData.activity?.description ?? "";
-    const structured = activityData.activity?.structuredData;
+    const activitySnap = await adminDb.doc(`users/${uid}/activities/${id}`).get();
+    if (!activitySnap.exists) {
+      return NextResponse.json({ error: "活動実績が見つかりません" }, { status: 404 });
+    }
+    const activity = activitySnap.data() ?? {};
+
+    let admissionPolicy = "（AP未設定）";
+    try {
+      const uniDoc = await adminDb.doc(`universities/${universityId}`).get();
+      const faculty = (uniDoc.data()?.faculties ?? []).find(
+        (f: { id: string; admissionPolicy?: string }) => f.id === facultyId
+      );
+      if (faculty?.admissionPolicy) admissionPolicy = faculty.admissionPolicy;
+    } catch (e) {
+      console.warn("[activities/optimize] AP の取得に失敗:", e);
+    }
+
+    const activityDesc = activity.description ?? "";
+    const structured = activity.structuredData;
 
     const activityContext = structured
       ? `動機: ${structured.motivation}\n行動: ${structured.actions.join("、")}\n成果: ${structured.results.join("、")}\n学び: ${structured.learnings.join("、")}\n接続: ${structured.connection}`
