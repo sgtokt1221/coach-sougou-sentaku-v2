@@ -267,6 +267,10 @@ export async function POST(request: NextRequest) {
           sourceType: sourceType ?? "manual",
           // 続きのターンと採点でも同じ分野を使うため、セッションに残す
           ...(oralExamTopic ? { oralExam: oralExamTopic } : {}),
+          // 履歴から再開したときも同じ資料で質問・採点できるよう残す
+          ...(mode === "presentation" && typeof presentationContent === "string" && presentationContent.trim()
+            ? { presentationContent: presentationContent.slice(0, 30000) }
+            : {}),
           ...(documentGrill ? { documentGrill: true } : {}),
           ...(homeworkAssignmentId ? { homeworkAssignmentId } : {}),
           ...(fixedOpening ? { openingMessage: fixedOpening } : {}),

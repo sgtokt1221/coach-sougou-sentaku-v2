@@ -5,6 +5,15 @@ const nextConfig: NextConfig = {
   // (docs/app-improvement-multi-perspective.md P0 #3 対応)
   generateBuildId: () => `build-${Date.now()}`,
   allowedDevOrigins: ['192.168.1.80'],
+  // pdf-parse（中の pdfjs）は自分の横の pdf.worker.mjs を読みに行く。束ねると見失い、
+  // 発表資料のPDFが毎回読めなかった。束ねずに node_modules から読ませる
+  serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  // worker は実行時に名前で読むため、本番へ載せるファイルの追跡から漏れる（ローカルでは動いて本番だけ落ちる）
+  outputFileTracingIncludes: {
+    "/api/interview/upload-presentation": [
+      "./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+    ],
+  },
   async headers() {
     /**
      * 変わらない画像・アイコンを CDN とブラウザに覚えさせる（2026-11-26）。

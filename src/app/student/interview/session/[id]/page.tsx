@@ -405,6 +405,7 @@ export default function InterviewSessionPage() {
             admissionPolicy: "",
           },
           openingMessage: doc.openingMessage ?? "",
+          presentationContent: doc.presentationContent,
         };
         if (cancelled) return;
         setSessionInfo(info);

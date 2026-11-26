@@ -91,6 +91,7 @@ export async function GET(
       facultyId: d.facultyId ?? "",
       universityContext: d.universityContext ?? null,
       openingMessage: d.openingMessage ?? "",
+      presentationContent: d.presentationContent ?? undefined,
       messages: Array.isArray(d.messages) ? d.messages : [],
     });
   } catch (error) {

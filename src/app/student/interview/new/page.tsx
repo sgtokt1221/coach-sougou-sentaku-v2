@@ -880,13 +880,20 @@ export default function InterviewNewPage() {
                                   }),
                                 }
                               );
+                              const data = await res.json().catch(() => ({}));
                               if (res.ok) {
-                                const data = await res.json();
                                 setPresentationContent(data.extractedText);
                                 setPresFileName(file.name);
+                              } else {
+                                toast.error(
+                                  data.error ??
+                                    "資料を読み取れませんでした。もう一度選んでください。"
+                                );
                               }
                             } catch {
-                              /* */
+                              toast.error(
+                                "資料を読み取れませんでした。もう一度選んでください。"
+                              );
                             }
                             setPresUploading(false);
                             e.target.value = "";

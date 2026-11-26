@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/api/auth";
+import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
+
+// Keynote はスライドを1枚ずつ画像で読むため、既定の実行時間では足りない
+export const maxDuration = 120;
+
+/** 読めなかったとき。画面にそのまま出す文を持つ（読めなかった旨を資料の中身として面接官に渡さない） */
+class ExtractError extends Error {}
 
 async function extractFromPptx(buffer: Buffer): Promise<{ text: string; slideCount: number }> {
   const JSZip = (await import("jszip")).default;
@@ -32,10 +39,15 @@ async function extractFromPptx(buffer: Buffer): Promise<{ text: string; slideCou
 }
 
 async function extractFromPdf(buffer: Buffer): Promise<{ text: string; slideCount: number }> {
-  // @ts-expect-error pdf-parse ESM export type mismatch
-  const pdfParse = (await import("pdf-parse")).default ?? (await import("pdf-parse"));
-  const data = await pdfParse(buffer);
-  return { text: data.text, slideCount: data.numpages };
+  // pdf-parse 2系は関数でなくクラスを出す（1系の書き方のままだと毎回落ちていた）
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  try {
+    const result = await parser.getText();
+    return { text: result.text, slideCount: result.total };
+  } finally {
+    await parser.destroy();
+  }
 }
 
 async function extractFromKeynote(buffer: Buffer): Promise<{ text: string; slideCount: number }> {
@@ -47,12 +59,12 @@ async function extractFromKeynote(buffer: Buffer): Promise<{ text: string; slide
     .sort();
 
   if (imageFiles.length === 0) {
-    return { text: "(Keynoteファイルからテキストを抽出できませんでした。PDFに変換してアップロードしてください)", slideCount: 0 };
+    throw new ExtractError("Keynoteから文字を読み取れませんでした。PDFに書き出してから選んでください。");
   }
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicKey) {
-    return { text: "(APIキー未設定のためKeynoteの解析ができません)", slideCount: 0 };
+    throw new ExtractError("いまはKeynoteを読み取れません。PDFに書き出してから選んでください。");
   }
 
   const slides: string[] = [];
@@ -71,7 +83,7 @@ async function extractFromKeynote(buffer: Buffer): Promise<{ text: string; slide
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6-20250514",
+        model: AI_MODEL_SONNET,
         max_tokens: 1024,
         messages: [{
           role: "user",
@@ -85,7 +97,7 @@ async function extractFromKeynote(buffer: Buffer): Promise<{ text: string; slide
 
     if (res.ok) {
       const data = await res.json();
-      const text = data.content?.[0]?.text ?? "";
+      const text = textOf(data);
       if (text.trim()) slides.push(`[スライド${i + 1}]\n${text}`);
     }
   }
@@ -93,10 +105,15 @@ async function extractFromKeynote(buffer: Buffer): Promise<{ text: string; slide
   return { text: slides.join("\n\n"), slideCount: slides.length };
 }
 
+/** 応答の本文。先頭が思考の欄でも本文を取る */
+function textOf(data: { content?: { type: string; text?: string }[] }): string {
+  return data.content?.find((b) => b.type === "text")?.text ?? "";
+}
+
 async function extractFromImage(base64: string, mediaType: string): Promise<{ text: string; slideCount: number }> {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicKey) {
-    return { text: "(APIキー未設定のため画像の解析ができません)", slideCount: 1 };
+    throw new ExtractError("いまは画像を読み取れません。");
   }
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -107,7 +124,7 @@ async function extractFromImage(base64: string, mediaType: string): Promise<{ te
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6-20250514",
+      model: AI_MODEL_SONNET,
       max_tokens: 2048,
       messages: [{
         role: "user",
@@ -120,11 +137,12 @@ async function extractFromImage(base64: string, mediaType: string): Promise<{ te
   });
 
   if (!res.ok) {
-    return { text: "(画像の解析に失敗しました)", slideCount: 1 };
+    console.error("[upload-presentation] 画像の読み取りに失敗", res.status, await res.text());
+    throw new ExtractError("画像を読み取れませんでした。もう一度選んでください。");
   }
 
   const data = await res.json();
-  return { text: data.content?.[0]?.text ?? "", slideCount: 1 };
+  return { text: textOf(data), slideCount: 1 };
 }
 
 export async function POST(request: NextRequest) {
@@ -163,12 +181,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!result.text.trim()) {
+      throw new ExtractError(
+        "資料から文字を読み取れませんでした。文字の入ったPDFやPPTXを選んでください。"
+      );
+    }
+
     return NextResponse.json({
       extractedText: result.text,
       slideCount: result.slideCount,
       fileName,
     });
   } catch (error) {
+    if (error instanceof ExtractError) {
+      return NextResponse.json({ error: error.message }, { status: 422 });
+    }
     console.error("Presentation upload error:", error);
     return NextResponse.json(
       { error: "ファイルの処理中にエラーが発生しました" },
