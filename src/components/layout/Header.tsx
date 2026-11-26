@@ -100,13 +100,12 @@ export function Header() {
       </Link>
 
       {/* PC以上: タイトル領域（<1024px は中央ロゴを出すため非表示） */}
-      <div className="hidden lg:flex min-w-0 flex-1 items-center justify-center">
-        <h1 className="truncate text-lg font-semibold text-foreground">
-          {getPageTitle(pathname)}
-        </h1>
-      </div>
+      {/* 右の名前の幅に引っ張られないよう、ヘッダー全体の中央に置く */}
+      <h1 className="hidden lg:block absolute left-1/2 top-1/2 max-w-[40%] -translate-x-1/2 -translate-y-1/2 truncate text-lg font-semibold text-foreground">
+        {getPageTitle(pathname)}
+      </h1>
 
-      <div className="md:flex-initial lg:flex-1" />
+      <div className="flex-1" />
 
       <DropdownMenu>
         <DropdownMenuTrigger
