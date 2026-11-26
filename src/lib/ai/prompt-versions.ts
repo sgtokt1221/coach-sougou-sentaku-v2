@@ -466,6 +466,11 @@ export const AI_PROMPT_VERSIONS = {
     //            overallFeedback・apSpecificNotes をやめ、priorityImprovement を最後に足した
     schemaVersion: "document-review-output-v4",
   },
+  documentPairCheck: {
+    // v1（2026-11-27）: 同じ学部に出す提出予定の志望理由書⇔自己推薦書と並べ、重なり（同じ切り口・同じ文・食い違い）と配分を出す。点には入れない
+    promptVersion: "document-pair-check-v1",
+    schemaVersion: "document-pair-check-output-v1",
+  },
   documentApMap: {
     // v1（2026-10-11）: APを要素に分け、本文が応えているかを要素ごとに判定する。
     //     AP合致度が点数1つと自由文だけで、何を足せばよいかが分からなかった。
@@ -499,7 +504,8 @@ export const AI_PROMPT_VERSIONS = {
     //     生徒が調べた大学・学部のこと（universityResearch）を渡し、できる限りそこへ寄せる。
     //     生徒の希望があっても書き出し1文の形は崩さない
     // v9（2026-11-27）: 公式サイトで確かめた学部の特色（facultyInfo）を <faculty_info> で渡す。生徒が調べたことを先に使う
-    promptVersion: "statement-draft-v9",
+    // v10（2026-11-27）: 同じ学部の提出予定のもう一通（志望理由書⇔自己推薦書）を <companion_document> で渡し、役割を分けて書く
+    promptVersion: "statement-draft-v10",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
@@ -508,7 +514,8 @@ export const AI_PROMPT_VERSIONS = {
     // 2026-11-26: 別の案（前の案と理由を足して書き直す。src/lib/ai/prompts/statement.ts の buildAlternativeRule）
     // v6（2026-11-27）: statement-draft-v8 と同じ大学への寄せ方と universityResearch
     // v7（2026-11-27）: statement-draft-v9 と同じ facultyInfo
-    promptVersion: "template-draft-v7",
+    // v8（2026-11-27）: statement-draft-v10 と同じ companion
+    promptVersion: "template-draft-v8",
     schemaVersion: "template-draft-output-v3",
   },
   storyCheck: {

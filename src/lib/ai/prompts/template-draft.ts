@@ -5,7 +5,9 @@ import {
   ACTIVITY_GROUNDING_RULE,
   DOCUMENT_COMPLETE_PROSE_RULE,
   buildStudentEmphasisRule,
+  buildCompanionRule,
   buildUniversityFitRule,
+  type CompanionForPrompt,
   type FacultyInfoForPrompt,
 } from "./shared";
 
@@ -57,7 +59,9 @@ export function buildTemplateDraftPrompt(
   /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
   universityResearch = "",
   /** 公式サイトで確かめた学部の特色（facultyInfo） */
-  facultyInfo: FacultyInfoForPrompt[] = []
+  facultyInfo: FacultyInfoForPrompt[] = [],
+  /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
+  companion: CompanionForPrompt | null = null
 ): string {
   const target = targetWordCount || 800;
   // 比率だけだとモデルが字数に落とせないため、セクションごとの目安字数を実数で渡す
@@ -96,6 +100,8 @@ export function buildTemplateDraftPrompt(
   return `${TEMPLATE_DRAFT_SYSTEM_PROMPT}
 
 ${buildUniversityFitRule(universityResearch, facultyInfo)}
+
+${buildCompanionRule(companion, documentType)}
 
 ${buildStudentEmphasisRule(emphasis)}
 

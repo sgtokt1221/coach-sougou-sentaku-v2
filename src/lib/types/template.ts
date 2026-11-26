@@ -54,6 +54,8 @@ export interface DraftGenerateRequest {
   emphasis?: string;
   /** 任意。生徒が調べて書いた、この大学・学部のこと */
   universityResearch?: string;
+  /** 下書きを作る書類。同じ学部のもう一通（提出予定）を探すとき、この書類を除く */
+  documentId?: string;
 }
 
 export interface DraftGenerateResponse {

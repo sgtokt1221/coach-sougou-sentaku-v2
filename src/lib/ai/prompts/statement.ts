@@ -7,7 +7,9 @@ import {
   ACTIVITY_GROUNDING_RULE,
   DOCUMENT_COMPLETE_PROSE_RULE,
   buildStudentEmphasisRule,
+  buildCompanionRule,
   buildUniversityFitRule,
+  type CompanionForPrompt,
   type FacultyInfoForPrompt,
 } from "./shared";
 
@@ -222,7 +224,9 @@ export function buildStatementDraftPrompt(
   /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
   universityResearch = "",
   /** 公式サイトで確かめた学部の特色（facultyInfo） */
-  facultyInfo: FacultyInfoForPrompt[] = []
+  facultyInfo: FacultyInfoForPrompt[] = [],
+  /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
+  companion: CompanionForPrompt | null = null
 ): string {
   const kind = statementKindOf(documentType);
   const target = targetWordCount || 800;
@@ -262,6 +266,8 @@ ${ACTIVITY_GROUNDING_RULE}
   抽象的な言葉だけで段落を埋めないこと。
 
 ${buildUniversityFitRule(universityResearch, facultyInfo)}
+
+${buildCompanionRule(companion, kind.name)}
 
 ${buildStudentEmphasisRule(emphasis)}
 

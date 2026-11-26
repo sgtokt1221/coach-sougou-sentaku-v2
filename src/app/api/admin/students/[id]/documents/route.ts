@@ -23,6 +23,8 @@ interface DocumentListItem {
   targetWordCount?: number;
   status: DocumentStatus;
   review?: DocumentReview;
+  /** 生徒が付けた「提出予定」 */
+  submissionPlanned: boolean;
   deadline?: string;
   updatedAt: string;
   /** 点の欄（v10 の軸と旧軸の両方。並びは score-axes.ts が決める） */
@@ -100,6 +102,7 @@ export async function GET(
         targetWordCount: data.targetWordCount ?? undefined,
         status: data.status ?? "draft",
         review: (data.review as DocumentReview) ?? undefined,
+        submissionPlanned: data.submissionPlanned === true,
         deadline: data.deadline ?? undefined,
         updatedAt:
           typeof data.updatedAt === "string"

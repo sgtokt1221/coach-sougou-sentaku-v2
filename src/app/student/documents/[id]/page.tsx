@@ -41,6 +41,7 @@ import {
   Pencil,
   Shuffle,
   Loader2,
+  Check,
 } from "lucide-react";
 import {
   ALTERNATIVE_DAILY_LIMIT,
@@ -808,6 +809,7 @@ export default function DocumentEditorPage() {
           }}
           practiceHref="/student/interview/new"
           digest
+          companionHref={(companionId) => `/student/documents/${companionId}`}
         />
       ) : null,
   };
@@ -828,6 +830,24 @@ export default function DocumentEditorPage() {
     } catch {
       setDoc((d) => (d ? { ...d, title: prev } : d));
       toast.error("タイトルを保存できませんでした");
+    }
+  }
+
+  /** 提出予定の付け外し。同じ学部・同じ種類のほかの書類の印はサーバーで外れる */
+  async function toggleSubmissionPlanned() {
+    if (!doc) return;
+    const next = !doc.submissionPlanned;
+    setDoc({ ...doc, submissionPlanned: next });
+    try {
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionPlanned: next }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setDoc((d) => (d ? { ...d, submissionPlanned: !next } : d));
+      toast.error("提出予定を変えられませんでした");
     }
   }
 
@@ -881,6 +901,19 @@ export default function DocumentEditorPage() {
               {documentStatusLabel2(doc.status)}
             </Badge>
             <DocumentReviewBadge state={doc.review?.state} />
+            <button
+              type="button"
+              onClick={toggleSubmissionPlanned}
+              aria-pressed={!!doc.submissionPlanned}
+              className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                doc.submissionPlanned
+                  ? "bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground border"
+              }`}
+            >
+              {doc.submissionPlanned && <Check className="size-3" />}
+              提出予定
+            </button>
             <span className="text-muted-foreground min-w-0 truncate text-xs">
               {doc.universityName} {doc.facultyName}
             </span>

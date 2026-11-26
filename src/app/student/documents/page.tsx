@@ -308,6 +308,9 @@ export default function DocumentsPage() {
                                       {documentStatusLabel2(doc.status)}
                                     </StatusChip>
                                   )}
+                                  {doc.submissionPlanned && (
+                                    <StatusChip tone="solid">提出予定</StatusChip>
+                                  )}
                                   {doc.review?.state && (
                                     <StatusChip tone={REVIEW_TONE[doc.review.state]}>
                                       {DOCUMENT_REVIEW_LABELS[doc.review.state]}

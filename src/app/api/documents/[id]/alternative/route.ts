@@ -23,6 +23,7 @@ import {
 } from "@/lib/documents/draft-generation";
 import type { DocumentGeneration } from "@/lib/types/document";
 import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
+import { findCompanionDocument } from "@/lib/documents/companion";
 
 /**
  * AI で作った下書きの「別の案」を作る（2026-11-26）。保存した生成条件（documents.generation）で
@@ -104,6 +105,13 @@ export async function POST(
       generation.targetWordCount || data.targetWordCount || 800;
     const emphasis = generation.emphasis ?? "";
     const universityResearch = generation.universityResearch ?? "";
+    const companion = await findCompanionDocument({
+      uid: auth.uid,
+      universityId: data.universityId,
+      facultyId: data.facultyId,
+      type: data.type,
+      excludeId: id,
+    });
     const isDev = process.env.NODE_ENV === "development";
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!isDev && !apiKey) {
@@ -142,6 +150,7 @@ export async function POST(
               targetWordCount,
               emphasis,
               universityResearch,
+              companion,
               alternative,
             })
           ).draft;
@@ -158,6 +167,7 @@ export async function POST(
               targetWordCount,
               emphasis,
               universityResearch,
+              companion,
               documentType,
               alternative,
             })

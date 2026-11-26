@@ -135,6 +135,15 @@ function useIsWide(ref: React.RefObject<HTMLDivElement | null>): boolean {
  * 生徒の画面では赤ペンを「本文に入れる」で編集中の本文へ反映できる。
  * 管理者の画面は読むだけ（onApply を渡さない）。
  */
+const PAIR_KIND: Record<
+  "same_angle" | "same_sentence" | "contradiction",
+  { label: string; className: string }
+> = {
+  same_angle: { label: "同じ切り口", className: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" },
+  same_sentence: { label: "同じ文", className: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" },
+  contradiction: { label: "食い違い", className: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200" },
+};
+
 export function DocumentReviewView({
   documentType,
   reviewedText,
@@ -144,6 +153,7 @@ export function DocumentReviewView({
   onGenerateQuestions,
   practiceHref,
   digest = false,
+  companionHref,
 }: {
   /** 書類の種類。点の軸の名前が種類で変わる */
   documentType?: string;
@@ -163,6 +173,8 @@ export function DocumentReviewView({
    * 詳細（本文と指摘・軸ごとの点・AP・面接）を下に並べる。生徒の編集画面だけ
    */
   digest?: boolean;
+  /** もう一通（書き分けの相手）を開くリンク。無ければ名前だけ出す（管理者） */
+  companionHref?: (companionId: string) => string;
 }) {
   const [questions, setQuestions] = useState<DocumentInterviewQuestion[]>(
     feedback.interviewQuestions ?? []
@@ -261,8 +273,58 @@ export function DocumentReviewView({
     previousTotal.version === currentLayout.version &&
     previousTotal.max === current.max;
 
+  const pair = feedback.pairCheck;
   const apAndInterview = (
     <>
+      {pair && (pair.overlaps.length > 0 || pair.allocation) && (
+        <section className="space-y-2">
+          <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold">
+            <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
+            もう一通との書き分け
+            {companionHref ? (
+              <Link
+                href={companionHref(pair.companionId)}
+                className="text-primary text-xs font-normal hover:underline"
+              >
+                {pair.companionTitle}
+              </Link>
+            ) : (
+              <span className="text-muted-foreground text-xs font-normal">
+                {pair.companionTitle}
+              </span>
+            )}
+          </p>
+          {pair.allocation && (
+            <p className="text-sm leading-relaxed">{pair.allocation}</p>
+          )}
+          {pair.overlaps.length > 0 && (
+            <ul className="space-y-2">
+              {pair.overlaps.map((o, i) => (
+                <li key={i} className="bg-muted/40 space-y-1.5 rounded-lg p-3">
+                  <span
+                    className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-semibold ${PAIR_KIND[o.kind].className}`}
+                  >
+                    {PAIR_KIND[o.kind].label}
+                  </span>
+                  <p className="text-sm leading-snug">
+                    <span className="text-muted-foreground mr-1 text-xs">この書類</span>
+                    「{o.thisQuote}」
+                  </p>
+                  <p className="text-sm leading-snug">
+                    <span className="text-muted-foreground mr-1 text-xs">
+                      {pair.companionType}
+                    </span>
+                    「{o.otherQuote}」
+                  </p>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {o.advice}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
       {(feedback.apMap?.length ?? 0) > 0 ? (
         <section className="space-y-2">
           <p className="flex items-center gap-1.5 text-sm font-semibold">

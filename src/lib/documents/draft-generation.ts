@@ -42,6 +42,7 @@ import type {
   DraftGenerateResponse,
 } from "@/lib/types/template";
 import { loadFacultyInfo, type FacultyInfoItem } from "@/lib/universities/faculty-info";
+import type { CompanionForPrompt } from "@/lib/ai/prompts/shared";
 
 export type { AlternativeReason };
 
@@ -162,6 +163,8 @@ export async function writeStatementDraft(
     documentType: string;
     /** 生徒が調べて書いた、この大学・学部のこと（任意） */
     universityResearch?: string;
+    /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
+    companion?: CompanionForPrompt | null;
     alternative?: AlternativeRequest;
   }
 ): Promise<StatementDraftResult> {
@@ -177,7 +180,8 @@ export async function writeStatementDraft(
       options.emphasis,
       options.documentType,
       options.universityResearch ?? "",
-      material.facultyInfo
+      material.facultyInfo,
+      options.companion ?? null
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`
@@ -323,6 +327,8 @@ export async function writeTemplateDraft(
     emphasis: string;
     /** 生徒が調べて書いた、この大学・学部のこと（任意） */
     universityResearch?: string;
+    /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
+    companion?: CompanionForPrompt | null;
     alternative?: AlternativeRequest;
   }
 ): Promise<DraftGenerateResponse> {
@@ -340,7 +346,8 @@ export async function writeTemplateDraft(
       material.selfAnalysis,
       emphasis,
       options.universityResearch ?? "",
-      material.facultyInfo
+      material.facultyInfo,
+      options.companion ?? null
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`

@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Document, DocumentCreateRequest } from "@/lib/types/document";
 import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
+import { setSubmissionPlanned } from "@/lib/documents/companion";
 
 /**
  * 認証済みユーザーの書類一覧を返す。
@@ -106,12 +107,17 @@ export async function POST(request: NextRequest) {
     }
 
     const docRef = await adminDb.collection("documents").add(docData);
+    // 2通まとめて作るときは、最初から提出予定にする（同じ学部・同じ種類の前の印は外す）
+    if (body.submissionPlanned === true) {
+      await setSubmissionPlanned(auth.uid, docRef.id, true);
+    }
     // その学部の公式サイトの情報がまだ無ければ、裏で調べ始める（下書きの前に間に合わせる）
     await ensureFacultyInfo(body.universityId, body.facultyId);
 
     const newDoc: Document = {
       id: docRef.id,
       ...docData,
+      ...(body.submissionPlanned === true ? { submissionPlanned: true } : {}),
     };
 
     return NextResponse.json(newDoc, { status: 201 });

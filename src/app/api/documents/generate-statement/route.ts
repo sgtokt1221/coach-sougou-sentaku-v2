@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
+import { findCompanionDocument } from "@/lib/documents/companion";
 import { requireRole } from "@/lib/api/auth";
 import { requireFeature } from "@/lib/api/subscription";
 import {
@@ -27,6 +28,8 @@ interface GenerateStatementRequest {
   emphasis?: string;
   /** 任意。生徒が調べて書いた、この大学・学部のこと */
   universityResearch?: string;
+  /** 下書きを作る書類。同じ学部のもう一通（提出予定）を探すとき、この書類を除く */
+  documentId?: string;
   /** 書類の種類（志望理由書 / 自己推薦書）。無ければ志望理由書 */
   documentType?: string;
 }
@@ -63,6 +66,14 @@ export async function POST(request: NextRequest) {
 
     // 公式サイトの情報がまだ無い学部は裏で調べ始める（今回は待たない。次回から使う）
     await ensureFacultyInfo(body.universityId, body.facultyId);
+    // 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書）。本文はサーバーで引く
+    const companion = await findCompanionDocument({
+      uid: auth.uid,
+      universityId: body.universityId,
+      facultyId: body.facultyId,
+      type: documentType,
+      excludeId: typeof body.documentId === "string" ? body.documentId : undefined,
+    });
     const material = await loadStatementMaterial(
       auth.uid,
       body.universityId,
@@ -88,6 +99,7 @@ export async function POST(request: NextRequest) {
         targetWordCount: body.targetWordCount || 800,
         emphasis: normalizeStudentEmphasis(body.emphasis),
         universityResearch: normalizeStudentResearch(body.universityResearch),
+        companion,
         documentType,
       }
     );

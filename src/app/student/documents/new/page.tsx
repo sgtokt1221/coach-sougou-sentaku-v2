@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Circle,
   FileText,
+  Files,
   GraduationCap,
   Loader2,
   Plus,
@@ -157,6 +158,11 @@ export default function NewDocumentPage() {
 
   const [step, setStep] = useState(0);
   const [documentType, setDocumentType] = useState<DocumentType | null>(null);
+  /**
+   * 志望理由書と自己推薦書を2通まとめて作る。この書類は志望理由書になり、下書きの後に
+   * 自己推薦書をもう1通作る。2通とも提出予定にして、役割を分けて書かせる
+   */
+  const [pairMode, setPairMode] = useState(false);
   const [selectedUniversity, setSelectedUniversity] =
     useState<UniversityOption | null>(null);
   const [frameworkType, setFrameworkType] = useState<FrameworkType | null>(
@@ -224,6 +230,7 @@ export default function NewDocumentPage() {
       targetWordCount: number;
       emphasis?: string;
       universityResearch?: string;
+      pairMode?: boolean;
       sections?: { id: string; content: string }[];
     }) => {
       if (!docId) return;
@@ -256,6 +263,7 @@ export default function NewDocumentPage() {
       targetWordCount,
       emphasis,
       universityResearch,
+      pairMode,
       sections:
         draftResult?.sections.map((s) => ({ id: s.id, content: s.content })) ??
         [],
@@ -337,6 +345,7 @@ export default function NewDocumentPage() {
           facultyName: selectedUniversity.facultyName,
           targetWordCount,
           initialContent: "",
+          ...(pairMode ? { submissionPlanned: true } : {}),
           wizardState: {
             currentStep: 3,
             writingMode: writingMode ?? undefined,
@@ -345,6 +354,7 @@ export default function NewDocumentPage() {
             targetWordCount,
             emphasis,
             universityResearch,
+            pairMode,
             completed: false,
           },
         }),
@@ -372,6 +382,7 @@ export default function NewDocumentPage() {
     selectedActivityIds,
     emphasis,
     universityResearch,
+    pairMode,
   ]);
 
   /** 次のステップへ。志望校ステップ(1)を抜けるとき早期作成し、保留中の自動保存を確定する。 */
@@ -437,6 +448,7 @@ export default function NewDocumentPage() {
         if (typeof ws?.emphasis === "string") setEmphasis(ws.emphasis);
         if (typeof ws?.universityResearch === "string")
           setUniversityResearch(ws.universityResearch);
+        if (ws?.pairMode === true) setPairMode(true);
         // 本体を優先する。編集画面で変えた目標字数は本体にしか入らず、
         // wizardState の値は古いことがある（再開して自動保存すると本体を戻してしまう）
         if (typeof doc.targetWordCount === "number") {
@@ -627,6 +639,7 @@ export default function NewDocumentPage() {
         targetWordCount,
         emphasis: emphasis.trim() || undefined,
         universityResearch: universityResearch.trim() || undefined,
+        documentId: docId ?? undefined,
       };
 
       const res = await authFetch("/api/documents/generate-draft", {
@@ -672,6 +685,7 @@ export default function NewDocumentPage() {
           emphasis: emphasis.trim() || undefined,
           universityResearch: universityResearch.trim() || undefined,
           documentType,
+          documentId: docId ?? undefined,
         }),
       });
 
@@ -706,6 +720,13 @@ export default function NewDocumentPage() {
         targetWordCount,
       };
       if (writingMode === "free") {
+        if (pairMode) {
+          // 1通目（志望理由書）を先に保存してから、それを相手に2通目（自己推薦書）を作る
+          await persistContent(data.draft, generation);
+          await createCompanionDraft();
+          await finishWizard(data.draft, generation, { contentSaved: true });
+          return;
+        }
         // 1本の本文の書類は、そのまま編集画面へ（AI添削などの道具はそちらにある）
         await finishWizard(data.draft, generation);
         return;
@@ -760,9 +781,80 @@ export default function NewDocumentPage() {
    * フレームワーク形式をやめた（2026-10-09）ので、1本の本文で作る書類は下書きを作った時点で
    * 編集画面へ移す（以前は「書類として保存」を押すまで道具が使えなかった）。
    */
+  /**
+   * 2通まとめて作るときの2通目（自己推薦書）。提出予定で作り、サーバーが1通目（提出予定の志望理由書）を
+   * 相手として渡して下書きを作る。失敗しても1通目は残し、知らせるだけにする。
+   */
+  async function createCompanionDraft() {
+    if (!selectedUniversity) return;
+    const fail = () =>
+      toast.error("自己推薦書は作れませんでした。一覧から作り直せます");
+    try {
+      const created = await authFetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "自己推薦書",
+          universityId: selectedUniversity.universityId,
+          facultyId: selectedUniversity.facultyId,
+          universityName: selectedUniversity.universityName,
+          facultyName: selectedUniversity.facultyName,
+          targetWordCount,
+          initialContent: "",
+          submissionPlanned: true,
+          wizardState: {
+            currentStep: 4,
+            writingMode: "free",
+            selectedActivityIds,
+            targetWordCount,
+            emphasis,
+            universityResearch,
+            pairMode: true,
+            completed: true,
+          },
+        }),
+      });
+      if (!created.ok) return fail();
+      const second = (await created.json()) as { id: string };
+      const gen = await authFetch("/api/documents/generate-statement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          universityId: selectedUniversity.universityId,
+          facultyId: selectedUniversity.facultyId,
+          targetWordCount,
+          emphasis: emphasis.trim() || undefined,
+          universityResearch: universityResearch.trim() || undefined,
+          documentType: "自己推薦書",
+          documentId: second.id,
+        }),
+      });
+      if (!gen.ok) return fail();
+      const data = (await gen.json()) as { draft: string };
+      const saved = await authFetch(`/api/documents/${second.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: data.draft,
+          generation: {
+            source: "statement",
+            emphasis: emphasis.trim() || undefined,
+            universityResearch: universityResearch.trim() || undefined,
+            targetWordCount,
+          } satisfies DocumentGenerationInput,
+        }),
+      });
+      if (!saved.ok) return fail();
+    } catch {
+      fail();
+    }
+  }
+
   async function finishWizard(
     content: string,
-    generation?: DocumentGenerationInput
+    generation?: DocumentGenerationInput,
+    /** 本文はもう保存してある（同じ本文の版を二重に積まない） */
+    options?: { contentSaved?: boolean }
   ) {
     if (!docId) return;
     setSaving(true);
@@ -772,9 +864,8 @@ export default function NewDocumentPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content,
+          ...(options?.contentSaved ? {} : { content, generation }),
           targetWordCount,
-          generation,
           wizardState: {
             currentStep: 4,
             writingMode: writingMode ?? undefined,
@@ -783,6 +874,7 @@ export default function NewDocumentPage() {
             targetWordCount,
             emphasis,
             universityResearch,
+            pairMode,
             completed: true,
           },
         }),
@@ -924,8 +1016,11 @@ export default function NewDocumentPage() {
             {CREATABLE_DOCUMENT_TYPES.map((type) => (
               <ChoiceCard
                 key={type}
-                selected={documentType === type}
-                onClick={() => setDocumentType(type)}
+                selected={documentType === type && !pairMode}
+                onClick={() => {
+                  setDocumentType(type);
+                  setPairMode(false);
+                }}
                 icon={FileText}
                 title={type}
                 description={
@@ -937,6 +1032,16 @@ export default function NewDocumentPage() {
                 }
               />
             ))}
+            <ChoiceCard
+              selected={pairMode}
+              onClick={() => {
+                setDocumentType("志望理由書");
+                setPairMode(true);
+              }}
+              icon={Files}
+              title="志望理由書と自己推薦書"
+              description="同じ大学・学部に2通出すとき。役割を分けて2通の下書きを作ります。"
+            />
           </div>
         </section>
       )}
@@ -1311,7 +1416,9 @@ export default function NewDocumentPage() {
           {!draftResult && (
             <dl className="bg-muted grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 rounded-xl px-4 py-4 text-sm sm:px-6">
               <dt className="text-muted-foreground">書類</dt>
-              <dd className="font-medium">{documentType}</dd>
+              <dd className="font-medium">
+                {pairMode ? "志望理由書・自己推薦書" : documentType}
+              </dd>
               <dt className="text-muted-foreground">志望校</dt>
               <dd className="font-medium">
                 {selectedUniversity?.universityName}{" "}
@@ -1378,7 +1485,7 @@ export default function NewDocumentPage() {
                 </button>
               )}
 
-              {writingMode === "free" && (
+              {writingMode === "free" && !pairMode && (
                 <button
                   type="button"
                   onClick={handleStartFreeWriting}
@@ -1408,7 +1515,7 @@ export default function NewDocumentPage() {
               mode="area"
               size="sm"
               className="bg-muted rounded-xl px-4 py-12"
-              title="AIが下書きを書いています"
+              title={pairMode ? "AIが2通の下書きを書いています" : "AIが下書きを書いています"}
             />
           )}
 

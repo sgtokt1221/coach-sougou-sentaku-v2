@@ -55,6 +55,8 @@ export interface DocumentWizardState {
   emphasis?: string;
   /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
   universityResearch?: string;
+  /** 志望理由書と自己推薦書を2通まとめて作る */
+  pairMode?: boolean;
   /** 書き方（構造に沿って書く / 自由に書く） */
   writingMode?: string;
 }
@@ -113,6 +115,11 @@ export interface Document {
   generation?: DocumentGeneration;
   /** 「別の案」を作った回数（日本時間の日付ごと。サーバーだけが書く） */
   alternativeUsage?: { date: string; count: number };
+  /**
+   * 提出予定（2026-11-27〜）。同じ学部・同じ種類で1通だけ（付け替えると前の印は外れる）。
+   * 志望理由書と自己推薦書の提出予定どうしが組になり、下書きと添削で書き分けを見る。
+   */
+  submissionPlanned?: boolean;
 }
 
 export interface DocumentVersion {
@@ -158,6 +165,25 @@ export interface DocumentReviewRecord {
   content: string;
   feedback: DocumentFeedback;
   feedbackAt: string;
+}
+
+export interface DocumentPairOverlap {
+  /** same_angle: 同じ経験を同じ切り口で書いている / same_sentence: ほぼ同じ文 / contradiction: 事実が食い違う */
+  kind: "same_angle" | "same_sentence" | "contradiction";
+  /** この書類の本文から一字一句 */
+  thisQuote: string;
+  /** もう一通の本文から一字一句 */
+  otherQuote: string;
+  advice: string;
+}
+
+export interface DocumentPairCheck {
+  companionId: string;
+  companionType: string;
+  companionTitle: string;
+  overlaps: DocumentPairOverlap[];
+  /** この書類が受け持つこと・もう一通に任せること（2文以内） */
+  allocation: string;
 }
 
 export interface DocumentFeedback {
@@ -218,6 +244,9 @@ export interface DocumentFeedback {
   apMap?: DocumentApMapItem[] | null;
   /** apMap を作った呼び出しの版とモデル */
   apMapMetadata?: AiGenerationMetadata | null;
+  /** 同じ学部の提出予定のもう一通（志望理由書⇔自己推薦書）との書き分け。点には入れない */
+  pairCheck?: DocumentPairCheck | null;
+  pairCheckMetadata?: AiGenerationMetadata | null;
   /**
    * 前回の添削の指摘が直ったか（2026-10-11 追加）。前回の添削が無い・本文が
    * 変わっていない・判定に失敗したときは無い（src/lib/documents/progress.ts）
@@ -299,6 +328,8 @@ export interface DocumentCreateRequest {
   initialContent?: string;
   /** 早期作成時のウィザード進行状態 */
   wizardState?: DocumentWizardState;
+  /** 2通まとめて作るとき、最初から提出予定にする */
+  submissionPlanned?: boolean;
 }
 
 /**

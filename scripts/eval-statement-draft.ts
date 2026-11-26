@@ -365,10 +365,108 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
   console.log(p.id, rep, `${row.fill}%`, row.percentage, JSON.stringify(row.scores));
 }
 
+/**
+ * --pair: 志望理由書と自己推薦書の書き分け。志望理由書を作り、自己推薦書を「志望理由書を相手に渡す／渡さない」の
+ * 2通りで作って、2通の12字の重なり・書き分けの判定・添削の点を比べる（結果は pair.jsonl）
+ */
+const PAIR = process.argv.includes("--pair");
+
+async function generateDoc(
+  client: Anthropic,
+  p: Profile,
+  documentType: string,
+  companion: { type: string; content: string } | null
+): Promise<string> {
+  const ap = loadAp(p.universityId, p.facultyId);
+  const prompt = buildStatementDraftPrompt(
+    p.universityName,
+    p.facultyName,
+    ap,
+    p.selfAnalysis,
+    TARGET,
+    p.activities,
+    "",
+    documentType,
+    RESEARCH ? (RESEARCH_BY_ID[p.id] ?? "") : "",
+    facultyInfoOf(p),
+    companion
+  );
+  const response = await client.messages.parse({
+    model: GEN_MODEL,
+    max_tokens: 16384,
+    system: prompt,
+    messages: [{ role: "user", content: `reference_dataに基づいて${documentType}を生成してください。` }],
+    output_config: { format: zodOutputFormat(StatementDraftOutputSchema), effort: "low" },
+  });
+  if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+    throw new Error(`生成の構造化応答が不正: ${response.stop_reason}`);
+  }
+  const structure = await fitStatementToTarget(client, { ...response.parsed_output.structure }, TARGET, "", documentType, GEN_MODEL);
+  return joinStatementStructure(structure);
+}
+
+async function runPair(client: Anthropic, p: Profile, rep: number): Promise<void> {
+  const ap = loadAp(p.universityId, p.facultyId);
+  const statement = await generateDoc(client, p, "志望理由書", null);
+  const [paired, alone] = await Promise.all([
+    generateDoc(client, p, "自己推薦書", { type: "志望理由書", content: statement }),
+    generateDoc(client, p, "自己推薦書", null),
+  ]);
+  const companion = { id: "statement", type: "志望理由書", title: "志望理由書", content: statement };
+  const review = (content: string) =>
+    runDocumentReview(
+      {
+        content,
+        documentType: "自己推薦書",
+        universityName: p.universityName,
+        facultyName: p.facultyName,
+        admissionPolicy: ap,
+        universityResearch: RESEARCH ? RESEARCH_BY_ID[p.id] : undefined,
+        facultyInfo: facultyInfoOf(p),
+        selfAnalysis: p.selfAnalysis,
+        activities: p.activities,
+        targetWordCount: TARGET,
+        previous: null,
+        model: REVIEW_MODEL,
+        companion,
+      },
+      client
+    );
+  const [rp, ra] = await Promise.all([review(paired), review(alone)]);
+  const pct = (fb: Parameters<typeof documentScoreLayout>[0]) => {
+    const layout = documentScoreLayout(fb, "自己推薦書");
+    return layout.incomplete ? null : documentTotal(layout).percentage;
+  };
+  const row = {
+    id: p.id,
+    rep,
+    pairedOverlap: overlapWith(paired, statement),
+    aloneOverlap: overlapWith(alone, statement),
+    pairedOverlaps: rp.feedback.pairCheck?.overlaps.length ?? null,
+    aloneOverlaps: ra.feedback.pairCheck?.overlaps.length ?? null,
+    pairedPct: pct(rp.feedback),
+    alonePct: pct(ra.feedback),
+  };
+  writeFileSync(
+    `${OUT}/traces/${p.id}_pair${rep}.json`,
+    JSON.stringify({ statement, paired, alone, pairedCheck: rp.feedback.pairCheck, aloneCheck: ra.feedback.pairCheck }, null, 2)
+  );
+  appendFileSync(`${OUT}/pair.jsonl`, JSON.stringify(row) + "\n");
+  console.log(JSON.stringify(row));
+}
+
 async function main(): Promise<void> {
   if (SUMMARIZE) return summarize();
   mkdirSync(`${OUT}/traces`, { recursive: true });
   const client = new Anthropic();
+  if (PAIR) {
+    await Promise.all(
+      PROFILES.flatMap((p) => Array.from({ length: REPS }, (_, rep) => ({ p, rep }))).map(({ p, rep }) =>
+        runPair(client, p, rep).catch((err) => console.log(p.id, rep, "ERROR", String(err).slice(0, 300)))
+      )
+    );
+    return;
+  }
   const jobs = PROFILES.flatMap((p) => Array.from({ length: REPS }, (_, rep) => ({ p, rep })));
   await Promise.all(
     jobs.map(async ({ p, rep }) => {

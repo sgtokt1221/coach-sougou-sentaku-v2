@@ -97,6 +97,8 @@ interface DocumentListItem {
   targetWordCount?: number;
   status: DocumentStatus;
   review?: DocumentReview;
+  /** 生徒が付けた「提出予定」 */
+  submissionPlanned?: boolean;
   deadline?: string;
   updatedAt: string;
   /** 点の欄（v10 の軸と旧軸の両方。並びは score-axes.ts が決める） */
@@ -607,6 +609,9 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                             >
                               {statusCfg.label}
                             </Badge>
+                            {doc.submissionPlanned && (
+                              <Badge className="text-[10px]">提出予定</Badge>
+                            )}
                             <DocumentReviewBadge state={doc.review?.state} />
                           </div>
                         </td>

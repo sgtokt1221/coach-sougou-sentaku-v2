@@ -27,6 +27,8 @@ import {
   judgeProgress,
 } from "@/lib/documents/progress";
 import { loadFacultyInfo } from "@/lib/universities/faculty-info";
+import { findCompanionDocument, type CompanionDocument } from "./companion";
+import { judgePair } from "./pair-judge";
 import type { FacultyInfoForPrompt } from "@/lib/ai/prompts/shared";
 import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
 
@@ -89,6 +91,8 @@ export interface DocumentReviewInput {
   universityResearch?: string;
   /** 公式サイトで確かめた学部の特色（facultyInfo）。先生が外した項目は含めない */
   facultyInfo?: FacultyInfoForPrompt[];
+  /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書）。あれば書き分けを見る */
+  companion?: CompanionDocument | null;
   selfAnalysis?: unknown;
   activities?: unknown[];
   targetWordCount?: number;
@@ -220,6 +224,20 @@ export async function runDocumentReview(
         })
       : Promise.resolve(null);
 
+  /** もう一通との書き分け。APとの対応表と同じく並列の別呼び出しで、点には入れない */
+  const pairPromise =
+    input.companion && !incompleteByLength
+      ? judgePair({
+          client,
+          model: reviewModel,
+          content,
+          documentType: input.documentType ?? "出願書類",
+          companion: input.companion,
+          universityName: input.universityName ?? "未指定",
+          facultyName: input.facultyName ?? "未指定",
+        })
+      : Promise.resolve(null);
+
   /**
    * 日本語の自然さ（話し言葉・重言・ら抜き・決まり文句・語の組み合わせ）。
    * 本体の赤ペンは5件で、その枠を文法の誤りが先に使うため、不自然さが素通りしていた。
@@ -326,6 +344,7 @@ ${content}
 
   const parsed = response.parsed_output;
   const apMap = await apMapPromise;
+  const pairCheck = await pairPromise;
   const progressJudged = await progressPromise;
   const naturalness = await naturalnessPromise;
   const progress =
@@ -421,6 +440,11 @@ ${content}
     apMapMetadata: apMap
       ? { ...AI_PROMPT_VERSIONS.documentApMap, model: reviewModel }
       : null,
+    // 作り直す結果は null で明示的に上書きする（merge で前回の書き分けが残らないように）
+    pairCheck,
+    pairCheckMetadata: pairCheck
+      ? { ...AI_PROMPT_VERSIONS.documentPairCheck, model: reviewModel }
+      : null,
     aiMetadata: {
       ...AI_PROMPT_VERSIONS.documentReview,
       model: reviewModel,
@@ -494,7 +518,7 @@ export async function reviewDocumentCore(params: {
    * 登録済みの実績と突き合わせられないと、書かれている経験が本人のものか
    * 判断できず、逆に強い実績を書き落としていても指摘できない。
    */
-  const [, { selfAnalysis, activities }, facultyInfo] = await Promise.all([
+  const [, { selfAnalysis, activities }, facultyInfo, companion] = await Promise.all([
     // まだ無い学部は調べる処理を積むだけ（調べ終わるのは待たない）。次回の添削から使う
     ensureFacultyInfo(universityId, facultyId).then(() => undefined),
     loadStudentDocumentContext(params.ownerUid),
@@ -502,6 +526,14 @@ export async function reviewDocumentCore(params: {
       typeof universityId === "string" ? universityId : undefined,
       typeof facultyId === "string" ? facultyId : undefined
     ),
+    // 添削している書類が提出予定でなくても、相手は同じ学部の提出予定のもう一通
+    findCompanionDocument({
+      uid: params.ownerUid,
+      universityId,
+      facultyId,
+      type: documentData.type,
+      excludeId: params.documentId,
+    }).catch(() => null),
   ]);
 
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -519,6 +551,7 @@ export async function reviewDocumentCore(params: {
         ? documentData.generation.universityResearch
         : undefined,
     facultyInfo,
+    companion,
     selfAnalysis,
     activities,
     targetWordCount: documentData.targetWordCount,

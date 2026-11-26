@@ -5,8 +5,11 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { DocumentGeneration, DocumentReview } from "@/lib/types/document";
-import { normalizeStudentEmphasis,
-  normalizeStudentResearch } from "@/lib/ai/prompts/shared";
+import {
+  normalizeStudentEmphasis,
+  normalizeStudentResearch,
+} from "@/lib/ai/prompts/shared";
+import { setSubmissionPlanned } from "@/lib/documents/companion";
 
 /**
  * 指定書類の詳細を取得する。
@@ -188,6 +191,11 @@ export async function PUT(
     }
 
     await docRef.update(updates);
+    // 提出予定。付けるときは同じ学部・同じ種類のほかの書類の印を外す（companion.ts）
+    if (typeof body.submissionPlanned === "boolean") {
+      await setSubmissionPlanned(auth.uid, id, body.submissionPlanned);
+      updates.submissionPlanned = body.submissionPlanned;
+    }
 
     return NextResponse.json({
       id,
