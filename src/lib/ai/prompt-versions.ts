@@ -362,7 +362,12 @@ export const AI_PROMPT_VERSIONS = {
     //     文字から測れず、本番で重い「書類との整合・深掘りで崩れないか・自分の言葉か」が
     //     軸に無かった。保存キーも変える（旧回の enthusiasm は読み取り専用）。
     //     面接官にも志望理由書を渡し、書類に基づいて質問・確認させる（statementSnapshot）。
-    promptVersion: "interview-score-v5",
+    // v6（2026-11-27）: プレゼンと集団討論の合計を、その形式の4軸にした（満点40は同じ）。
+    //     プレゼン: 明確さ・AP合致度・発表の論理構成・データの根拠
+    //     集団討論: 明確さ・協調性・リーダーシップ・傾聴力
+    //     それまでは個人面接と同じ共通4軸で、発表・討論の出来が「合計外」だった。
+    //     集団討論は AI が演じた他の受験生と本人の発言を分けて採点させる。
+    promptVersion: "interview-score-v6",
     schemaVersion: "interview-score-output-v1",
   },
   interviewDocumentDefense: {

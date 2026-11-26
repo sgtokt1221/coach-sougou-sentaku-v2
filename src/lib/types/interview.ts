@@ -69,6 +69,11 @@ export interface InterviewScores {
    * 旧データには無いので、読む側は interviewTotalMax() を通す。
    */
   totalMax?: number;
+  /**
+   * 合計の軸の決め方。"mode-v6"（2026-11-27〜）は、プレゼンと集団討論の合計を
+   * その形式の軸で出した回（axis-layout.ts の MODE_TOTAL）。無い回は共通4軸の合計。
+   */
+  totalBasis?: "mode-v6";
   // プレゼンテーション追加項目
   presentationStructure?: number; // 発表の論理構成 0-10
   dataEvidence?: number; // データの根拠 0-10

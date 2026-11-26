@@ -48,4 +48,19 @@ const withVideo = { ...v5, bodyLanguage: 7 };
 const bl = interviewAxisLayout("individual", withVideo).find((a) => a.key === "bodyLanguage")!;
 assert.equal(interviewAxisLabel(bl), "ボディランゲージ（合計外）");
 
+// v6 集団討論: 明確さ・協調性・リーダーシップ・傾聴力が合計、AP・一貫性・具体性は合計外
+const gd6 = { clarity: 6, apAlignment: 5, consistency: 6, specificity: 3, bodyLanguage: null, collaboration: 7, leadership: 5, listening: 7, total: 25, totalMax: 40, totalBasis: "mode-v6" as const };
+assert.equal(sumInTotalAxes("group_discussion", gd6), 25);
+const gdAxes = interviewAxisLayout("group_discussion", gd6);
+assert.equal(interviewAxisLabel(gdAxes.find((a) => a.key === "specificity")!), "具体性（合計外）");
+assert.equal(interviewAxisLabel(gdAxes.find((a) => a.key === "listening")!), "傾聴力");
+// v5 までの集団討論: 共通4軸が合計のまま、討論の軸は合計外
+const gd5 = { clarity: 6, apAlignment: 5, consistency: 6, specificity: 6, bodyLanguage: null, collaboration: 7, leadership: 5, listening: 7, total: 23, totalMax: 40 };
+assert.equal(sumInTotalAxes("group_discussion", gd5), 23);
+assert.equal(interviewAxisLabel(interviewAxisLayout("group_discussion", gd5).find((a) => a.key === "listening")!), "傾聴力（合計外）");
+// v6 プレゼン: 明確さ・AP合致度・発表の論理構成・データの根拠が合計
+const pr6 = { clarity: 7, apAlignment: 6, consistency: 6, specificity: 5, bodyLanguage: null, presentationStructure: 7, dataEvidence: 5, resourceConsistency: 6, total: 25, totalMax: 40, totalBasis: "mode-v6" as const };
+assert.equal(sumInTotalAxes("presentation", pr6), 25);
+assert.equal(interviewAxisLabel(interviewAxisLayout("presentation", pr6).find((a) => a.key === "resourceConsistency")!), "資料との整合性（合計外）");
+
 console.log("verify-interview-axis-layout: ok");

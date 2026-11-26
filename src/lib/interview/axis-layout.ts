@@ -10,7 +10,10 @@ import type { InterviewScores } from "@/lib/types/interview";
  *   - 〜v3: 共通4軸。口頭試問は共通4軸＋専門知識で満点50
  * 以前は生徒の結果画面だけがこれを持ち、管理者の詳細は4軸固定で合計と合わなかった。
  */
-export type InterviewAxisKey = Exclude<keyof InterviewScores, "total" | "totalMax">;
+export type InterviewAxisKey = Exclude<
+  keyof InterviewScores,
+  "total" | "totalMax" | "totalBasis"
+>;
 
 export interface InterviewAxis {
   key: InterviewAxisKey;
@@ -42,6 +45,16 @@ const MODE_EXTRA: Record<string, InterviewAxisKey[]> = {
   group_discussion: ["collaboration", "leadership", "listening"],
 };
 
+/**
+ * v6（2026-11-27〜、scores.totalBasis = "mode-v6"）で合計に入る軸。満点は40のまま。
+ * それまでのプレゼン・集団討論は個人面接と同じ共通4軸が合計で、発表や討論の出来
+ * （発表の論理構成・協調性など）が「合計外」だった。外れた共通軸は参考値として残す。
+ */
+export const MODE_TOTAL: Record<string, InterviewAxisKey[]> = {
+  presentation: ["clarity", "apAlignment", "presentationStructure", "dataEvidence"],
+  group_discussion: ["clarity", "collaboration", "leadership", "listening"],
+};
+
 export function interviewAxisLayout(
   mode: string | undefined,
   scores: Partial<InterviewScores> | null | undefined
@@ -54,7 +67,10 @@ export function interviewAxisLayout(
   const oralV4orLater = isOral && !legacyOral && has("knowledgeAccuracy") && has("criticalThinking");
 
   const inTotal = new Set<InterviewAxisKey>();
-  if (oralV4orLater) {
+  const modeTotal = s.totalBasis === "mode-v6" ? MODE_TOTAL[mode ?? ""] : undefined;
+  if (modeTotal) {
+    modeTotal.forEach((k) => inTotal.add(k));
+  } else if (oralV4orLater) {
     ["clarity", "specificity", "knowledgeAccuracy", "criticalThinking"].forEach((k) =>
       inTotal.add(k as InterviewAxisKey)
     );

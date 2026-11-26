@@ -10,6 +10,7 @@ import type {
   VideoAnalysis,
 } from "@/lib/types/interview";
 import { INTERVIEW_CONTENT_MAX } from "@/lib/types/interview";
+import { MODE_TOTAL } from "@/lib/interview/axis-layout";
 
 /**
  * 面接スコアリング AI 呼び出しのコア機能。
@@ -101,7 +102,13 @@ export async function scoreInterviewCore(
 
   // 会話をテキスト形式に変換
   const conversationText = input.messages
-    .map((m) => `${m.role === "ai" ? "面接官" : "受験生"}: ${m.content}`)
+    // 集団討論は AI が司会・他の受験生・教員を1つの発言にまとめて演じる。
+    // 「面接官」とだけ付けると、他の受験生の発言と本人の発言の区別が採点に伝わらない
+    .map((m) =>
+      input.mode === "group_discussion"
+        ? `${m.role === "ai" ? "AI（司会・他の受験生・教員）" : "受験生D（本人）"}: ${m.content}`
+        : `${m.role === "ai" ? "面接官" : "受験生"}: ${m.content}`
+    )
     .join("\n");
 
   const evaluationPrompt = buildInterviewEvaluationPrompt(
@@ -205,8 +212,8 @@ export async function scoreInterviewCore(
    * 要求しているのに、保存時に捨てていた（監査 P0-2）。AI を呼んで採点させた
    * 結果を使わず、どのモードも実質同じ4軸で見ている状態だった。
    *
-   * 合計には入れない。モードごとに軸数が変わると満点が変わり、
-   * 面接どうしの比較ができなくなる（P0-1 と同じ失敗を繰り返さない）。
+   * 合計の満点は40のまま変えない（軸数を足すと満点が変わり、面接どうしを比べられない）。
+   * プレゼンと集団討論は v6 から、合計の4軸をその形式の軸に入れ替える（下の modeTotal）。
    */
   const MODE_KEYS = [
     "presentationStructure",
@@ -275,6 +282,25 @@ export async function scoreInterviewCore(
         modeScores.criticalThinking
       : null;
 
+  /**
+   * v6（2026-11-27）: プレゼンと集団討論の合計を、その形式で見たい4軸にする。
+   * それまでは個人面接と同じ共通4軸で、討論の協調性・傾聴力や発表の構成が合計外だった。
+   * 具体性（いつ・どこで・何をしたか）は社会のテーマを話し合う討論に合わず、低く出ていた。
+   * 軸が1つでも欠けた回は従来の合計に戻す。
+   */
+  const modeTotalKeys = MODE_TOTAL[input.mode ?? ""];
+  const axisValue = (k: string): number | undefined => {
+    const v =
+      k in modeScores
+        ? modeScores[k as keyof typeof modeScores]
+        : (parsed.scores as Record<string, unknown>)[k];
+    return typeof v === "number" ? v : undefined;
+  };
+  const modeTotal =
+    modeTotalKeys && modeTotalKeys.every((k) => axisValue(k) !== undefined)
+      ? modeTotalKeys.reduce((sum, k) => sum + (axisValue(k) ?? 0), 0)
+      : null;
+
   const scores: InterviewScores = {
     clarity: parsed.scores.clarity,
     apAlignment: parsed.scores.apAlignment,
@@ -282,8 +308,9 @@ export async function scoreInterviewCore(
     specificity: parsed.scores.specificity,
     bodyLanguage,
     ...modeScores,
-    total: oralExamTotal ?? contentTotal,
+    total: oralExamTotal ?? modeTotal ?? contentTotal,
     totalMax: INTERVIEW_CONTENT_MAX,
+    ...(modeTotal !== null ? { totalBasis: "mode-v6" as const } : {}),
   };
 
   const feedback: InterviewFeedback = {
