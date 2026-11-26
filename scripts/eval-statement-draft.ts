@@ -24,6 +24,7 @@ import { fitStatementToTarget, joinStatementStructure } from "@/lib/documents/st
 import { runDocumentReview } from "@/lib/documents/review-core";
 import { documentScoreLayout, documentTotal } from "@/lib/documents/score-axes";
 import type { ActivityContext } from "@/lib/documents/student-context";
+import type { FacultyInfoForPrompt } from "@/lib/ai/prompts/shared";
 
 function opt(name: string): string | undefined {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -43,13 +44,24 @@ const BASE = opt("base") ?? "gen-o55-v6";
 const EMPHASIS = process.argv.includes("--emphasis");
 /** --research を付けると、生徒が調べて書いた「この大学・学部のこと」を渡す（作成画面の任意の欄） */
 const RESEARCH = process.argv.includes("--research");
+/**
+ * --faculty-info を付けると、scripts/research-faculty-info.ts の試し実行で取った
+ * 公式サイトの学部の特色（.claude/hillclimb/faculty-info/<大学>__<学部>.json）を下書きと添削に渡す
+ */
+const FACULTY_INFO = process.argv.includes("--faculty-info");
+function facultyInfoOf(p: { universityId: string; facultyId: string }): FacultyInfoForPrompt[] {
+  if (!FACULTY_INFO) return [];
+  const path = `.claude/hillclimb/faculty-info/${p.universityId}__${p.facultyId}.json`;
+  const d = JSON.parse(readFileSync(path, "utf8")) as { items: FacultyInfoForPrompt[] };
+  return d.items.map((i) => ({ category: i.category, title: i.title, quote: i.quote }));
+}
 const RESEARCH_BY_ID: Record<string, string> = {
   "P1-law":
     "オープンキャンパスの模擬授業で、労働法の先生が「契約書が無くても労働契約は成立するが、条件を証明するのが難しくなる」と話していた。2年次から司法・行政・ビジネスなどのコースに分かれて学ぶと聞いた。",
   "P2-nursing":
-    "1年次から附属病院や地域の施設で実習があると在学生が話していた。退院支援や在宅看護を学ぶ授業があり、他の医療系学部と合同で学ぶ授業もあるとパンフレットに書いてあった。",
+    "オープンキャンパスで、1年次から地域での実習があると在学生が話していた。医学部や薬学部と一緒に学ぶ授業があるとパンフレットに書いてあった。",
   "P3-policy":
-    "研究会（ゼミ）に1年生から入れる。法律・経済・情報など分野をまたいで科目を取れる。地域の現場に入ってフィールドワークをする授業がある。",
+    "説明会で、1年次は学科に所属せずに基礎を広く学び、2年次に学科を選ぶと聞いた。企業や自治体と連携してキャンパスの外で調べる授業がある。",
 };
 const EMPHASIS_BY_ID: Record<string, { text: string; mark: RegExp }> = {
   "P1-law": {
@@ -123,9 +135,9 @@ const PROFILES: Profile[] = [
   },
   {
     id: "P2-nursing",
-    universityId: "chiba-u",
+    universityId: "kindai-u",
     facultyId: "nursing",
-    universityName: "千葉大学",
+    universityName: "近畿大学",
     facultyName: "看護学部",
     selfAnalysis: {
       values: ["その人がその人らしく暮らし続けられること"],
@@ -148,9 +160,9 @@ const PROFILES: Profile[] = [
   },
   {
     id: "P3-policy",
-    universityId: "keio-u",
+    universityId: "kwansei-u",
     facultyId: "policy",
-    universityName: "慶應義塾大学",
+    universityName: "関西学院大学",
     facultyName: "総合政策学部",
     selfAnalysis: {
       values: ["地元に人が戻ってこられる町"],
@@ -225,6 +237,10 @@ interface Row {
   genMs: number;
   totalMs: number;
   emphasisInIntro?: boolean;
+  /** 本文に出た教員・研究室らしき語の数（0 であること） */
+  teacherNames: number;
+  /** 学部情報の原文を半分以上そのまま写した項目の数 */
+  quoteCopies: number;
 }
 
 function summarize(): void {
@@ -272,7 +288,8 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
       p.activities,
       EMPHASIS ? (EMPHASIS_BY_ID[p.id]?.text ?? "") : "",
       "志望理由書",
-      RESEARCH ? (RESEARCH_BY_ID[p.id] ?? "") : ""
+      RESEARCH ? (RESEARCH_BY_ID[p.id] ?? "") : "",
+      facultyInfoOf(p)
     ) +
     (ALTERNATIVE && previousDraft
       ? `\n\n${buildAlternativeRule({ reason: ALTERNATIVE, previousDraft })}`
@@ -305,6 +322,7 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
       facultyName: p.facultyName,
       admissionPolicy: ap,
       universityResearch: RESEARCH ? RESEARCH_BY_ID[p.id] : undefined,
+      facultyInfo: facultyInfoOf(p),
       selfAnalysis: p.selfAnalysis,
       activities: p.activities,
       targetWordCount: TARGET,
@@ -327,6 +345,8 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
     praise: /共感|魅力を感じ|教育理念|理念に/.test(draft),
     selfClaim: /私の強みは/.test(draft),
     invented: inventedNumbers(draft, p),
+    teacherNames: (draft.match(/教授|准教授|先生|研究室/g) ?? []).length,
+    quoteCopies: facultyInfoOf(p).filter((i) => overlapWith(draft, i.quote) > 0.5).length,
     genMs,
     totalMs: Date.now() - t0,
     ...(EMPHASIS && EMPHASIS_BY_ID[p.id]

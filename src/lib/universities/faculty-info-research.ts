@@ -15,7 +15,10 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { AI_MODEL_SONNET } from "@/lib/ai/prompt-versions";
 import {
+  FACULTY_INFO_COLLECTION,
+  FACULTY_INFO_VERSION,
   PERSON_LIKE,
+  facultyInfoDocId,
   inAllowedDomains,
   numbersIn,
   quoteInPage,
@@ -341,4 +344,158 @@ export async function researchFaculty(
     if (result.items.length >= FACULTY_RESEARCH_LIMITS.maxItems) break;
   }
   return finish();
+}
+
+// ---------------------------------------------------------------- 調べて保存する
+
+/** 1か月に調べる学部の上限。超えたら調べない（費用の天井） */
+export const MAX_FACULTY_RESEARCH_PER_MONTH = 40;
+/** 失敗がこの回数に達したら、自動では調べ直さない（管理画面からは取り直せる） */
+export const MAX_FACULTY_RESEARCH_ATTEMPTS = 2;
+const LEASE_MS = 6 * 60 * 1000;
+
+export type FacultyInfoJobOutcome =
+  | "saved"
+  | "empty"
+  | "failed"
+  | "skipped-running"
+  | "skipped-capped"
+  | "skipped-no-faculty";
+
+function jstMonthKey(now = new Date()): string {
+  return new Date(now.getTime() + 9 * 3600 * 1000).toISOString().slice(0, 7);
+}
+
+/**
+ * 1学部を調べて facultyInfo に保存する（Cloud Tasks から呼ぶ）。
+ * 想定内の失敗は例外にせず結果で返す。例外にすると Cloud Tasks が再試行し、検索代をもう一度払う。
+ */
+export async function runFacultyInfoJob(
+  db: FirebaseFirestore.Firestore,
+  universityId: string,
+  facultyId: string,
+  client: Anthropic
+): Promise<FacultyInfoJobOutcome> {
+  const ref = db.doc(
+    `${FACULTY_INFO_COLLECTION}/${facultyInfoDocId(universityId, facultyId)}`
+  );
+
+  // 学部が実在するか。リクエストの ID をそのまま信じて費用を使わない
+  const uniSnap = await db.doc(`universities/${universityId}`).get();
+  const uni = uniSnap.data();
+  const faculty = Array.isArray(uni?.faculties)
+    ? (
+        uni!.faculties as { id?: string; name?: string; admissionUrl?: string }[]
+      ).find((f) => f.id === facultyId)
+    : undefined;
+  if (!uni || !faculty) return "skipped-no-faculty";
+
+  // 二重実行と月の上限は、同じトランザクションで確かめる
+  const counterRef = db.doc("systemJobs/facultyInfo");
+  const gate = await db.runTransaction(async (tx) => {
+    const [cur, counter] = await Promise.all([tx.get(ref), tx.get(counterRef)]);
+    const lease = cur.data()?.leaseUntil;
+    if (typeof lease === "string" && lease > new Date().toISOString()) {
+      return "running" as const;
+    }
+    const month = jstMonthKey();
+    const runs =
+      counter.data()?.month === month ? Number(counter.data()?.runs ?? 0) : 0;
+    if (runs >= MAX_FACULTY_RESEARCH_PER_MONTH) return "capped" as const;
+    tx.set(counterRef, { month, runs: runs + 1 }, { merge: true });
+    tx.set(
+      ref,
+      {
+        universityId,
+        facultyId,
+        universityName: String(uni.name ?? ""),
+        facultyName: String(faculty.name ?? ""),
+        leaseUntil: new Date(Date.now() + LEASE_MS).toISOString(),
+        ...(cur.exists ? {} : { status: "running", items: [], attempts: 0 }),
+      },
+      { merge: true }
+    );
+    return "ok" as const;
+  });
+  if (gate === "running") return "skipped-running";
+  if (gate === "capped") {
+    console.error(
+      `[faculty-info] 月の上限（${MAX_FACULTY_RESEARCH_PER_MONTH}学部）に達したので調べない`,
+      universityId,
+      facultyId
+    );
+    await ref.set({ lastError: "monthly-cap", leaseUntil: null }, { merge: true });
+    return "skipped-capped";
+  }
+
+  const seedUrls = [uni.officialUrl, faculty.admissionUrl].filter(
+    (u): u is string => typeof u === "string" && /^https?:\/\//.test(u)
+  );
+  const prev = (await ref.get()).data() ?? {};
+  const prevItems = (Array.isArray(prev.items) ? prev.items : []) as FacultyInfoItem[];
+  const now = new Date().toISOString();
+
+  let research: FacultyResearchResult | null = null;
+  let error: string | undefined;
+  try {
+    research = await researchFaculty({
+      client,
+      universityName: String(uni.name ?? ""),
+      facultyName: String(faculty.name ?? ""),
+      seedUrls,
+    });
+    error = research.error;
+  } catch (e) {
+    error = e instanceof Error ? e.message : String(e);
+  }
+
+  // 先生が手で足した項目は残し、外した項目は外したまま（同じ ID）にする
+  const hiddenIds = new Set(prevItems.filter((i) => i.hidden).map((i) => i.id));
+  const manual = prevItems.filter((i) => i.origin === "manual");
+  const fresh = (research?.items ?? []).map((i) => ({
+    ...i,
+    hidden: hiddenIds.has(i.id),
+  }));
+  // ページを1枚も読めなかった・AI が失敗した = 失敗。読めたが項目が0件 = empty
+  const failed =
+    !research ||
+    research.pagesFetched.length === 0 ||
+    (research.error?.startsWith("extract-failed") ?? false);
+  const outcome: FacultyInfoJobOutcome = failed
+    ? "failed"
+    : fresh.length === 0
+      ? "empty"
+      : "saved";
+  const items = failed ? prevItems : [...fresh, ...manual];
+
+  await ref.set(
+    {
+      version: FACULTY_INFO_VERSION,
+      // 失敗しても、前に取れた項目があればそれを使い続ける
+      status: failed
+        ? prevItems.length > 0
+          ? "ready"
+          : "failed"
+        : items.length > 0
+          ? "ready"
+          : "empty",
+      items,
+      allowedDomains: research?.allowedDomains ?? [],
+      pagesFetched: research?.pagesFetched ?? [],
+      ...(failed ? {} : { collectedAt: now }),
+      updatedAt: now,
+      attempts: failed ? Number(prev.attempts ?? 0) + 1 : 0,
+      usage: research?.usage ?? null,
+      lastError: error ?? null,
+      leaseUntil: null,
+    },
+    { merge: true }
+  );
+  console.log(
+    `[faculty-info] ${universityId}/${facultyId} ${outcome} 件数=${fresh.length} 捨てた=${research?.dropped.length ?? 0}` +
+      ` 検索=${research?.usage.webSearchRequests ?? 0} ページ=${research?.pagesFetched.length ?? 0}` +
+      ` 入力=${research?.usage.inputTokens ?? 0} 出力=${research?.usage.outputTokens ?? 0} 約$${research?.usage.estimatedUsd ?? 0}` +
+      (error ? ` エラー=${error}` : "")
+  );
+  return outcome;
 }

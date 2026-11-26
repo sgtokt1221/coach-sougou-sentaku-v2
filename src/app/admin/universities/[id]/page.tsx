@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SegmentControl } from "@/components/shared/SegmentControl";
+import { FacultyInfoPanel } from "@/components/admin/FacultyInfoPanel";
 import {
   Dialog,
   DialogContent,
@@ -826,6 +827,12 @@ export default function AdminUniversityEditPage() {
                       onChange={(updated) => updateFaculty(activeIdx, updated)}
                       canEdit={canEdit}
                       deviation={getUniversityDeviation(university.id)?.faculties[activeFaculty.id]}
+                    />
+                    <Separator className="my-6" />
+                    <FacultyInfoPanel
+                      universityId={university.id}
+                      facultyId={activeFaculty.id}
+                      canEdit={canEdit}
                     />
                   </div>
                 )}

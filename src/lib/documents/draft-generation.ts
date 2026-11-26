@@ -41,6 +41,7 @@ import type {
   FrameworkDefinition,
   DraftGenerateResponse,
 } from "@/lib/types/template";
+import { loadFacultyInfo, type FacultyInfoItem } from "@/lib/universities/faculty-info";
 
 export type { AlternativeReason };
 
@@ -67,6 +68,8 @@ export interface UniversityFaculty {
   universityName: string;
   facultyName: string;
   admissionPolicy: string;
+  /** 公式サイトで確かめた学部の特色。まだ調べていない学部は空 */
+  facultyInfo: FacultyInfoItem[];
 }
 
 export async function loadUniversityFaculty(
@@ -75,7 +78,10 @@ export async function loadUniversityFaculty(
   fallback?: { universityName?: string; facultyName?: string }
 ): Promise<UniversityFaculty> {
   if (!adminDb) throw new DraftInputError("データベース接続エラー", 500);
-  const snap = await adminDb.doc(`universities/${universityId}`).get();
+  const [snap, facultyInfo] = await Promise.all([
+    adminDb.doc(`universities/${universityId}`).get(),
+    loadFacultyInfo(universityId, facultyId),
+  ]);
   const data = snap.exists ? snap.data() : null;
   if (!data) throw new DraftInputError("大学が見つかりません", 404);
   const faculties = Array.isArray(data.faculties)
@@ -97,6 +103,7 @@ export async function loadUniversityFaculty(
         ? faculty.name
         : (fallback?.facultyName ?? "学部"),
     admissionPolicy: prepareAdmissionPolicy(faculty.admissionPolicy).text,
+    facultyInfo,
   };
 }
 
@@ -169,7 +176,8 @@ export async function writeStatementDraft(
       material.activities,
       options.emphasis,
       options.documentType,
-      options.universityResearch ?? ""
+      options.universityResearch ?? "",
+      material.facultyInfo
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`
@@ -331,7 +339,8 @@ export async function writeTemplateDraft(
       material.activities,
       material.selfAnalysis,
       emphasis,
-      options.universityResearch ?? ""
+      options.universityResearch ?? "",
+      material.facultyInfo
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`

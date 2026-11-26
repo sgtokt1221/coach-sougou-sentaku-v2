@@ -20,6 +20,8 @@ export interface DocumentReviewPromptOptions {
   fillRate?: number | null;
   /** 生徒が調べて書いた、この大学・学部のこと（reference_data.universityResearch）があるか */
   hasUniversityResearch?: boolean;
+  /** 公式サイトで確かめた学部の特色（reference_data.facultyInfo）があるか */
+  hasFacultyInfo?: boolean;
 }
 
 /**
@@ -227,6 +229,16 @@ reference_data の universityResearch は、生徒がオープンキャンパス
 - ここにあるカリキュラム・コース・実習・制度などは、確認済みの大学固有の情報として扱います。本文に出てきても「資料に無い」「確かめたか分からない」として下げません。
 - fit では、本文がそれらを本人の問いとどう結びつけているかを見ます。特色を並べただけで問いとつながっていなければ、これまでどおり下げます。
 - universityResearch に無い大学固有の情報の扱いは、上の「大学との対応（fit）の見方」のとおりです。`
+      : ""
+  }${
+    options.hasFacultyInfo
+      ? `
+
+## 公式サイトで確かめたこの学部の特色（fit で見る）
+reference_data の facultyInfo は、この学部の公式サイトから原文の引用つきで取り出した事実です。
+- ここにあるコース・特色・プログラムは確認済みの事実として扱います。本文に出てきても「資料に無い」「確かめたか分からない」として下げません。
+- fit では、本文がそれを本人の問いとどう結びつけているかを見ます。特色を並べただけ、原文を写しただけで問いとつながっていなければ下げます。
+- facultyInfo と生徒の記述（universityResearch）が食い違っても、生徒の記述を理由に下げません。`
       : ""
   }
 

@@ -8,6 +8,7 @@ import {
   DOCUMENT_COMPLETE_PROSE_RULE,
   buildStudentEmphasisRule,
   buildUniversityFitRule,
+  type FacultyInfoForPrompt,
 } from "./shared";
 
 export interface SelfAnalysisData {
@@ -219,7 +220,9 @@ export function buildStatementDraftPrompt(
   /** 書類の種類（志望理由書 / 自己推薦書）。段の役割を切り替える */
   documentType = "志望理由書",
   /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
-  universityResearch = ""
+  universityResearch = "",
+  /** 公式サイトで確かめた学部の特色（facultyInfo） */
+  facultyInfo: FacultyInfoForPrompt[] = []
 ): string {
   const kind = statementKindOf(documentType);
   const target = targetWordCount || 800;
@@ -258,7 +261,7 @@ ${ACTIVITY_GROUNDING_RULE}
 - 自己分析の価値観・将来像を、activities にある具体的な場面・数値・役割で裏づけること。
   抽象的な言葉だけで段落を埋めないこと。
 
-${buildUniversityFitRule(universityResearch)}
+${buildUniversityFitRule(universityResearch, facultyInfo)}
 
 ${buildStudentEmphasisRule(emphasis)}
 

@@ -13,6 +13,7 @@ import {
   mockStatementDraft,
   writeStatementDraft,
 } from "@/lib/documents/draft-generation";
+import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
 
 // 生成(40-50秒)に加えて字数超過時の圧縮リライトが走るため、60秒では打ち切られる。
 export const maxDuration = 300;
@@ -60,6 +61,8 @@ export async function POST(request: NextRequest) {
       ? (body.documentType as string)
       : "志望理由書";
 
+    // 公式サイトの情報がまだ無い学部は裏で調べ始める（今回は待たない。次回から使う）
+    await ensureFacultyInfo(body.universityId, body.facultyId);
     const material = await loadStatementMaterial(
       auth.uid,
       body.universityId,

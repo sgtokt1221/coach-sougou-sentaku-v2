@@ -457,7 +457,8 @@ export const AI_PROMPT_VERSIONS = {
     //     始めない。例文を空にするのは、本文に無い事実が要る指摘だけにする
     // v12（2026-11-27）: 下書きの作成画面で生徒が調べて書いた大学・学部のこと（universityResearch）が
     //     ある書類だけ、それを確認済みの大学固有の情報として fit で扱う。無い書類は v11 と同じ
-    promptVersion: "document-review-v12",
+    // v13（2026-11-27）: 公式サイトで確かめた学部の特色（facultyInfo）がある学部だけ、確認済みの事実として fit で扱う
+    promptVersion: "document-review-v13",
     // output-v4: 軸のキーを coherence/insight/fit/plan/readability に変え、
     //            overallFeedback・apSpecificNotes をやめ、priorityImprovement を最後に足した
     schemaVersion: "document-review-output-v4",
@@ -494,7 +495,8 @@ export const AI_PROMPT_VERSIONS = {
     // v8（2026-11-27）: AP の項目を順になぞらず、本人の問いを学部の学問のどの見方・方法で扱うかで大学に寄せる。
     //     生徒が調べた大学・学部のこと（universityResearch）を渡し、できる限りそこへ寄せる。
     //     生徒の希望があっても書き出し1文の形は崩さない
-    promptVersion: "statement-draft-v8",
+    // v9（2026-11-27）: 公式サイトで確かめた学部の特色（facultyInfo）を <faculty_info> で渡す。生徒が調べたことを先に使う
+    promptVersion: "statement-draft-v9",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
@@ -502,7 +504,8 @@ export const AI_PROMPT_VERSIONS = {
     // v4: 字数の上限を100%にし、字数合わせを本体と同じモデルで行う。
     // 2026-11-26: 別の案（前の案と理由を足して書き直す。src/lib/ai/prompts/statement.ts の buildAlternativeRule）
     // v6（2026-11-27）: statement-draft-v8 と同じ大学への寄せ方と universityResearch
-    promptVersion: "template-draft-v6",
+    // v7（2026-11-27）: statement-draft-v9 と同じ facultyInfo
+    promptVersion: "template-draft-v7",
     schemaVersion: "template-draft-output-v3",
   },
   storyCheck: {

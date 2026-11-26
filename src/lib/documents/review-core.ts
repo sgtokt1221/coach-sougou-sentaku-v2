@@ -26,6 +26,9 @@ import {
   collectPreviousIssues,
   judgeProgress,
 } from "@/lib/documents/progress";
+import { loadFacultyInfo } from "@/lib/universities/faculty-info";
+import type { FacultyInfoForPrompt } from "@/lib/ai/prompts/shared";
+import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
 
 /**
  * 出願書類のAI添削のコア。
@@ -84,6 +87,8 @@ export interface DocumentReviewInput {
   admissionPolicy: string;
   /** 生徒が調べて書いた、この大学・学部のこと（下書きの作成画面で入れたもの） */
   universityResearch?: string;
+  /** 公式サイトで確かめた学部の特色（facultyInfo）。先生が外した項目は含めない */
+  facultyInfo?: FacultyInfoForPrompt[];
   selfAnalysis?: unknown;
   activities?: unknown[];
   targetWordCount?: number;
@@ -172,6 +177,7 @@ export async function runDocumentReview(
     targetWordCount,
     fillRate,
     hasUniversityResearch: Boolean(input.universityResearch?.trim()),
+    hasFacultyInfo: (input.facultyInfo?.length ?? 0) > 0,
   });
   const referenceData = {
     universityName: input.universityName ?? "未指定",
@@ -180,6 +186,15 @@ export async function runDocumentReview(
     admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
     ...(input.universityResearch?.trim()
       ? { universityResearch: input.universityResearch.trim() }
+      : {}),
+    ...(input.facultyInfo && input.facultyInfo.length > 0
+      ? {
+          facultyInfo: input.facultyInfo.map((i) => ({
+            category: i.category,
+            title: i.title,
+            quote: i.quote,
+          })),
+        }
       : {}),
     selfAnalysis: input.selfAnalysis ?? null,
     activities:
@@ -479,9 +494,15 @@ export async function reviewDocumentCore(params: {
    * 登録済みの実績と突き合わせられないと、書かれている経験が本人のものか
    * 判断できず、逆に強い実績を書き落としていても指摘できない。
    */
-  const { selfAnalysis, activities } = await loadStudentDocumentContext(
-    params.ownerUid
-  );
+  const [, { selfAnalysis, activities }, facultyInfo] = await Promise.all([
+    // まだ無い学部は調べる処理を積むだけ（調べ終わるのは待たない）。次回の添削から使う
+    ensureFacultyInfo(universityId, facultyId).then(() => undefined),
+    loadStudentDocumentContext(params.ownerUid),
+    loadFacultyInfo(
+      typeof universityId === "string" ? universityId : undefined,
+      typeof facultyId === "string" ? facultyId : undefined
+    ),
+  ]);
 
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new DocumentReviewError("APIキーが設定されていません", 503);
@@ -497,6 +518,7 @@ export async function reviewDocumentCore(params: {
       typeof documentData.generation?.universityResearch === "string"
         ? documentData.generation.universityResearch
         : undefined,
+    facultyInfo,
     selfAnalysis,
     activities,
     targetWordCount: documentData.targetWordCount,

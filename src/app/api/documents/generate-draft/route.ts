@@ -14,6 +14,7 @@ import {
   loadTemplateMaterial,
   writeTemplateDraft,
 } from "@/lib/documents/draft-generation";
+import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
 
 // 生成に加えて字数超過時の圧縮リライトが走るため、既定の実行時間では足りない。
 export const maxDuration = 300;
@@ -69,6 +70,8 @@ export async function POST(request: NextRequest) {
     const requestedIds = Array.isArray(body.activityIds)
       ? body.activityIds.filter((id): id is string => typeof id === "string")
       : null;
+    // 公式サイトの情報がまだ無い学部は裏で調べ始める（今回は待たない。次回から使う）
+    await ensureFacultyInfo(body.universityId, body.facultyId);
     const material = await loadTemplateMaterial(
       auth.uid,
       body.universityId,

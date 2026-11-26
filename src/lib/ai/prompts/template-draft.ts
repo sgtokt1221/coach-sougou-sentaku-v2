@@ -6,6 +6,7 @@ import {
   DOCUMENT_COMPLETE_PROSE_RULE,
   buildStudentEmphasisRule,
   buildUniversityFitRule,
+  type FacultyInfoForPrompt,
 } from "./shared";
 
 const TEMPLATE_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO入試）の出願書類作成を支援する専門家です。
@@ -54,7 +55,9 @@ export function buildTemplateDraftPrompt(
   /** 生徒が任意で書いた「特に熱く書いてほしい点・方向性」 */
   emphasis = "",
   /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
-  universityResearch = ""
+  universityResearch = "",
+  /** 公式サイトで確かめた学部の特色（facultyInfo） */
+  facultyInfo: FacultyInfoForPrompt[] = []
 ): string {
   const target = targetWordCount || 800;
   // 比率だけだとモデルが字数に落とせないため、セクションごとの目安字数を実数で渡す
@@ -92,7 +95,7 @@ export function buildTemplateDraftPrompt(
 
   return `${TEMPLATE_DRAFT_SYSTEM_PROMPT}
 
-${buildUniversityFitRule(universityResearch)}
+${buildUniversityFitRule(universityResearch, facultyInfo)}
 
 ${buildStudentEmphasisRule(emphasis)}
 

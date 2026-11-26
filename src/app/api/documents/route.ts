@@ -4,6 +4,7 @@ import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import type { Document, DocumentCreateRequest } from "@/lib/types/document";
+import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
 
 /**
  * 認証済みユーザーの書類一覧を返す。
@@ -105,6 +106,8 @@ export async function POST(request: NextRequest) {
     }
 
     const docRef = await adminDb.collection("documents").add(docData);
+    // その学部の公式サイトの情報がまだ無ければ、裏で調べ始める（下書きの前に間に合わせる）
+    await ensureFacultyInfo(body.universityId, body.facultyId);
 
     const newDoc: Document = {
       id: docRef.id,

@@ -22,6 +22,7 @@ import {
   writeTemplateDraft,
 } from "@/lib/documents/draft-generation";
 import type { DocumentGeneration } from "@/lib/types/document";
+import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
 
 /**
  * AI で作った下書きの「別の案」を作る（2026-11-26）。保存した生成条件（documents.generation）で
@@ -97,6 +98,7 @@ export async function POST(
     }
 
     const alternative = { reason, previousDraft };
+    await ensureFacultyInfo(data.universityId, data.facultyId);
     const documentType = String(data.type ?? "志望理由書");
     const targetWordCount =
       generation.targetWordCount || data.targetWordCount || 800;
