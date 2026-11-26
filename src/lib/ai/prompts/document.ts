@@ -18,6 +18,8 @@ export interface DocumentReviewPromptOptions {
   targetWordCount?: number;
   /** 目標字数に対する充足率(%)。サーバー計算値。目標が無ければ null */
   fillRate?: number | null;
+  /** 生徒が調べて書いた、この大学・学部のこと（reference_data.universityResearch）があるか */
+  hasUniversityResearch?: boolean;
 }
 
 /**
@@ -216,7 +218,17 @@ ${axisLines}
 この流れに無い要素（例: 活動報告書に志望理由や将来像）を欠落として減点しません。
 
 ## 今回のAP評価条件
-${apRule}
+${apRule}${
+    options.hasUniversityResearch
+      ? `
+
+## 生徒が調べたこの大学・学部のこと（fit で見る）
+reference_data の universityResearch は、生徒がオープンキャンパス・パンフレット・公式サイトなどで調べて書いた事実です。
+- ここにあるカリキュラム・コース・実習・制度などは、確認済みの大学固有の情報として扱います。本文に出てきても「資料に無い」「確かめたか分からない」として下げません。
+- fit では、本文がそれらを本人の問いとどう結びつけているかを見ます。特色を並べただけで問いとつながっていなければ、これまでどおり下げます。
+- universityResearch に無い大学固有の情報の扱いは、上の「大学との対応（fit）の見方」のとおりです。`
+      : ""
+  }
 
 ## 今回の字数
 ${buildWordCountRule(options)}

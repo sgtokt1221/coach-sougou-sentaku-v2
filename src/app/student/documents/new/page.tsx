@@ -11,7 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { STUDENT_EMPHASIS_MAX_CHARS } from "@/lib/ai/prompts/shared";
+import {
+  STUDENT_EMPHASIS_MAX_CHARS,
+  STUDENT_RESEARCH_MAX_CHARS,
+} from "@/lib/ai/prompts/shared";
 import { SectionTextarea } from "@/components/documents/SectionTextarea";
 import {
   ArrowLeft,
@@ -174,6 +177,8 @@ export default function NewDocumentPage() {
   const [wordCountInput, setWordCountInput] = useState("800");
   /** 任意。特に熱く書いてほしい点・内容の方向性。AIの下書き作成に渡す */
   const [emphasis, setEmphasis] = useState("");
+  /** 任意。オープンキャンパス・パンフレット等で調べた、この大学・学部のこと。下書きを大学に寄せる材料 */
+  const [universityResearch, setUniversityResearch] = useState("");
   useEffect(() => {
     setWordCountInput(String(targetWordCount));
   }, [targetWordCount]);
@@ -218,6 +223,7 @@ export default function NewDocumentPage() {
       selectedActivityIds: string[];
       targetWordCount: number;
       emphasis?: string;
+      universityResearch?: string;
       sections?: { id: string; content: string }[];
     }) => {
       if (!docId) return;
@@ -249,6 +255,7 @@ export default function NewDocumentPage() {
       selectedActivityIds,
       targetWordCount,
       emphasis,
+      universityResearch,
       sections:
         draftResult?.sections.map((s) => ({ id: s.id, content: s.content })) ??
         [],
@@ -337,6 +344,7 @@ export default function NewDocumentPage() {
             selectedActivityIds,
             targetWordCount,
             emphasis,
+            universityResearch,
             completed: false,
           },
         }),
@@ -363,6 +371,7 @@ export default function NewDocumentPage() {
     frameworkType,
     selectedActivityIds,
     emphasis,
+    universityResearch,
   ]);
 
   /** 次のステップへ。志望校ステップ(1)を抜けるとき早期作成し、保留中の自動保存を確定する。 */
@@ -426,6 +435,8 @@ export default function NewDocumentPage() {
           setSelectedActivityIds(ws.selectedActivityIds);
         }
         if (typeof ws?.emphasis === "string") setEmphasis(ws.emphasis);
+        if (typeof ws?.universityResearch === "string")
+          setUniversityResearch(ws.universityResearch);
         // 本体を優先する。編集画面で変えた目標字数は本体にしか入らず、
         // wizardState の値は古いことがある（再開して自動保存すると本体を戻してしまう）
         if (typeof doc.targetWordCount === "number") {
@@ -615,6 +626,7 @@ export default function NewDocumentPage() {
         activityIds: selectedActivityIds,
         targetWordCount,
         emphasis: emphasis.trim() || undefined,
+        universityResearch: universityResearch.trim() || undefined,
       };
 
       const res = await authFetch("/api/documents/generate-draft", {
@@ -634,6 +646,7 @@ export default function NewDocumentPage() {
         frameworkType,
         activityIds: selectedActivityIds,
         emphasis: emphasis.trim() || undefined,
+        universityResearch: universityResearch.trim() || undefined,
         targetWordCount,
       });
     } catch (err) {
@@ -657,6 +670,7 @@ export default function NewDocumentPage() {
           facultyId: selectedUniversity.facultyId,
           targetWordCount,
           emphasis: emphasis.trim() || undefined,
+          universityResearch: universityResearch.trim() || undefined,
           documentType,
         }),
       });
@@ -688,6 +702,7 @@ export default function NewDocumentPage() {
       const generation: DocumentGenerationInput = {
         source: "statement",
         emphasis: emphasis.trim() || undefined,
+        universityResearch: universityResearch.trim() || undefined,
         targetWordCount,
       };
       if (writingMode === "free") {
@@ -767,6 +782,7 @@ export default function NewDocumentPage() {
             selectedActivityIds,
             targetWordCount,
             emphasis,
+            universityResearch,
             completed: true,
           },
         }),
@@ -1159,6 +1175,30 @@ export default function NewDocumentPage() {
             />
             <p className="text-muted-foreground text-right text-sm tabular-nums">
               {emphasis.length} / {STUDENT_EMPHASIS_MAX_CHARS}字
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Label htmlFor="universityResearch" className="text-base font-bold">
+                この大学・学部について調べて知ったこと
+              </Label>
+              <OptionalTag />
+            </div>
+            <Textarea
+              id="universityResearch"
+              value={universityResearch}
+              onChange={(e) =>
+                setUniversityResearch(
+                  e.target.value.slice(0, STUDENT_RESEARCH_MAX_CHARS)
+                )
+              }
+              rows={4}
+              className="bg-card text-base md:text-base"
+              placeholder="例: オープンキャンパスで、1年生から地域の病院で実習があると聞いた。在宅看護を学ぶコースがある。"
+            />
+            <p className="text-muted-foreground text-right text-sm tabular-nums">
+              {universityResearch.length} / {STUDENT_RESEARCH_MAX_CHARS}字
             </p>
           </div>
 

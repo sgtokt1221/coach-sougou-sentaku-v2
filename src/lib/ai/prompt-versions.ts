@@ -455,7 +455,9 @@ export const AI_PROMPT_VERSIONS = {
     // v11（2026-11-25）: 決まり文句を減らす。大学との対応で「シラバス・オープンキャンパスで
     //     確かめて書く」を促さず、固有名が無いことだけで下げない。今回の課題を「引っかかる」で
     //     始めない。例文を空にするのは、本文に無い事実が要る指摘だけにする
-    promptVersion: "document-review-v11",
+    // v12（2026-11-27）: 下書きの作成画面で生徒が調べて書いた大学・学部のこと（universityResearch）が
+    //     ある書類だけ、それを確認済みの大学固有の情報として fit で扱う。無い書類は v11 と同じ
+    promptVersion: "document-review-v12",
     // output-v4: 軸のキーを coherence/insight/fit/plan/readability に変え、
     //            overallFeedback・apSpecificNotes をやめ、priorityImprovement を最後に足した
     schemaVersion: "document-review-output-v4",
@@ -489,14 +491,18 @@ export const AI_PROMPT_VERSIONS = {
     //     志望理由書の段の役割を添削の4軸に合わせ、「自己の強み」の段を「入学後の学び」にした。
     //     AP の言い換え・賛辞・自己申告の強みを避けるよう明記。字数合わせも本体と同じモデルで行う。
     // 2026-11-26: 別の案（前の案と理由を足して書き直す。src/lib/ai/prompts/statement.ts の buildAlternativeRule）
-    promptVersion: "statement-draft-v7",
+    // v8（2026-11-27）: AP の項目を順になぞらず、本人の問いを学部の学問のどの見方・方法で扱うかで大学に寄せる。
+    //     生徒が調べた大学・学部のこと（universityResearch）を渡し、できる限りそこへ寄せる。
+    //     生徒の希望があっても書き出し1文の形は崩さない
+    promptVersion: "statement-draft-v8",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
     // v3: 骨子（要素と問い）ではなく、段ごとの完全な本文を返す。字数を設定の90〜110%に合わせる。
     // v4: 字数の上限を100%にし、字数合わせを本体と同じモデルで行う。
     // 2026-11-26: 別の案（前の案と理由を足して書き直す。src/lib/ai/prompts/statement.ts の buildAlternativeRule）
-    promptVersion: "template-draft-v5",
+    // v6（2026-11-27）: statement-draft-v8 と同じ大学への寄せ方と universityResearch
+    promptVersion: "template-draft-v6",
     schemaVersion: "template-draft-output-v3",
   },
   storyCheck: {

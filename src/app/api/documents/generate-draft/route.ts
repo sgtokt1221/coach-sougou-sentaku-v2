@@ -4,7 +4,10 @@ import { getFrameworkByType } from "@/lib/templates/frameworks";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
-import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
+import {
+  normalizeStudentEmphasis,
+  normalizeStudentResearch,
+} from "@/lib/ai/prompts/shared";
 import {
   DraftInputError,
   DraftOutputError,
@@ -84,6 +87,7 @@ export async function POST(request: NextRequest) {
         documentType: body.documentType,
         targetWordCount: body.targetWordCount || 800,
         emphasis: normalizeStudentEmphasis(body.emphasis),
+        universityResearch: normalizeStudentResearch(body.universityResearch),
       }
     );
     return NextResponse.json(result);

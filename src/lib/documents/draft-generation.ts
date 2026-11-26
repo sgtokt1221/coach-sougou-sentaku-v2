@@ -153,6 +153,8 @@ export async function writeStatementDraft(
     targetWordCount: number;
     emphasis: string;
     documentType: string;
+    /** 生徒が調べて書いた、この大学・学部のこと（任意） */
+    universityResearch?: string;
     alternative?: AlternativeRequest;
   }
 ): Promise<StatementDraftResult> {
@@ -166,7 +168,8 @@ export async function writeStatementDraft(
       target,
       material.activities,
       options.emphasis,
-      options.documentType
+      options.documentType,
+      options.universityResearch ?? ""
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`
@@ -310,6 +313,8 @@ export async function writeTemplateDraft(
     documentType: string;
     targetWordCount: number;
     emphasis: string;
+    /** 生徒が調べて書いた、この大学・学部のこと（任意） */
+    universityResearch?: string;
     alternative?: AlternativeRequest;
   }
 ): Promise<DraftGenerateResponse> {
@@ -325,7 +330,8 @@ export async function writeTemplateDraft(
       options.targetWordCount || 800,
       material.activities,
       material.selfAnalysis,
-      emphasis
+      emphasis,
+      options.universityResearch ?? ""
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`

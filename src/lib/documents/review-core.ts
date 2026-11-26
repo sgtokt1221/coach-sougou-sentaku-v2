@@ -82,6 +82,8 @@ export interface DocumentReviewInput {
   facultyName?: string;
   /** 整形済みの AP。無ければ空文字（大学との対応を採点しない） */
   admissionPolicy: string;
+  /** 生徒が調べて書いた、この大学・学部のこと（下書きの作成画面で入れたもの） */
+  universityResearch?: string;
   selfAnalysis?: unknown;
   activities?: unknown[];
   targetWordCount?: number;
@@ -169,12 +171,16 @@ export async function runDocumentReview(
     documentType: input.documentType,
     targetWordCount,
     fillRate,
+    hasUniversityResearch: Boolean(input.universityResearch?.trim()),
   });
   const referenceData = {
     universityName: input.universityName ?? "未指定",
     facultyName: input.facultyName ?? "未指定",
     documentType: input.documentType ?? "出願書類",
     admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
+    ...(input.universityResearch?.trim()
+      ? { universityResearch: input.universityResearch.trim() }
+      : {}),
     selfAnalysis: input.selfAnalysis ?? null,
     activities:
       input.activities && input.activities.length > 0 ? input.activities : null,
@@ -487,6 +493,10 @@ export async function reviewDocumentCore(params: {
     universityName: documentData.universityName,
     facultyName: documentData.facultyName,
     admissionPolicy,
+    universityResearch:
+      typeof documentData.generation?.universityResearch === "string"
+        ? documentData.generation.universityResearch
+        : undefined,
     selfAnalysis,
     activities,
     targetWordCount: documentData.targetWordCount,

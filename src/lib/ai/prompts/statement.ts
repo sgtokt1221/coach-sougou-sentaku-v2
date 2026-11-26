@@ -7,6 +7,7 @@ import {
   ACTIVITY_GROUNDING_RULE,
   DOCUMENT_COMPLETE_PROSE_RULE,
   buildStudentEmphasisRule,
+  buildUniversityFitRule,
 } from "./shared";
 
 export interface SelfAnalysisData {
@@ -179,7 +180,7 @@ const STATEMENT_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜の出願書�
 - 文体は「である調」で統一します。
 - 生徒の価値観・経験から、志望分野、大学で取り組みたい問い、将来像へ一貫してつなぎます。
 - APは単語を貼り付けず、生徒の確認済み事実との意味的な接続として表現します。
-- 大学固有のカリキュラム情報は提供されていないため、授業名・教員名・研究室名を推測しません。
+- 授業名・教員名・研究室名は、下の「大学・学部への寄せ方」にあるものだけを使い、推測しません。
 - 各段落を自然につなぎ、一つの物語として読めるようにします。
 - 審査官が読んで冷める書き方をしません（添削でも減点されます）:
   - アドミッション・ポリシーの文言を引用する・言い換える（「貴学部のAPにある〜は私の経験と重なる」）
@@ -216,7 +217,9 @@ export function buildStatementDraftPrompt(
   /** 生徒が任意で書いた「特に熱く書いてほしい点・方向性」 */
   emphasis = "",
   /** 書類の種類（志望理由書 / 自己推薦書）。段の役割を切り替える */
-  documentType = "志望理由書"
+  documentType = "志望理由書",
+  /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
+  universityResearch = ""
 ): string {
   const kind = statementKindOf(documentType);
   const target = targetWordCount || 800;
@@ -254,6 +257,8 @@ export function buildStatementDraftPrompt(
 ${ACTIVITY_GROUNDING_RULE}
 - 自己分析の価値観・将来像を、activities にある具体的な場面・数値・役割で裏づけること。
   抽象的な言葉だけで段落を埋めないこと。
+
+${buildUniversityFitRule(universityResearch)}
 
 ${buildStudentEmphasisRule(emphasis)}
 

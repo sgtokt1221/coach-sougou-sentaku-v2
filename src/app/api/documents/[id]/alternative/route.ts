@@ -101,6 +101,7 @@ export async function POST(
     const targetWordCount =
       generation.targetWordCount || data.targetWordCount || 800;
     const emphasis = generation.emphasis ?? "";
+    const universityResearch = generation.universityResearch ?? "";
     const isDev = process.env.NODE_ENV === "development";
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!isDev && !apiKey) {
@@ -138,6 +139,7 @@ export async function POST(
               documentType,
               targetWordCount,
               emphasis,
+              universityResearch,
               alternative,
             })
           ).draft;
@@ -153,6 +155,7 @@ export async function POST(
             await writeStatementDraft(new Anthropic({ apiKey }), material, {
               targetWordCount,
               emphasis,
+              universityResearch,
               documentType,
               alternative,
             })

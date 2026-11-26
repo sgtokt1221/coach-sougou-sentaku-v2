@@ -36,6 +36,35 @@ const REVIEW_MODEL = opt("review-model") ?? "claude-sonnet-5";
 /** 別の案を作る理由。指定すると --base の下書きを前の案として渡す */
 const ALTERNATIVE = opt("alternative") as AlternativeReason | undefined;
 const BASE = opt("base") ?? "gen-o55-v6";
+/**
+ * --emphasis を付けると、作成画面の「特に熱く書いてほしい点・方向性」を生徒ごとに渡す。
+ * 指示が効いたかは、指示の語が最初の段に出るか（emphasisInIntro）と本文を読んで見る
+ */
+const EMPHASIS = process.argv.includes("--emphasis");
+/** --research を付けると、生徒が調べて書いた「この大学・学部のこと」を渡す（作成画面の任意の欄） */
+const RESEARCH = process.argv.includes("--research");
+const RESEARCH_BY_ID: Record<string, string> = {
+  "P1-law":
+    "オープンキャンパスの模擬授業で、労働法の先生が「契約書が無くても労働契約は成立するが、条件を証明するのが難しくなる」と話していた。2年次から司法・行政・ビジネスなどのコースに分かれて学ぶと聞いた。",
+  "P2-nursing":
+    "1年次から附属病院や地域の施設で実習があると在学生が話していた。退院支援や在宅看護を学ぶ授業があり、他の医療系学部と合同で学ぶ授業もあるとパンフレットに書いてあった。",
+  "P3-policy":
+    "研究会（ゼミ）に1年生から入れる。法律・経済・情報など分野をまたいで科目を取れる。地域の現場に入ってフィールドワークをする授業がある。",
+};
+const EMPHASIS_BY_ID: Record<string, { text: string; mark: RegExp }> = {
+  "P1-law": {
+    text: "生徒会のアルバイト調査で、契約書をもらっていない生徒が4割いたことに一番驚いた。そこを一番熱く書いてほしい。",
+    mark: /4割|契約書/,
+  },
+  "P2-nursing": {
+    text: "将来は訪問看護師より、病院で退院のときに本人と家族の話し合いを支える看護師になりたい。その方向で書いてほしい。",
+    mark: /退院/,
+  },
+  "P3-policy": {
+    text: "店主さんたちへの聞き取りで、相続の問題で貸したくても貸せないと知ったことを中心に書いてほしい。",
+    mark: /相続/,
+  },
+};
 
 /** 前の案と、12字の並びがどれだけ重なるか（0〜1）。写していれば高い */
 function overlapWith(draft: string, prev: string): number {
@@ -195,6 +224,7 @@ interface Row {
   invented: string[];
   genMs: number;
   totalMs: number;
+  emphasisInIntro?: boolean;
 }
 
 function summarize(): void {
@@ -240,8 +270,9 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
       p.selfAnalysis,
       TARGET,
       p.activities,
-      "",
-      "志望理由書"
+      EMPHASIS ? (EMPHASIS_BY_ID[p.id]?.text ?? "") : "",
+      "志望理由書",
+      RESEARCH ? (RESEARCH_BY_ID[p.id] ?? "") : ""
     ) +
     (ALTERNATIVE && previousDraft
       ? `\n\n${buildAlternativeRule({ reason: ALTERNATIVE, previousDraft })}`
@@ -260,7 +291,7 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
     client,
     { ...response.parsed_output.structure },
     TARGET,
-    "",
+    EMPHASIS ? (EMPHASIS_BY_ID[p.id]?.text ?? "") : "",
     "志望理由書",
     GEN_MODEL
   );
@@ -273,6 +304,7 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
       universityName: p.universityName,
       facultyName: p.facultyName,
       admissionPolicy: ap,
+      universityResearch: RESEARCH ? RESEARCH_BY_ID[p.id] : undefined,
       selfAnalysis: p.selfAnalysis,
       activities: p.activities,
       targetWordCount: TARGET,
@@ -297,6 +329,9 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
     invented: inventedNumbers(draft, p),
     genMs,
     totalMs: Date.now() - t0,
+    ...(EMPHASIS && EMPHASIS_BY_ID[p.id]
+      ? { emphasisInIntro: EMPHASIS_BY_ID[p.id].mark.test(structure.intro) }
+      : {}),
     ...(previousDraft
       ? {
           prevOverlap: overlapWith(draft, previousDraft),

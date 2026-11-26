@@ -5,7 +5,8 @@ import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import type { DocumentGeneration, DocumentReview } from "@/lib/types/document";
-import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
+import { normalizeStudentEmphasis,
+  normalizeStudentResearch } from "@/lib/ai/prompts/shared";
 
 /**
  * 指定書類の詳細を取得する。
@@ -271,5 +272,9 @@ function parseDocumentGeneration(raw: unknown): DocumentGeneration | null {
     typeof g.emphasis === "string" ? g.emphasis : ""
   );
   if (emphasis) generation.emphasis = emphasis;
+  const research = normalizeStudentResearch(
+    typeof g.universityResearch === "string" ? g.universityResearch : ""
+  );
+  if (research) generation.universityResearch = research;
   return generation;
 }

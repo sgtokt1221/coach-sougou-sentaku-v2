@@ -53,6 +53,8 @@ export interface DocumentWizardState {
   sections?: { id: string; content: string }[];
   /** 生徒が任意で書いた「特に熱く書いてほしい点」 */
   emphasis?: string;
+  /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
+  universityResearch?: string;
   /** 書き方（構造に沿って書く / 自由に書く） */
   writingMode?: string;
 }
@@ -67,6 +69,8 @@ export interface DocumentGeneration {
   frameworkType?: string;
   activityIds?: string[];
   emphasis?: string;
+  /** 生徒が調べて書いた、この大学・学部のこと。「別の案」でも同じものを使う */
+  universityResearch?: string;
   targetWordCount: number;
   createdAt: string;
 }

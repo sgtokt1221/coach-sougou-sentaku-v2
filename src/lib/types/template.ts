@@ -52,6 +52,8 @@ export interface DraftGenerateRequest {
   targetWordCount?: number;
   /** 任意。特に熱く書いてほしい点・内容の方向性（400字まで） */
   emphasis?: string;
+  /** 任意。生徒が調べて書いた、この大学・学部のこと */
+  universityResearch?: string;
 }
 
 export interface DraftGenerateResponse {

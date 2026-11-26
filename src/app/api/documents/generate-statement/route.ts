@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireRole } from "@/lib/api/auth";
 import { requireFeature } from "@/lib/api/subscription";
-import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
+import {
+  normalizeStudentEmphasis,
+  normalizeStudentResearch,
+} from "@/lib/ai/prompts/shared";
 import { CREATABLE_DOCUMENT_TYPES } from "@/lib/types/document";
 import {
   DraftInputError,
@@ -21,6 +24,8 @@ interface GenerateStatementRequest {
   targetWordCount?: number;
   /** 任意。特に熱く書いてほしい点・内容の方向性 */
   emphasis?: string;
+  /** 任意。生徒が調べて書いた、この大学・学部のこと */
+  universityResearch?: string;
   /** 書類の種類（志望理由書 / 自己推薦書）。無ければ志望理由書 */
   documentType?: string;
 }
@@ -79,6 +84,7 @@ export async function POST(request: NextRequest) {
       {
         targetWordCount: body.targetWordCount || 800,
         emphasis: normalizeStudentEmphasis(body.emphasis),
+        universityResearch: normalizeStudentResearch(body.universityResearch),
         documentType,
       }
     );
