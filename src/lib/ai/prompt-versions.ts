@@ -458,7 +458,10 @@ export const AI_PROMPT_VERSIONS = {
     // v12（2026-11-27）: 下書きの作成画面で生徒が調べて書いた大学・学部のこと（universityResearch）が
     //     ある書類だけ、それを確認済みの大学固有の情報として fit で扱う。無い書類は v11 と同じ
     // v13（2026-11-27）: 公式サイトで確かめた学部の特色（facultyInfo）がある学部だけ、確認済みの事実として fit で扱う
-    promptVersion: "document-review-v13",
+    // v14（2026-11-27）: fit の段を決めた。8点以上は確かめ済みの大学固有の学び（AP・生徒が調べたこと・公式サイトの特色）を
+    //     本人の問いと結びつけて使えていること。確かめられない名前は点を動かさず、出典を手元に用意する指摘を1件だけ出す
+    //     （v13 までは「下げない」と書きつつ、資料に無いとして下げる回があった）
+    promptVersion: "document-review-v14",
     // output-v4: 軸のキーを coherence/insight/fit/plan/readability に変え、
     //            overallFeedback・apSpecificNotes をやめ、priorityImprovement を最後に足した
     schemaVersion: "document-review-output-v4",
