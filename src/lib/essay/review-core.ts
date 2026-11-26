@@ -10,6 +10,7 @@ import {
 import { AI_MODEL_ESSAY_REVIEW, AI_PROMPT_VERSIONS } from "@/lib/ai/prompt-versions";
 import { sourceEngagementCaps } from "@/lib/essay/source-engagement";
 import { judgeSourceEngagement } from "@/lib/essay/source-engagement-judge";
+import { fixedTaskRequirements } from "@/lib/essay/task-requirements";
 import { judgeKnowledgeAccuracy } from "@/lib/essay/knowledge-judge";
 import { judgeOralExamSubQuestions } from "@/lib/essay/oral-exam-subquestion-judge";
 import {
@@ -117,6 +118,9 @@ export interface EssayReviewTelemetry {
   caps: Record<EssayScoreAxis, number>;
   /** 表現力の上限を決めた数（別の上限の案を、AI を呼ばずに試算するため） */
   expressionInputs: { grammarErrors: number; typos: number; over80: number; over100: boolean };
+  /** 設問の要求の固定リスト（無ければ null）と、本体がその件数どおりに返したか */
+  fixedRequirements: string[] | null;
+  requirementsFixed: boolean | null;
 }
 
 export class EssayReviewParseError extends Error {
@@ -159,8 +163,20 @@ export async function reviewEssayCore(
     fillRate,
   });
 
+  /**
+   * 設問の要求の固定リスト（設問ごとに1回だけ作って保存する。2回目からは読むだけ）。
+   * 本体に毎回分けさせると要求の件数が回ごとに変わり、同じ答案の点が割れた（v41 の評価）
+   */
+  const fixedRequirements = await fixedTaskRequirements({
+    client,
+    topic: input.topic,
+    questionType: input.questionType,
+    onCall,
+  });
+
   const referenceData = {
     topic: input.topic ?? null,
+    fixedRequirements,
     questionType: input.questionType ?? "essay",
     wordLimit: input.wordLimit ?? null,
     admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
@@ -284,8 +300,9 @@ ${input.ocrText}
       response.stop_reason !== "max_tokens" && Boolean(response.parsed_output),
   });
 
-  const rawText =
-    response.content[0]?.type === "text" ? response.content[0].text : "";
+  // Sonnet 5 以降は先頭に thinking ブロックが来るので、本文のブロックを探す
+  const textBlock = response.content.find((b) => b.type === "text");
+  const rawText = textBlock?.type === "text" ? textBlock.text : "";
   if (response.stop_reason === "max_tokens") {
     throw new EssayReviewParseError(
       "AI 添削結果が最大トークン数で途中終了しました",
@@ -317,6 +334,20 @@ ${input.ocrText}
    *     → 上限は概ね30点台前半
    */
   const task = parsed.feedback?.taskFulfillment;
+  /**
+   * 固定リストどおりの件数で返ったら、要求の文言を固定側で上書きする（言い換えで揺れないように）。
+   * 件数が合わなければモデルの出力をそのまま使い、テレメトリに残す
+   */
+  const requirementsFixed =
+    fixedRequirements && task?.requirements
+      ? task.requirements.length === fixedRequirements.length
+      : null;
+  if (requirementsFixed && task?.requirements && fixedRequirements) {
+    task.requirements = task.requirements.map((r, i) => ({
+      ...r,
+      requirement: fixedRequirements[i],
+    }));
+  }
   const missingRequired =
     task?.requirements?.some((r) => r.status === "missing") ?? false;
   /**
@@ -611,6 +642,8 @@ ${input.ocrText}
         responsiveness: responsivenessCap,
         reasoningMaturity: maturityCap,
       },
+      fixedRequirements,
+      requirementsFixed,
       expressionInputs: {
         grammarErrors: grammarErrorCount,
         typos: typoCount,

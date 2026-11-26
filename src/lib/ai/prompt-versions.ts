@@ -341,7 +341,10 @@ export const AI_PROMPT_VERSIONS = {
     //      なだらかにした（1文の数え違いで2段動いていた）。
     //      本番6件×2回: 論理力5点 15/18(v40)→7/12、表現力は2〜4文の答案で+1。作成答案 29/32（N8「未来機構」・N18 は前から、
     //      N16 は3回で通過）。N14 6 < N13・N15 7、N12 矛盾は5のまま。UD の3版は重い欠点が2種類残っており5のまま（正しい判定）
-    promptVersion: "essay-review-v41",
+    // v42（2026-11-26）: 設問の要求を設問ごとに1回だけ分けて固定し（src/lib/essay/task-requirements.ts）、
+    //      本体は要求ごとの判定だけにする。前置きで並べた例は主題の要求に含め、一部だけなら partial。
+    //      v41 で同じ答案の要求が3〜5件に割れ、missing の有無で 24点と30点に分かれていた
+    promptVersion: "essay-review-v42",
     schemaVersion: "essay-review-output-v5",
   },
   interviewScore: {

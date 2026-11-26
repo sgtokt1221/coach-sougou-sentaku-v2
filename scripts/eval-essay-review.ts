@@ -26,6 +26,8 @@
 import { resolveQuestionSource } from "../src/lib/essay/lecture-info";
 import { config } from "dotenv";
 config({ path: ".env.local" });
+// 設問の要求の固定リストを本番の Firestore に保存しない（同じプロセスの中だけで使い回す）
+process.env.ESSAY_REQUIREMENTS_CACHE = "memory";
 
 import {
   appendFileSync,
@@ -338,6 +340,8 @@ interface ResultRow {
     rawScores?: Record<string, number>;
     caps?: Record<string, number>;
     expressionInputs?: { grammarErrors: number; typos: number; over80: number; over100: boolean };
+    fixedRequirements?: string[] | null;
+    requirementsFixed?: boolean | null;
     knowledge: {
       score: number;
       errors: { claim: string; severity: string; inText: boolean }[];
@@ -416,6 +420,8 @@ function toRow(
       rawScores: telemetry.rawScores,
       caps: telemetry.caps,
       expressionInputs: telemetry.expressionInputs,
+      fixedRequirements: telemetry.fixedRequirements,
+      requirementsFixed: telemetry.requirementsFixed,
       knowledge:
         typeof scores.knowledgeAccuracy === "number"
           ? { score: scores.knowledgeAccuracy, errors: knowledgeErrors }

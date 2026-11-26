@@ -28,6 +28,7 @@ interface Trace {
   essay: string;
   scores: Record<string, number>;
   fb: {
+    taskFulfillment?: { requirements?: { status: string }[] };
     goodPoints: string[];
     priorityImprovement: string;
     improvements: string[];
@@ -67,6 +68,23 @@ for (const ts of byCase.values()) {
     }
 }
 
+// 設問の要求の揺れ（件数・missing の有無）と合計の幅
+let reqCountSame = 0;
+let missingSame = 0;
+let wideCases = 0;
+for (const ts of byCase.values()) {
+  const reqs = ts.map((t) => t.fb.taskFulfillment?.requirements ?? []);
+  for (let i = 0; i < ts.length; i++)
+    for (let j = i + 1; j < ts.length; j++) {
+      if (reqs[i].length === reqs[j].length) reqCountSame++;
+      const mi = reqs[i].some((r) => r.status === "missing");
+      const mj = reqs[j].some((r) => r.status === "missing");
+      if (mi === mj) missingSame++;
+    }
+  const totals = ts.map((t) => t.scores.total);
+  if (ts.length > 1 && Math.max(...totals) - Math.min(...totals) > 3) wideCases++;
+}
+
 const imps = traces.flatMap((t) => t.fb.improvements.map((s) => ({ s, essay: t.essay })));
 const withExample = imps.filter(
   ({ s, essay }) => /たとえば/.test(s) || quotes(s).some((q) => q.length >= 10 && !essay.includes(q))
@@ -90,6 +108,9 @@ const lines = [
   `| 改善点に見本がある | ${withExample}/${imps.length} |`,
   `| 赤ペンの理由が二重 | ${doubled}/${corrections.length} |`,
   `| 赤ペン件数の中央値 | ${median} |`,
+  `| 同じ答案の回どうしで要求の件数が一致 | ${reqCountSame}/${pairs} 組 |`,
+  `| 同じ答案の回どうしで「書かれていない要求」の有無が一致 | ${missingSame}/${pairs} 組 |`,
+  `| 合計の幅が3点を超えた答案 | ${wideCases}/${byCase.size} 件 |`,
   `| 論理力5点 | ${count((t) => t.scores.logic === 5)}/${n} |`,
 ];
 console.log(lines.join("\n"));
