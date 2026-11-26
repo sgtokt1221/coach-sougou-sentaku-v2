@@ -480,13 +480,15 @@ export const AI_PROMPT_VERSIONS = {
     // v5: 字数の上限を100%にした（添削は100%超を全軸5点以下にするため、作った下書きが C 止まりだった）。
     //     志望理由書の段の役割を添削の4軸に合わせ、「自己の強み」の段を「入学後の学び」にした。
     //     AP の言い換え・賛辞・自己申告の強みを避けるよう明記。字数合わせも本体と同じモデルで行う。
-    promptVersion: "statement-draft-v6",
+    // 2026-11-26: 別の案（前の案と理由を足して書き直す。src/lib/ai/prompts/statement.ts の buildAlternativeRule）
+    promptVersion: "statement-draft-v7",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
     // v3: 骨子（要素と問い）ではなく、段ごとの完全な本文を返す。字数を設定の90〜110%に合わせる。
     // v4: 字数の上限を100%にし、字数合わせを本体と同じモデルで行う。
-    promptVersion: "template-draft-v4",
+    // 2026-11-26: 別の案（前の案と理由を足して書き直す。src/lib/ai/prompts/statement.ts の buildAlternativeRule）
+    promptVersion: "template-draft-v5",
     schemaVersion: "template-draft-output-v3",
   },
   storyCheck: {

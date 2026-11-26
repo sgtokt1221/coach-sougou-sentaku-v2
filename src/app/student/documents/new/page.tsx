@@ -29,7 +29,7 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
-import type { DocumentType } from "@/lib/types/document";
+import type { DocumentGeneration, DocumentType } from "@/lib/types/document";
 import { CREATABLE_DOCUMENT_TYPES } from "@/lib/types/document";
 import type {
   FrameworkType,
@@ -107,6 +107,9 @@ type WritingMode = "framework" | "free";
 const TARGET_WORD_COUNT_MIN = 100;
 const TARGET_WORD_COUNT_MAX = 4000;
 
+/** AI 下書きの生成条件（サーバーが createdAt を付けて documents.generation に残す） */
+type DocumentGenerationInput = Omit<DocumentGeneration, "createdAt">;
+
 export default function NewDocumentPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
@@ -176,9 +179,13 @@ export default function NewDocumentPage() {
   }, [targetWordCount]);
   function commitWordCount() {
     const n = Number(wordCountInput);
-    const next = Number.isFinite(n) && n > 0
-      ? Math.min(TARGET_WORD_COUNT_MAX, Math.max(TARGET_WORD_COUNT_MIN, Math.round(n)))
-      : targetWordCount;
+    const next =
+      Number.isFinite(n) && n > 0
+        ? Math.min(
+            TARGET_WORD_COUNT_MAX,
+            Math.max(TARGET_WORD_COUNT_MIN, Math.round(n))
+          )
+        : targetWordCount;
     setTargetWordCount(next);
     setWordCountInput(String(next));
   }
@@ -287,13 +294,14 @@ export default function NewDocumentPage() {
    * @param content 保存する本文
    */
   const persistContent = useCallback(
-    async (content: string) => {
+    async (content: string, generation?: DocumentGenerationInput) => {
       if (!docId) return;
       try {
         const res = await authFetch(`/api/documents/${docId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content }),
+          // generation: AI で作った下書きの条件。編集画面の「別の案」で同じ条件から作り直す
+          body: JSON.stringify({ content, generation }),
         });
         if (!res.ok) throw new Error();
       } catch {
@@ -621,7 +629,13 @@ export default function NewDocumentPage() {
       }
       const data: DraftGenerateResponse = await res.json();
       setDraftResult(data);
-      await persistContent(data.draft);
+      await persistContent(data.draft, {
+        source: "draft",
+        frameworkType,
+        activityIds: selectedActivityIds,
+        emphasis: emphasis.trim() || undefined,
+        targetWordCount,
+      });
     } catch (err) {
       console.error("Draft generation failed:", err);
       toast.error(err instanceof Error ? err.message : "生成に失敗しました");
@@ -671,12 +685,17 @@ export default function NewDocumentPage() {
         evaluationScores: data.evaluationScores,
         improvementSuggestions: data.improvementSuggestions,
       });
+      const generation: DocumentGenerationInput = {
+        source: "statement",
+        emphasis: emphasis.trim() || undefined,
+        targetWordCount,
+      };
       if (writingMode === "free") {
         // 1本の本文の書類は、そのまま編集画面へ（AI添削などの道具はそちらにある）
-        await finishWizard(data.draft);
+        await finishWizard(data.draft, generation);
         return;
       }
-      await persistContent(data.draft);
+      await persistContent(data.draft, generation);
     } catch (err) {
       console.error("Self-analysis draft generation failed:", err);
       toast.error(
@@ -726,7 +745,10 @@ export default function NewDocumentPage() {
    * フレームワーク形式をやめた（2026-10-09）ので、1本の本文で作る書類は下書きを作った時点で
    * 編集画面へ移す（以前は「書類として保存」を押すまで道具が使えなかった）。
    */
-  async function finishWizard(content: string) {
+  async function finishWizard(
+    content: string,
+    generation?: DocumentGenerationInput
+  ) {
     if (!docId) return;
     setSaving(true);
 
@@ -737,6 +759,7 @@ export default function NewDocumentPage() {
         body: JSON.stringify({
           content,
           targetWordCount,
+          generation,
           wizardState: {
             currentStep: 4,
             writingMode: writingMode ?? undefined,
@@ -801,7 +824,8 @@ export default function NewDocumentPage() {
                 hour: "2-digit",
                 minute: "2-digit",
               })}）`}
-            {saveStatus === "error" && "保存に失敗しました（自動で再試行します）"}
+            {saveStatus === "error" &&
+              "保存に失敗しました（自動で再試行します）"}
             {saveStatus !== "saving" &&
               saveStatus !== "error" &&
               !(saveStatus === "saved" && lastSavedAt) &&
@@ -851,7 +875,11 @@ export default function NewDocumentPage() {
                         : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  {done ? <Check className="size-4" strokeWidth={2.5} /> : n + 1}
+                  {done ? (
+                    <Check className="size-4" strokeWidth={2.5} />
+                  ) : (
+                    n + 1
+                  )}
                 </span>
                 <span
                   className={`text-sm leading-tight ${
@@ -954,8 +982,7 @@ export default function NewDocumentPage() {
                 }
                 onChange={(e) => {
                   const uni = allUniversities.find(
-                    (u) =>
-                      `${u.universityId}:${u.facultyId}` === e.target.value
+                    (u) => `${u.universityId}:${u.facultyId}` === e.target.value
                   );
                   if (uni) setSelectedUniversity(uni);
                 }}
@@ -1035,7 +1062,10 @@ export default function NewDocumentPage() {
                     <CardTitle className="flex flex-wrap items-center gap-2 text-base">
                       {fw.name}
                       {isRecommended && (
-                        <Badge variant="secondary" className="h-6 gap-1 text-sm">
+                        <Badge
+                          variant="secondary"
+                          className="h-6 gap-1 text-sm"
+                        >
                           <Star className="h-3 w-3" />
                           推奨
                         </Badge>
@@ -1048,7 +1078,11 @@ export default function NewDocumentPage() {
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {fw.sections.map((s) => (
-                        <Badge key={s.id} variant="outline" className="h-6 text-sm">
+                        <Badge
+                          key={s.id}
+                          variant="outline"
+                          className="h-6 text-sm"
+                        >
                           {s.title}
                         </Badge>
                       ))}
@@ -1074,7 +1108,8 @@ export default function NewDocumentPage() {
               目標文字数
             </Label>
             <p className="text-muted-foreground text-sm" id="wordCountHelp">
-              {TARGET_WORD_COUNT_MIN}〜{TARGET_WORD_COUNT_MAX}字。AIはこの字数の90〜110%で下書きを書きます。
+              {TARGET_WORD_COUNT_MIN}〜{TARGET_WORD_COUNT_MAX}
+              字。AIはこの字数の90〜110%で下書きを書きます。
             </p>
             <div className="flex items-center gap-2">
               <Input
@@ -1083,7 +1118,13 @@ export default function NewDocumentPage() {
                 aria-describedby="wordCountHelp"
                 value={wordCountInput}
                 onChange={(e) =>
-                  setWordCountInput(e.target.value.replace(/[^0-9０-９]/g, "").replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0)))
+                  setWordCountInput(
+                    e.target.value
+                      .replace(/[^0-9０-９]/g, "")
+                      .replace(/[０-９]/g, (d) =>
+                        String.fromCharCode(d.charCodeAt(0) - 0xfee0)
+                      )
+                  )
                 }
                 onBlur={commitWordCount}
                 onKeyDown={(e) => {
@@ -1181,7 +1222,9 @@ export default function NewDocumentPage() {
                                 : "border-input bg-card border-2"
                             }`}
                           >
-                            {checked && <Check className="size-4" strokeWidth={3} />}
+                            {checked && (
+                              <Check className="size-4" strokeWidth={3} />
+                            )}
                           </span>
                           <span className="min-w-0 flex-1 space-y-1">
                             <span className="block text-base font-medium">
@@ -1253,7 +1296,9 @@ export default function NewDocumentPage() {
               {emphasis.trim() && (
                 <>
                   <dt className="text-muted-foreground">熱く書く点</dt>
-                  <dd className="line-clamp-2 font-medium">{emphasis.trim()}</dd>
+                  <dd className="line-clamp-2 font-medium">
+                    {emphasis.trim()}
+                  </dd>
                 </>
               )}
             </dl>
@@ -1351,7 +1396,9 @@ export default function NewDocumentPage() {
                   <CardHeader className="lg:shrink-0">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <CardTitle className="text-lg">
-                        {writingMode === "free" ? "本文" : "下書き（段ごとに直せます）"}
+                        {writingMode === "free"
+                          ? "本文"
+                          : "下書き（段ごとに直せます）"}
                       </CardTitle>
                       {/* 段ごとに書くと全体の字数が分からないので、合計を常に出す */}
                       {(() => {
@@ -1479,7 +1526,8 @@ export default function NewDocumentPage() {
 
 /** 書類の種類カードの説明（画面に出す文言だけ） */
 const DOCUMENT_TYPE_DESCRIPTIONS: Partial<Record<DocumentType, string>> = {
-  志望理由書: "なぜこの大学・学部で学びたいのか、入学後に何をしたいのかを書きます。",
+  志望理由書:
+    "なぜこの大学・学部で学びたいのか、入学後に何をしたいのかを書きます。",
   自己推薦書: "これまでの経験と強みから、自分を大学に推薦する理由を書きます。",
 };
 

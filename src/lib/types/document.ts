@@ -51,6 +51,24 @@ export interface DocumentWizardState {
   completed: boolean;
   /** 下書きの各セクション本文。再開時に本文(見出しなし)から復元できないため、ここから復元する。 */
   sections?: { id: string; content: string }[];
+  /** 生徒が任意で書いた「特に熱く書いてほしい点」 */
+  emphasis?: string;
+  /** 書き方（構造に沿って書く / 自由に書く） */
+  writingMode?: string;
+}
+
+/**
+ * AI で作った下書きの生成条件（2026-11-26〜）。編集画面の「別の案」を出すかの判定と、
+ * 同じ条件で作り直すために残す。手で書いた書類には無い。
+ */
+export interface DocumentGeneration {
+  /** statement: 自己分析から書く / draft: 型で書く */
+  source: "statement" | "draft";
+  frameworkType?: string;
+  activityIds?: string[];
+  emphasis?: string;
+  targetWordCount: number;
+  createdAt: string;
 }
 
 export interface Document {
@@ -87,6 +105,10 @@ export interface Document {
   wizardState?: DocumentWizardState;
   /** 管理者/講師による範囲指定インラインコメント */
   inlineComments?: EssayInlineComment[];
+  /** AI で作った下書きの生成条件。あれば「別の案」を作れる */
+  generation?: DocumentGeneration;
+  /** 「別の案」を作った回数（日本時間の日付ごと。サーバーだけが書く） */
+  alternativeUsage?: { date: string; count: number };
 }
 
 export interface DocumentVersion {

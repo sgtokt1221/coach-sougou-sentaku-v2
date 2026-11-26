@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import type {
-  DraftGenerateRequest,
-  DraftGenerateResponse,
-} from "@/lib/types/template";
+import type { DraftGenerateRequest } from "@/lib/types/template";
 import { getFrameworkByType } from "@/lib/templates/frameworks";
-import { buildTemplateDraftPrompt } from "@/lib/ai/prompts/template-draft";
-import { charRangeFor, fitToCharRange } from "@/lib/ai/fit-char-limit";
-import { TemplateDraftOutputSchema } from "@/lib/ai/schemas/template-draft";
 import { adminDb } from "@/lib/firebase/admin";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import { loadStudentDocumentContext } from "@/lib/documents/student-context";
 import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
 import {
-  AI_PROMPT_VERSIONS,
-  selectDraftModel,
-} from "@/lib/ai/prompt-versions";
+  DraftInputError,
+  DraftOutputError,
+  loadTemplateMaterial,
+  writeTemplateDraft,
+} from "@/lib/documents/draft-generation";
 
 // 生成に加えて字数超過時の圧縮リライトが走るため、既定の実行時間では足りない。
 export const maxDuration = 300;
@@ -70,152 +63,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /**
-     * 生徒の材料。以前は活動実績しか読んでおらず、自己分析は見ていなかった。
-     * 隣の generate-statement はその逆で、どちらのボタンを押しても材料が
-     * 半分しか使われていなかったので、両方を同じローダーから読む。
-     */
     const requestedIds = Array.isArray(body.activityIds)
       ? body.activityIds.filter((id): id is string => typeof id === "string")
       : null;
-    const { selfAnalysis, activities } = await loadStudentDocumentContext(
+    const material = await loadTemplateMaterial(
       auth.uid,
-      requestedIds
+      body.universityId,
+      body.facultyId,
+      requestedIds,
+      { universityName: body.universityName, facultyName: body.facultyName }
     );
-
-    const universitySnap = await adminDb
-      .doc(`universities/${body.universityId}`)
-      .get();
-    if (!universitySnap.exists) {
-      return NextResponse.json(
-        { error: "大学が見つかりません" },
-        { status: 404 }
-      );
-    }
-    const universityData = universitySnap.data()!;
-    const faculty = Array.isArray(universityData.faculties)
-      ? universityData.faculties.find(
-          (item: { id?: string }) => item.id === body.facultyId
-        )
-      : undefined;
-    if (!faculty) {
-      return NextResponse.json(
-        { error: "学部が見つかりません" },
-        { status: 404 }
-      );
-    }
-    const universityName =
-      typeof universityData.name === "string"
-        ? universityData.name
-        : body.universityName;
-    const facultyName =
-      typeof faculty.name === "string" ? faculty.name : body.facultyName;
-    const admissionPolicy = prepareAdmissionPolicy(
-      faculty.admissionPolicy
-    ).text;
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
-    const client = new Anthropic({ apiKey });
-    const generationModel = selectDraftModel(body.documentType);
-
-    const emphasis = normalizeStudentEmphasis(body.emphasis);
-    const systemPrompt = buildTemplateDraftPrompt(
-      framework,
-      universityName,
-      facultyName,
-      admissionPolicy,
-      body.documentType,
-      body.targetWordCount || 800,
-      activities,
-      selfAnalysis,
-      emphasis
+    const result = await writeTemplateDraft(
+      new Anthropic({ apiKey }),
+      material,
+      {
+        framework,
+        frameworkType: body.frameworkType,
+        documentType: body.documentType,
+        targetWordCount: body.targetWordCount || 800,
+        emphasis: normalizeStudentEmphasis(body.emphasis),
+      }
     );
-
-    const message = await client.messages.parse({
-      model: generationModel,
-      // 拡張思考が有効なモデルでは max_tokens を thinking と本文で分け合う。
-      // 4096 だと思考だけで使い切って本文が0トークンになり生成が失敗する。
-      max_tokens: 16384,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: "reference_dataに基づいて下書きを生成してください。",
-        },
-      ],
-      output_config: {
-        format: zodOutputFormat(TemplateDraftOutputSchema),
-        // 拡張思考を使わせない。思考が max_tokens を食うと本文が途中で切れ、
-        // 構造化出力のJSONパースに失敗して生成ごと落ちる。
-        effort: "low",
-      },
-    });
-
-    if (message.stop_reason === "max_tokens" || !message.parsed_output) {
-      // usage には thinking の内訳も入る（max_tokens を思考で使い切ったかの判別用）
-      console.error("[generate-draft] 構造化応答が不正", {
-        stop_reason: message.stop_reason,
-        usage: message.usage,
-      });
-      return NextResponse.json(
-        { error: "AIからの応答を検証できませんでした" },
-        { status: 502 }
-      );
-    }
-
-    const sectionsById = new Map(
-      message.parsed_output.sections.map((section) => [section.id, section])
-    );
-    /**
-     * 各段の本文を、生徒が設定した字数に合わせる。
-     * 段ごとに目安（設定字数を段の数で割った字数）の90〜100%に収め、足りなければ
-     * 事実を足さずに考えを展開して伸ばし、超えていれば縮める。
-     * 以前は本文を返さず骨子（要素と問い）だけを返し、本人が書く形にしていた。
-     */
-    const target = body.targetWordCount || 800;
-    const perSection = target / Math.max(1, framework.sections.length);
-    const { min, max } = charRangeFor(perSection);
-    const sections = await Promise.all(
-      framework.sections.map(async (s) => {
-        const generated = sectionsById.get(s.id);
-        const raw = (generated?.text ?? "").trim();
-        const content = raw
-          ? await fitToCharRange(
-              client,
-              raw,
-              min,
-              max,
-              emphasis
-                ? `${s.title}（${s.description}）。生徒の希望（この方向で書く）: ${emphasis}`
-                : `${s.title}（${s.description}）`,
-              generationModel
-            )
-          : "";
-        return {
-          id: s.id,
-          title: generated?.title || s.title,
-          content,
-          placeholder: `【${s.guidingQuestion}】\n${s.placeholder ?? "ここに記入してください。"}`,
-        };
-      })
-    );
-    const draft = sections
-      .map((s) => s.content.trim())
-      .filter(Boolean)
-      .join("\n\n");
-
-    const result: DraftGenerateResponse = {
-      draft,
-      frameworkType: body.frameworkType,
-      sections,
-      wordCount: draft.length,
-      aiMetadata: {
-        ...AI_PROMPT_VERSIONS.templateDraft,
-        model: generationModel,
-      },
-    };
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof DraftInputError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+    if (error instanceof DraftOutputError) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
+    }
     console.error("Draft generation error:", error);
     return NextResponse.json(
       { error: "下書きの生成中にエラーが発生しました" },

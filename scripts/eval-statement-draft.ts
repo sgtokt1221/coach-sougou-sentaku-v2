@@ -13,7 +13,12 @@ import { appendFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } f
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { prepareAdmissionPolicy } from "@/lib/ai/admission-policy";
-import { buildStatementDraftPrompt, type SelfAnalysisData } from "@/lib/ai/prompts/statement";
+import {
+  buildAlternativeRule,
+  buildStatementDraftPrompt,
+  type AlternativeReason,
+  type SelfAnalysisData,
+} from "@/lib/ai/prompts/statement";
 import { StatementDraftOutputSchema } from "@/lib/ai/schemas/statement";
 import { fitStatementToTarget, joinStatementStructure } from "@/lib/documents/statement-length";
 import { runDocumentReview } from "@/lib/documents/review-core";
@@ -28,6 +33,25 @@ const REPS = Number(opt("reps") ?? 1);
 const VARIANT = opt("variant") ?? "baseline";
 const GEN_MODEL = opt("gen-model") ?? "claude-sonnet-5";
 const REVIEW_MODEL = opt("review-model") ?? "claude-sonnet-5";
+/** 別の案を作る理由。指定すると --base の下書きを前の案として渡す */
+const ALTERNATIVE = opt("alternative") as AlternativeReason | undefined;
+const BASE = opt("base") ?? "gen-o55-v6";
+
+/** 前の案と、12字の並びがどれだけ重なるか（0〜1）。写していれば高い */
+function overlapWith(draft: string, prev: string): number {
+  const grams = (t: string) => {
+    const c = t.replace(/\s/g, "");
+    const set = new Set<string>();
+    for (let i = 0; i + 12 <= c.length; i++) set.add(c.slice(i, i + 12));
+    return set;
+  };
+  const a = grams(draft);
+  const b = grams(prev);
+  if (a.size === 0) return 0;
+  let hit = 0;
+  for (const g of a) if (b.has(g)) hit++;
+  return Math.round((hit / a.size) * 100) / 100;
+}
 const SUMMARIZE = process.argv.includes("--summarize");
 const OUT = `.claude/hillclimb/statement-draft/${VARIANT}`;
 const TARGET = 800;
@@ -154,6 +178,10 @@ function inventedNumbers(draft: string, p: Profile): string[] {
 }
 
 interface Row {
+  /** 別の案のとき: 前の案との重なり（12字の並び）と、両方の1文目 */
+  prevOverlap?: number;
+  firstSentence?: string;
+  prevFirstSentence?: string;
   id: string;
   rep: number;
   genModel: string;
@@ -201,16 +229,23 @@ function summarize(): void {
 async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void> {
   const ap = loadAp(p.universityId, p.facultyId);
   const t0 = Date.now();
-  const prompt = buildStatementDraftPrompt(
-    p.universityName,
-    p.facultyName,
-    ap,
-    p.selfAnalysis,
-    TARGET,
-    p.activities,
-    "",
-    "志望理由書"
-  );
+  const previousDraft = ALTERNATIVE
+    ? (JSON.parse(readFileSync(`.claude/hillclimb/statement-draft/${BASE}/traces/${p.id}_rep0.json`, "utf8")) as { draft: string }).draft
+    : null;
+  const prompt =
+    buildStatementDraftPrompt(
+      p.universityName,
+      p.facultyName,
+      ap,
+      p.selfAnalysis,
+      TARGET,
+      p.activities,
+      "",
+      "志望理由書"
+    ) +
+    (ALTERNATIVE && previousDraft
+      ? `\n\n${buildAlternativeRule({ reason: ALTERNATIVE, previousDraft })}`
+      : "");
   const response = await client.messages.parse({
     model: GEN_MODEL,
     max_tokens: 16384,
@@ -262,6 +297,13 @@ async function runOne(client: Anthropic, p: Profile, rep: number): Promise<void>
     invented: inventedNumbers(draft, p),
     genMs,
     totalMs: Date.now() - t0,
+    ...(previousDraft
+      ? {
+          prevOverlap: overlapWith(draft, previousDraft),
+          firstSentence: draft.split("。")[0],
+          prevFirstSentence: previousDraft.split("。")[0],
+        }
+      : {}),
   };
   writeFileSync(`${OUT}/traces/${p.id}_rep${rep}.json`, JSON.stringify({ draft, feedback }, null, 2));
   appendFileSync(`${OUT}/results.jsonl`, JSON.stringify(row) + "\n");

@@ -39,7 +39,19 @@ import {
   Languages,
   MessageSquare,
   Pencil,
+  Shuffle,
+  Loader2,
 } from "lucide-react";
+import {
+  ALTERNATIVE_DAILY_LIMIT,
+  ALTERNATIVE_REASON_LABELS,
+  alternativeRemaining,
+} from "@/lib/documents/alternative";
+import {
+  ALTERNATIVE_REASONS,
+  type AlternativeReason,
+} from "@/lib/ai/prompts/statement";
+import { jstDayKey } from "@/lib/utils/activity-heatmap";
 import {
   DOCUMENT_TITLE_MAX,
   normalizeDocumentTitle,
@@ -230,7 +242,9 @@ export default function DocumentEditorPage() {
         setReviews(history);
         // 直近の添削は書類直下の方が新しい（面接の質問を後から足している）
         const withLatest = (r: DocumentReviewRecord) =>
-          r.feedbackAt === data.feedbackAt && data.feedback ? data.feedback : r.feedback;
+          r.feedbackAt === data.feedbackAt && data.feedback
+            ? data.feedback
+            : r.feedback;
         const current = history.find((r) => r.content === data.content);
         const shown = current ?? (opts?.exact ? undefined : history[0]);
         if (shown) {
@@ -444,6 +458,7 @@ export default function DocumentEditorPage() {
       if (res.ok) {
         const data = (await res.json()) as { rewritten: string };
         setRewritten(data.rewritten ?? null);
+        setAlternativeShown(false);
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err?.error || "書き換えに失敗しました");
@@ -470,6 +485,7 @@ export default function DocumentEditorPage() {
   function discardRewrite() {
     setRewritten(null);
     setNaturalizeNotes(null);
+    setAlternativeShown(false);
   }
 
   /**
@@ -494,6 +510,7 @@ export default function DocumentEditorPage() {
         return;
       }
       setRewritten(data.rewritten ?? null);
+      setAlternativeShown(false);
       setNaturalizeNotes({
         changes: data.changes ?? [],
         questions: data.questions ?? [],
@@ -505,6 +522,50 @@ export default function DocumentEditorPage() {
       toast.error("整えられませんでした");
     } finally {
       setNaturalizing(false);
+    }
+  }
+
+  /**
+   * 「別の案」（AI で作った下書きだけ）。保存した生成条件で作り直し、前の案と理由を渡す。
+   * 案は書き換え案と同じ表示・同じ置き換え（前の本文は版に残る）を通る。1日3回まで。
+   */
+  const [alternativeReason, setAlternativeReason] =
+    useState<AlternativeReason>("experience");
+  const [alternativeBusy, setAlternativeBusy] = useState(false);
+  /** いま出ている案が「別の案」か（書き換えのカードには出さない） */
+  const [alternativeShown, setAlternativeShown] = useState(false);
+  async function handleAlternative() {
+    if (!doc || alternativeBusy) return;
+    setAlternativeBusy(true);
+    try {
+      const res = await authFetch(`/api/documents/${id}/alternative`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: alternativeReason, content }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (typeof data?.remaining === "number") {
+        const count = ALTERNATIVE_DAILY_LIMIT - data.remaining;
+        setDoc((prev) =>
+          prev
+            ? {
+                ...prev,
+                alternativeUsage: { date: jstDayKey(Date.now()), count },
+              }
+            : prev
+        );
+      }
+      if (!res.ok) {
+        toast.error(data?.error || "別の案を作れませんでした");
+        return;
+      }
+      setRewritten(data.draft ?? null);
+      setNaturalizeNotes(null);
+      setAlternativeShown(true);
+    } catch {
+      toast.error("別の案を作れませんでした");
+    } finally {
+      setAlternativeBusy(false);
     }
   }
 
@@ -578,6 +639,7 @@ export default function DocumentEditorPage() {
       setContent(rewritten);
       setRewritten(null);
       setNaturalizeNotes(null);
+      setAlternativeShown(false);
       await loadDocument();
       toast.success("書き換えました。前の本文はバージョン履歴に残っています");
     } catch {
@@ -872,6 +934,7 @@ export default function DocumentEditorPage() {
               hasFeedback={!!feedback}
               versionCount={doc.versions?.length ?? 0}
               commentCount={doc.inlineComments?.length ?? 0}
+              hasAlternative={!!doc.generation}
             />
           }
         />
@@ -909,6 +972,18 @@ export default function DocumentEditorPage() {
           naturalizing={naturalizing}
           naturalizeNotes={naturalizeNotes}
           onNaturalize={handleNaturalize}
+          alternative={
+            doc.generation
+              ? {
+                  reason: alternativeReason,
+                  setReason: setAlternativeReason,
+                  busy: alternativeBusy,
+                  remaining: alternativeRemaining(doc.alternativeUsage),
+                  shown: alternativeShown,
+                  onCreate: handleAlternative,
+                }
+              : null
+          }
           onShowInText={
             reviewedContent !== null ? () => setEditorView("review") : undefined
           }
@@ -964,6 +1039,7 @@ export default function DocumentEditorPage() {
                 hasFeedback={!!feedback}
                 versionCount={doc.versions?.length ?? 0}
                 commentCount={doc.inlineComments?.length ?? 0}
+                hasAlternative={!!doc.generation}
               />
             }
           />
@@ -1007,6 +1083,18 @@ export default function DocumentEditorPage() {
               naturalizing={naturalizing}
               naturalizeNotes={naturalizeNotes}
               onNaturalize={handleNaturalize}
+              alternative={
+                doc.generation
+                  ? {
+                      reason: alternativeReason,
+                      setReason: setAlternativeReason,
+                      busy: alternativeBusy,
+                      remaining: alternativeRemaining(doc.alternativeUsage),
+                      shown: alternativeShown,
+                      onCreate: handleAlternative,
+                    }
+                  : null
+              }
               onShowInText={
                 reviewedContent !== null
                   ? () => {
@@ -1101,7 +1189,9 @@ function EditorPanel({
   // 添削を見るときは、ダイジェストと詳細のカードが自分の面を持つので外の枠を消す
   const reading = !!reviewView && view === "review";
   return (
-    <Card className={reading ? "border-0 bg-transparent shadow-none" : undefined}>
+    <Card
+      className={reading ? "border-0 bg-transparent shadow-none" : undefined}
+    >
       <CardContent className={reading ? "space-y-4 p-0" : "space-y-3 p-4"}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           {toolbar ?? <span />}
@@ -1258,6 +1348,7 @@ function ReviewPanel({
   naturalizeNotes,
   onNaturalize,
   onShowInText,
+  alternative,
 }: {
   /** 書類の種類。点の軸の名前が種類で変わる */
   documentType?: string;
@@ -1293,6 +1384,8 @@ function ReviewPanel({
   onNaturalize: (style: DocumentProseStyle) => void;
   /** 改善点・赤ペン・APとの対応を本文の上で見る。添削した本文が分かるときだけ */
   onShowInText?: () => void;
+  /** 「別の案」。AI で作った下書きのときだけ渡す */
+  alternative?: AlternativeControls | null;
 }) {
   /** 中身を開いている版。1つずつ開く */
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
@@ -1441,6 +1534,16 @@ function ReviewPanel({
       </Card>
 
       {/* AIで書き換え */}
+      {alternative && (
+        <AlternativeCard
+          controls={alternative}
+          rewritten={rewritten}
+          currentContent={currentContent}
+          onApply={onApplyRewrite}
+          onDiscard={onDiscardRewrite}
+        />
+      )}
+
       <Card data-tool="rewrite">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -1467,7 +1570,7 @@ function ReviewPanel({
             {rewriting ? "書き換えています..." : "書き換え案を作る"}
           </Button>
 
-          {rewritten && !naturalizeNotes && (
+          {rewritten && !naturalizeNotes && !alternative?.shown && (
             <RewritePreview
               rewritten={rewritten}
               currentContent={currentContent}
@@ -1696,6 +1799,7 @@ function ReviewPanel({
 type DocumentToolKey =
   | "comments"
   | "review"
+  | "alternative"
   | "rewrite"
   | "naturalize"
   | "likeness"
@@ -1706,12 +1810,15 @@ function DocumentToolbar({
   hasFeedback,
   versionCount,
   commentCount,
+  hasAlternative = false,
 }: {
   onOpen: (target: DocumentToolKey) => void;
   hasFeedback: boolean;
   versionCount: number;
   /** 先生からの範囲コメント件数。0なら出さない */
   commentCount: number;
+  /** AI で作った下書き。「別の案」を出す */
+  hasAlternative?: boolean;
 }) {
   const items = [
     // 先生のコメントはAIの機能より先に置く
@@ -1731,6 +1838,16 @@ function DocumentToolbar({
       label: "AI添削",
       dot: hasFeedback,
     },
+    ...(hasAlternative
+      ? [
+          {
+            key: "alternative" as const,
+            icon: Shuffle,
+            label: "別の案",
+            dot: false,
+          },
+        ]
+      : []),
     { key: "rewrite" as const, icon: Wand2, label: "AIで書き換え", dot: false },
     {
       key: "naturalize" as const,
@@ -2014,5 +2131,93 @@ function RewritePreview({
         </div>
       </div>
     </>
+  );
+}
+
+interface AlternativeControls {
+  reason: AlternativeReason;
+  setReason: (r: AlternativeReason) => void;
+  busy: boolean;
+  /** 今日あと何回作れるか */
+  remaining: number;
+  /** いま出ている案が別の案か */
+  shown: boolean;
+  onCreate: () => void;
+}
+
+/**
+ * 「別の案」。AI で作った下書きが気に入らないとき、理由を選んで作り直す。
+ * 案は書き換えと同じ見比べ（RewritePreview）で出し、置き換える前の本文は版に残る。
+ */
+function AlternativeCard({
+  controls,
+  rewritten,
+  currentContent,
+  onApply,
+  onDiscard,
+}: {
+  controls: AlternativeControls;
+  rewritten: string | null;
+  currentContent: string;
+  onApply: () => void;
+  onDiscard: () => void;
+}) {
+  const { reason, setReason, busy, remaining, shown, onCreate } = controls;
+  return (
+    <Card data-tool="alternative">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Shuffle className="size-4" />
+          別の案
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div
+          className="flex flex-wrap gap-2"
+          role="radiogroup"
+          aria-label="作り直す理由"
+        >
+          {ALTERNATIVE_REASONS.map((r) => (
+            <button
+              key={r}
+              type="button"
+              role="radio"
+              aria-checked={reason === r}
+              onClick={() => setReason(r)}
+              className={`min-h-11 rounded-full px-4 text-sm font-bold transition-colors ${
+                reason === r
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground hover:bg-muted/70"
+              }`}
+            >
+              {ALTERNATIVE_REASON_LABELS[r]}
+            </button>
+          ))}
+        </div>
+        <Button
+          className="w-full"
+          onClick={onCreate}
+          disabled={busy || remaining <= 0}
+        >
+          {busy ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : (
+            <Shuffle className="mr-2 size-4" />
+          )}
+          {busy ? "別の案を書いています…" : "別の案を作る"}
+        </Button>
+        <p className="text-muted-foreground text-center text-sm tabular-nums">
+          今日はあと{remaining}回
+        </p>
+        {shown && rewritten && (
+          <RewritePreview
+            rewritten={rewritten}
+            currentContent={currentContent}
+            onApply={onApply}
+            onDiscard={onDiscard}
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 }

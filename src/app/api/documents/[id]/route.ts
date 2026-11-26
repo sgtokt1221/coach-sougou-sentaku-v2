@@ -4,7 +4,8 @@ import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
-import type { DocumentReview } from "@/lib/types/document";
+import type { DocumentGeneration, DocumentReview } from "@/lib/types/document";
+import { normalizeStudentEmphasis } from "@/lib/ai/prompts/shared";
 
 /**
  * 指定書類の詳細を取得する。
@@ -150,19 +151,29 @@ export async function PUT(
       const title = normalizeDocumentTitle(body.title);
       if (title) updates.title = title;
     }
-    if (body.targetWordCount !== undefined) updates.targetWordCount = body.targetWordCount;
+    if (body.targetWordCount !== undefined)
+      updates.targetWordCount = body.targetWordCount;
     if (body.deadline !== undefined) updates.deadline = body.deadline;
     // ウィザード進行状態と書類基本項目（志望校/タイプ変更対応）。ホワイトリストのみ。
     if (body.wizardState !== undefined) updates.wizardState = body.wizardState;
-    if (body.universityId !== undefined) updates.universityId = body.universityId;
+    if (body.universityId !== undefined)
+      updates.universityId = body.universityId;
     if (body.facultyId !== undefined) updates.facultyId = body.facultyId;
-    if (body.universityName !== undefined) updates.universityName = body.universityName;
+    if (body.universityName !== undefined)
+      updates.universityName = body.universityName;
     if (body.facultyName !== undefined) updates.facultyName = body.facultyName;
     if (body.type !== undefined) updates.type = body.type;
+    // AI 下書きの生成条件（作成画面が下書きを保存するときに送る）。形を検査してから残す
+    if (body.generation !== undefined) {
+      const generation = parseDocumentGeneration(body.generation);
+      if (generation) updates.generation = generation;
+    }
 
     // 本文を修正したら、承認/差し戻し済みのレビュー状態は「再確認待ち」に戻す。
     if (body.content !== undefined) {
-      const existingReview = existing.data()?.review as DocumentReview | undefined;
+      const existingReview = existing.data()?.review as
+        | DocumentReview
+        | undefined;
       if (existingReview && existingReview.state !== "resubmitted") {
         updates.review = { state: "resubmitted", at: now };
       }
@@ -205,23 +216,60 @@ export async function DELETE(
     const auth = await requireRole(request, ["student"]);
     if (auth instanceof NextResponse) return auth;
     if (!adminDb) {
-      return NextResponse.json({ error: "サーバー設定エラー" }, { status: 500 });
+      return NextResponse.json(
+        { error: "サーバー設定エラー" },
+        { status: 500 }
+      );
     }
 
     const { id } = await params;
     const docRef = adminDb.doc(`documents/${id}`);
     const existing = await docRef.get();
     if (!existing.exists) {
-      return NextResponse.json({ error: "書類が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "書類が見つかりません" },
+        { status: 404 }
+      );
     }
     if (existing.data()?.userId !== auth.uid) {
-      return NextResponse.json({ error: "この書類へのアクセス権がありません" }, { status: 403 });
+      return NextResponse.json(
+        { error: "この書類へのアクセス権がありません" },
+        { status: 403 }
+      );
     }
 
     await docRef.delete();
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error("Document delete error:", error);
-    return NextResponse.json({ error: "書類の削除中にエラーが発生しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "書類の削除中にエラーが発生しました" },
+      { status: 500 }
+    );
   }
+}
+
+/** 画面から来た生成条件を、決まった形だけ通す（それ以外の欄は捨てる） */
+function parseDocumentGeneration(raw: unknown): DocumentGeneration | null {
+  if (!raw || typeof raw !== "object") return null;
+  const g = raw as Record<string, unknown>;
+  if (g.source !== "statement" && g.source !== "draft") return null;
+  const target = Number(g.targetWordCount);
+  if (!Number.isFinite(target) || target <= 0 || target > 10000) return null;
+  const generation: DocumentGeneration = {
+    source: g.source,
+    targetWordCount: Math.round(target),
+    createdAt: new Date().toISOString(),
+  };
+  if (typeof g.frameworkType === "string" && g.frameworkType)
+    generation.frameworkType = g.frameworkType.slice(0, 64);
+  if (Array.isArray(g.activityIds))
+    generation.activityIds = g.activityIds
+      .filter((x): x is string => typeof x === "string")
+      .slice(0, 50);
+  const emphasis = normalizeStudentEmphasis(
+    typeof g.emphasis === "string" ? g.emphasis : ""
+  );
+  if (emphasis) generation.emphasis = emphasis;
+  return generation;
 }
