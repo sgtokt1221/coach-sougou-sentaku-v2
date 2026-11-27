@@ -1,3 +1,4 @@
+import { documentTypeLabel } from "@/lib/documents/kind";
 import { NextRequest, NextResponse } from "next/server";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
@@ -67,7 +68,7 @@ export async function POST(
     }
 
     const aiLikeness = await checkAiLikeness(content, {
-      documentType: data?.type ?? "出願書類",
+      documentType: documentTypeLabel(data ?? {}),
       universityName: data?.universityName ?? "未指定",
       facultyName: data?.facultyName ?? "未指定",
     });

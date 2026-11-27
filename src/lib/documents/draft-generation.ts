@@ -42,7 +42,8 @@ import type {
   DraftGenerateResponse,
 } from "@/lib/types/template";
 import { loadFacultyInfo, type FacultyInfoItem } from "@/lib/universities/faculty-info";
-import type { CompanionForPrompt } from "@/lib/ai/prompts/shared";
+import type { SetDocForPrompt } from "@/lib/ai/prompts/shared";
+import { documentTypeLabel } from "./kind";
 
 export type { AlternativeReason };
 
@@ -163,8 +164,12 @@ export async function writeStatementDraft(
     documentType: string;
     /** 生徒が調べて書いた、この大学・学部のこと（任意） */
     universityResearch?: string;
-    /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
-    companion?: CompanionForPrompt | null;
+    /** 同じ学部に出す、ほかの提出予定の書類（findSubmissionSet） */
+    others?: SetDocForPrompt[];
+    /** 独自書類の名前 */
+    customName?: string;
+    /** 募集要項の設問（任意） */
+    question?: string;
     alternative?: AlternativeRequest;
   }
 ): Promise<StatementDraftResult> {
@@ -181,11 +186,16 @@ export async function writeStatementDraft(
       options.documentType,
       options.universityResearch ?? "",
       material.facultyInfo,
-      options.companion ?? null
+      options.others ?? [],
+      { customName: options.customName, question: options.question }
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`
       : "");
+  const documentName = documentTypeLabel({
+    type: options.documentType,
+    customName: options.customName,
+  });
   const response = await client.messages.parse({
     model: AI_MODEL_STATEMENT_DRAFT,
     // 拡張思考が有効なモデルでは max_tokens を thinking と本文で分け合う。
@@ -196,7 +206,7 @@ export async function writeStatementDraft(
     messages: [
       {
         role: "user",
-        content: "reference_dataに基づいて志望理由書を生成してください。",
+        content: `reference_dataに基づいて${documentName}を生成してください。`,
       },
     ],
     output_config: {
@@ -250,7 +260,9 @@ export async function writeStatementDraft(
 /** 開発環境のモック（AI を呼ばない）。別の案のときは前の案と見分けられる印を付ける */
 export function mockStatementDraft(
   material: StatementMaterial,
-  alternative?: AlternativeRequest
+  alternative?: AlternativeRequest,
+  /** エミュレータで配線を見るための印（書類名と、並べて読んだ書類の数） */
+  label?: { name: string; setCount: number }
 ): StatementDraftResult {
   const { universityName, facultyName, admissionPolicy, selfAnalysis } =
     material;
@@ -264,7 +276,9 @@ export function mockStatementDraft(
     : admissionPolicy
       ? "【自分の経験とAPの接点を入力】"
       : "【AP確認後に接続を書く】";
-  const mark = alternative ? `（別の案: ${alternative.reason}）` : "";
+  const mark =
+    (label ? `【${label.name}・ほかの提出書類${label.setCount}通】` : "") +
+    (alternative ? `（別の案: ${alternative.reason}）` : "");
   const structure = {
     intro: `${mark}私は${value}を大切にしている。${experience}を振り返る中で、${facultyName.replace("学部", "")}分野への関心を持った。`,
     body: `${universityName}${facultyName}で、【大学で探究したい問いを入力】に取り組みたい。${apConnection}。`,
@@ -327,8 +341,8 @@ export async function writeTemplateDraft(
     emphasis: string;
     /** 生徒が調べて書いた、この大学・学部のこと（任意） */
     universityResearch?: string;
-    /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
-    companion?: CompanionForPrompt | null;
+    /** 同じ学部に出す、ほかの提出予定の書類（findSubmissionSet） */
+    others?: SetDocForPrompt[];
     alternative?: AlternativeRequest;
   }
 ): Promise<DraftGenerateResponse> {
@@ -347,7 +361,7 @@ export async function writeTemplateDraft(
       emphasis,
       options.universityResearch ?? "",
       material.facultyInfo,
-      options.companion ?? null
+      options.others ?? []
     ) +
     (options.alternative
       ? `\n\n${buildAlternativeRule(options.alternative)}`

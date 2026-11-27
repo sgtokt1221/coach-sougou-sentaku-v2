@@ -10,6 +10,11 @@ import {
   normalizeStudentResearch,
 } from "@/lib/ai/prompts/shared";
 import { setSubmissionPlanned } from "@/lib/documents/companion";
+import {
+  CUSTOM_DOCUMENT_TYPE,
+  normalizeCustomName,
+  normalizeDocumentQuestion,
+} from "@/lib/documents/kind";
 
 /**
  * 指定書類の詳細を取得する。
@@ -167,6 +172,15 @@ export async function PUT(
       updates.universityName = body.universityName;
     if (body.facultyName !== undefined) updates.facultyName = body.facultyName;
     if (body.type !== undefined) updates.type = body.type;
+    // 独自書類の名前（空は保存しない）と設問（空で消せる）
+    const nextType = (body.type ?? existing.data()?.type) as unknown;
+    if (body.customName !== undefined && nextType === CUSTOM_DOCUMENT_TYPE) {
+      const customName = normalizeCustomName(body.customName);
+      if (customName) updates.customName = customName;
+    }
+    if (body.question !== undefined) {
+      updates.question = normalizeDocumentQuestion(body.question);
+    }
     // AI 下書きの生成条件（作成画面が下書きを保存するときに送る）。形を検査してから残す
     if (body.generation !== undefined) {
       const generation = parseDocumentGeneration(body.generation);
@@ -191,10 +205,16 @@ export async function PUT(
     }
 
     await docRef.update(updates);
-    // 提出予定。付けるときは同じ学部・同じ種類のほかの書類の印を外す（companion.ts）
+    // 提出予定。付けるときは同じ学部・同じ枠のほかの書類の印を外す（companion.ts）
     if (typeof body.submissionPlanned === "boolean") {
       await setSubmissionPlanned(auth.uid, id, body.submissionPlanned);
       updates.submissionPlanned = body.submissionPlanned;
+    } else if (
+      existing.data()?.submissionPlanned === true &&
+      ("type" in updates || "customName" in updates || "universityId" in updates || "facultyId" in updates)
+    ) {
+      // 提出予定のまま枠が変わったら、新しい枠の先客の印を外す
+      await setSubmissionPlanned(auth.uid, id, true);
     }
 
     return NextResponse.json({

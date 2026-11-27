@@ -1,3 +1,4 @@
+import { documentTypeLabel } from "@/lib/documents/kind";
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -64,7 +65,7 @@ export async function POST(
 
   const before = detectUnnaturalJapanese(content, style);
   const system = buildDocumentNaturalizePrompt({
-    documentType: data.type ?? "出願書類",
+    documentType: documentTypeLabel(data),
     style,
     findings: before,
   });
@@ -124,7 +125,7 @@ export async function POST(
         text,
         min,
         max,
-        `${data.type ?? "出願書類"}の本文（${style === "dearu" ? "だ・である調" : "です・ます調"}）。本文に無い出来事・数値・名前は足さない`
+        `${documentTypeLabel(data)}の本文（${style === "dearu" ? "だ・である調" : "です・ます調"}）。本文に無い出来事・数値・名前は足さない`
       );
       if (introducedFacts(content, fitted).length === 0) {
         text = fitted;

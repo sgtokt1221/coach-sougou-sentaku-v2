@@ -1,5 +1,6 @@
 "use client";
 
+import { documentTypeLabel } from "@/lib/documents/kind";
 import {
   pickDocumentScoreFields,
   type DocumentScoreFields,
@@ -89,6 +90,7 @@ import {
 interface DocumentListItem {
   id: string;
   type: string;
+  customName?: string;
   /** 生徒が付けたタイトル（無ければ種類） */
   title?: string;
   universityName: string;
@@ -128,6 +130,9 @@ function formatCoachDate(iso: string | undefined): string {
 interface DocumentDetail {
   id: string;
   type: string;
+  customName?: string;
+  /** 募集要項の設問（生徒が入れたもの） */
+  question?: string;
   /** 生徒が付けたタイトル。どの書類の話かを生徒と揃えるために出す */
   title?: string;
   /** APを引くのに使う（表示名だけでは大学データを特定できない） */
@@ -373,8 +378,8 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
             : "");
       // チャットに出る書類名。生徒が付けたタイトルで、生徒の画面と同じ名前にする
       const targetLabel = detailDoc.title
-        ? `${detailDoc.title}（${detailDoc.type}）`
-        : `${detailDoc.universityName} ${detailDoc.type}`;
+        ? `${detailDoc.title}（${documentTypeLabel(detailDoc)}）`
+        : `${detailDoc.universityName} ${documentTypeLabel(detailDoc)}`;
       const feedbackBody = {
         type: "document",
         targetId: detailDoc.id,
@@ -535,10 +540,10 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
                     return (
                       <tr key={doc.id} className="border-b">
                         <td className="px-4 py-3">
-                          <p className="font-medium">{doc.title || doc.type}</p>
-                          {doc.title && doc.title !== doc.type && (
+                          <p className="font-medium">{doc.title || documentTypeLabel(doc)}</p>
+                          {doc.title && doc.title !== documentTypeLabel(doc) && (
                             <p className="text-muted-foreground text-xs">
-                              {doc.type}
+                              {documentTypeLabel(doc)}
                             </p>
                           )}
                         </td>
@@ -646,10 +651,17 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
             {detailDoc && (
               <DialogDescription>
                 {detailDoc.universityName} {detailDoc.facultyName} -{" "}
-                {detailDoc.type}
+                {documentTypeLabel(detailDoc)}
               </DialogDescription>
             )}
           </DialogHeader>
+
+          {!detailLoading && detailDoc?.question && (
+            <div className="bg-muted rounded-lg px-4 py-3 text-sm">
+              <p className="font-semibold">募集要項の設問</p>
+              <p className="mt-1 whitespace-pre-wrap">{detailDoc.question}</p>
+            </div>
+          )}
 
           {detailLoading ? (
             <div className="space-y-4 py-4">
@@ -1097,7 +1109,7 @@ export function DocumentsSection({ studentId }: { studentId: string }) {
               {detailDoc && (
                 <span className="text-muted-foreground truncate text-xs font-normal">
                   {detailDoc.title ||
-                    `${detailDoc.universityName} ${detailDoc.type}`}
+                    `${detailDoc.universityName} ${documentTypeLabel(detailDoc)}`}
                 </span>
               )}
             </DialogTitle>

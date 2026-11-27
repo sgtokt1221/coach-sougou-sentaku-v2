@@ -3,6 +3,7 @@ import {
   charRangeFor,
   fitToCharLimit,
   fitToCharRange,
+  QUESTION_FILL_HINT,
 } from "@/lib/ai/fit-char-limit";
 import {
   STATEMENT_SECTION_RATIOS,
@@ -96,7 +97,8 @@ export async function fitStatementToTarget(
             emphasis
               ? `${kind.name}の「${kind.sections[key]}」の段。生徒の希望（この方向で書く）: ${emphasis}`
               : `${kind.name}の「${kind.sections[key]}」の段`,
-            model
+            model,
+            documentType === "独自書類" ? QUESTION_FILL_HINT : undefined
           ),
         ] as const;
       })

@@ -80,6 +80,9 @@ export async function GET(
     return NextResponse.json({
       id: docRef.id,
       type: data.type ?? "",
+      // 独自書類の名前と、募集要項の設問（生徒が入れたもの）
+      customName: typeof data.customName === "string" ? data.customName : undefined,
+      question: typeof data.question === "string" && data.question ? data.question : undefined,
       // AP参照に必要。名前だけだと大学データを引けない
       universityId: data.universityId ?? "",
       facultyId: data.facultyId ?? "",

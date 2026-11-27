@@ -1,5 +1,7 @@
 "use client";
 
+import { DocumentBriefEditor } from "@/components/documents/DocumentBriefEditor";
+import { documentTypeLabel } from "@/lib/documents/kind";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { formatVersionDate } from "@/lib/ui/format-version-date";
 import { useRouter, useParams } from "next/navigation";
@@ -693,14 +695,15 @@ export default function DocumentEditorPage() {
    * 作成ウィザードはセクション単位だが、こちらは書き上げた本文への相談が主。
    * docId を渡すので、会話は書類に紐づいて管理者側からも辿れる。
    */
+  const typeLabel = doc ? documentTypeLabel(doc) : "書類";
   const coachSection = useMemo(
     () => ({
       id: "whole",
-      title: `${doc?.type ?? "書類"}の本文`,
+      title: `${typeLabel}の本文`,
       guidingQuestion: "この本文について、どこをどう直すとよいか相談できます。",
       content,
     }),
-    [doc?.type, content]
+    [typeLabel, content]
   );
 
   /**
@@ -833,7 +836,25 @@ export default function DocumentEditorPage() {
     }
   }
 
-  /** 提出予定の付け外し。同じ学部・同じ種類のほかの書類の印はサーバーで外れる */
+  /** 独自の書類の名前と、募集要項の設問を保存する。下書き・添削・書き分けはこの設問に沿う */
+  async function saveBrief(patch: { customName?: string; question: string }): Promise<boolean> {
+    if (!doc) return false;
+    try {
+      const res = await authFetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error();
+      setDoc((d) => (d ? { ...d, ...patch } : d));
+      return true;
+    } catch {
+      toast.error("設問を保存できませんでした");
+      return false;
+    }
+  }
+
+  /** 提出予定の付け外し。同じ学部・同じ枠のほかの書類の印はサーバーで外れる */
   async function toggleSubmissionPlanned() {
     if (!doc) return;
     const next = !doc.submissionPlanned;
@@ -920,6 +941,13 @@ export default function DocumentEditorPage() {
           </div>
         </div>
       </div>
+
+      <DocumentBriefEditor
+        type={doc.type}
+        customName={doc.customName}
+        question={doc.question}
+        onSave={saveBrief}
+      />
 
       {/* 差し戻し時の案内バナー（差し戻し理由の本文はチャットに届く） */}
       {doc.review?.state === "revision_requested" && (

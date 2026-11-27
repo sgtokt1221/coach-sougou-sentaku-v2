@@ -375,7 +375,8 @@ async function generateDoc(
   client: Anthropic,
   p: Profile,
   documentType: string,
-  companion: { type: string; content: string } | null
+  others: { type: string; name: string; content: string; question?: string }[],
+  brief: { customName?: string; question?: string } = {}
 ): Promise<string> {
   const ap = loadAp(p.universityId, p.facultyId);
   const prompt = buildStatementDraftPrompt(
@@ -389,13 +390,16 @@ async function generateDoc(
     documentType,
     RESEARCH ? (RESEARCH_BY_ID[p.id] ?? "") : "",
     facultyInfoOf(p),
-    companion
+    others,
+    brief
   );
   const response = await client.messages.parse({
     model: GEN_MODEL,
     max_tokens: 16384,
     system: prompt,
-    messages: [{ role: "user", content: `reference_dataに基づいて${documentType}を生成してください。` }],
+    messages: [
+      { role: "user", content: `reference_dataに基づいて${brief.customName || documentType}を生成してください。` },
+    ],
     output_config: { format: zodOutputFormat(StatementDraftOutputSchema), effort: "low" },
   });
   if (response.stop_reason === "max_tokens" || !response.parsed_output) {
@@ -407,12 +411,12 @@ async function generateDoc(
 
 async function runPair(client: Anthropic, p: Profile, rep: number): Promise<void> {
   const ap = loadAp(p.universityId, p.facultyId);
-  const statement = await generateDoc(client, p, "志望理由書", null);
+  const statement = await generateDoc(client, p, "志望理由書", []);
   const [paired, alone] = await Promise.all([
-    generateDoc(client, p, "自己推薦書", { type: "志望理由書", content: statement }),
-    generateDoc(client, p, "自己推薦書", null),
+    generateDoc(client, p, "自己推薦書", [{ type: "志望理由書", name: "志望理由書", content: statement }]),
+    generateDoc(client, p, "自己推薦書", []),
   ]);
-  const companion = { id: "statement", type: "志望理由書", title: "志望理由書", content: statement };
+  const companion = { id: "statement", type: "志望理由書", name: "志望理由書", title: "志望理由書", content: statement };
   const review = (content: string) =>
     runDocumentReview(
       {
@@ -428,7 +432,7 @@ async function runPair(client: Anthropic, p: Profile, rep: number): Promise<void
         targetWordCount: TARGET,
         previous: null,
         model: REVIEW_MODEL,
-        companion,
+        others: [companion],
       },
       client
     );
@@ -455,10 +459,95 @@ async function runPair(client: Anthropic, p: Profile, rep: number): Promise<void
   console.log(JSON.stringify(row));
 }
 
+/**
+ * --set: 独自の書類を含むセット。志望理由書 → 自己推薦書（志望理由書を見る）→ 独自「活動報告書」（2通を見る）を作り、
+ * 独自の書類を単独で作ったものと比べる（12字の重なり・書き分けの判定・添削の点。結果は set.jsonl）
+ */
+const SET = process.argv.includes("--set");
+const CUSTOM_NAME = "活動報告書";
+const CUSTOM_QUESTION =
+  "高校時代に最も力を入れて取り組んだ活動について、取り組みの内容、あなたの役割、そこから得たことを具体的に述べてください。";
+
+async function runSet(client: Anthropic, p: Profile, rep: number): Promise<void> {
+  const ap = loadAp(p.universityId, p.facultyId);
+  const statement = await generateDoc(client, p, "志望理由書", []);
+  const shiDoc = { id: "statement", type: "志望理由書", name: "志望理由書", title: "志望理由書", content: statement };
+  const selfRec = await generateDoc(client, p, "自己推薦書", [shiDoc]);
+  const recDoc = { id: "selfrec", type: "自己推薦書", name: "自己推薦書", title: "自己推薦書", content: selfRec };
+  const brief = { customName: CUSTOM_NAME, question: CUSTOM_QUESTION };
+  const [inSet, alone] = await Promise.all([
+    generateDoc(client, p, "独自書類", [shiDoc, recDoc], brief),
+    generateDoc(client, p, "独自書類", [], brief),
+  ]);
+  const review = (content: string) =>
+    runDocumentReview(
+      {
+        content,
+        documentType: "独自書類",
+        documentName: CUSTOM_NAME,
+        question: CUSTOM_QUESTION,
+        universityName: p.universityName,
+        facultyName: p.facultyName,
+        admissionPolicy: ap,
+        universityResearch: RESEARCH ? RESEARCH_BY_ID[p.id] : undefined,
+        facultyInfo: facultyInfoOf(p),
+        selfAnalysis: p.selfAnalysis,
+        activities: p.activities,
+        targetWordCount: TARGET,
+        previous: null,
+        model: REVIEW_MODEL,
+        others: [shiDoc, recDoc],
+      },
+      client
+    );
+  const [rs, ra] = await Promise.all([review(inSet), review(alone)]);
+  const pct = (fb: Parameters<typeof documentScoreLayout>[0]) => {
+    const layout = documentScoreLayout(fb, "独自書類");
+    return layout.incomplete ? null : documentTotal(layout).percentage;
+  };
+  const count = (ids: (string | undefined)[], id: string) => ids.filter((x) => x === id).length;
+  const setIds = rs.feedback.pairCheck?.overlaps.map((o) => o.otherId) ?? [];
+  const aloneIds = ra.feedback.pairCheck?.overlaps.map((o) => o.otherId) ?? [];
+  const row = {
+    id: p.id,
+    rep,
+    setOverlapStatement: overlapWith(inSet, statement),
+    setOverlapSelfRec: overlapWith(inSet, selfRec),
+    aloneOverlapStatement: overlapWith(alone, statement),
+    aloneOverlapSelfRec: overlapWith(alone, selfRec),
+    recOverlapStatement: overlapWith(selfRec, statement),
+    setOverlaps: { statement: count(setIds, "statement"), selfrec: count(setIds, "selfrec"), other: setIds.length - count(setIds, "statement") - count(setIds, "selfrec") },
+    aloneOverlaps: { statement: count(aloneIds, "statement"), selfrec: count(aloneIds, "selfrec") },
+    setPct: pct(rs.feedback),
+    alonePct: pct(ra.feedback),
+    setCoherence: rs.feedback.coherenceScore ?? null,
+    aloneCoherence: ra.feedback.coherenceScore ?? null,
+    setChars: inSet.length,
+  };
+  writeFileSync(
+    `${OUT}/traces/${p.id}_set${rep}.json`,
+    JSON.stringify(
+      { statement, selfRec, inSet, alone, setCheck: rs.feedback.pairCheck, aloneCheck: ra.feedback.pairCheck, setFeedback: rs.feedback },
+      null,
+      2
+    )
+  );
+  appendFileSync(`${OUT}/set.jsonl`, JSON.stringify(row) + "\n");
+  console.log(JSON.stringify(row));
+}
+
 async function main(): Promise<void> {
   if (SUMMARIZE) return summarize();
   mkdirSync(`${OUT}/traces`, { recursive: true });
   const client = new Anthropic();
+  if (SET) {
+    await Promise.all(
+      PROFILES.flatMap((p) => Array.from({ length: REPS }, (_, rep) => ({ p, rep }))).map(({ p, rep }) =>
+        runSet(client, p, rep).catch((err) => console.log(p.id, rep, "ERROR", String(err).slice(0, 300)))
+      )
+    );
+    return;
+  }
   if (PAIR) {
     await Promise.all(
       PROFILES.flatMap((p) => Array.from({ length: REPS }, (_, rep) => ({ p, rep }))).map(({ p, rep }) =>

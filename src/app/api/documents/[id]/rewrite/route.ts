@@ -1,3 +1,4 @@
+import { documentTypeLabel } from "@/lib/documents/kind";
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { requireFeature } from "@/lib/api/subscription";
@@ -123,7 +124,7 @@ export async function POST(
     const systemPrompt = buildDocumentRewritePrompt({
       instructionCharLimit,
       instruction,
-      documentType: data?.type ?? "出願書類",
+      documentType: documentTypeLabel(data ?? {}),
       universityName: data?.universityName ?? "未指定",
       facultyName: data?.facultyName ?? "未指定",
       admissionPolicy,
@@ -186,7 +187,7 @@ export async function POST(
         rewritten,
         min,
         max,
-        `${data?.type ?? "出願書類"}の本文`,
+        `${documentTypeLabel(data ?? {})}の本文`,
         selectDocumentModel(data?.type)
       );
     }

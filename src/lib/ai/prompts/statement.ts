@@ -7,10 +7,11 @@ import {
   ACTIVITY_GROUNDING_RULE,
   DOCUMENT_COMPLETE_PROSE_RULE,
   buildStudentEmphasisRule,
-  buildCompanionRule,
+  buildQuestionRule,
+  buildSubmissionSetRule,
   buildUniversityFitRule,
-  type CompanionForPrompt,
   type FacultyInfoForPrompt,
+  type SetDocForPrompt,
 } from "./shared";
 
 export interface SelfAnalysisData {
@@ -163,11 +164,40 @@ export const STATEMENT_KINDS: Record<string, StatementKind> = {
     },
     flow: "強み → それを裏づける経験 → 困難の乗り越え方 → 大学での生かし方",
   },
+  // 大学独自の書類（2026-11-27）。段の中身は設問が決める。name は呼び出し側が生徒の付けた名前に差し替える
+  独自書類: {
+    name: "出願書類",
+    sections: {
+      intro: "設問への答えの中心（設問が求めることへの答えを最初に示す）",
+      body: "その答えを裏づける具体的な経験と、その中で本人が何を考え、どう判断したか",
+      strengths: "設問の残りの要求への答え（残りが無ければ、経験の掘り下げ）",
+      conclusion: "設問が求める締め（設問が求めていなければ、その経験から得たことを本人の言葉でまとめる。大学での学び・将来には広げない）",
+    },
+    flow: "設問が求める順（設問の要求を一つずつ、本人の経験と考えで答える）",
+  },
 };
+
+/** 独自書類の「全体をつなぐ筋」。標準の種類は志望の筋でつなぐ */
+const THREAD_RULE_STANDARD =
+  "生徒の価値観・経験から、志望分野、大学で取り組みたい問い、将来像へ一貫してつなぎます。";
+/** 字数が足りないときの埋め方。志望理由書の形（大学で学びたいこと・将来の計画）を独自書類では使わない */
+const PROSE_FILL_STANDARD = `- 材料が足りない分は、事実ではなく考えを展開して埋める。たとえば、その学問・社会課題への問題意識、
+  大学・学部の学びを自分の計画の中でどう使うか、大学で学びたいこと・取り組みたいこと、将来の計画。`;
+const PROSE_FILL_CUSTOM = `- 材料が足りない分は、事実ではなく考えを展開して埋める。たとえば、その場面で何を考え、なぜそう判断したか、
+  うまくいかなかった点と次にどうしたか、その経験から得た見方。設問が求めていない大学での学び・将来の計画では埋めない。`;
+const CUSTOM_QUESTION_FIRST_RULE = `## 設問への答え方
+- この書類は大学の設問に答える書類です。志望理由書ではありません。
+- 1段目から設問が求めることに答えます。「大学では〜を学びたい」「将来は〜になりたい」は、設問が求めているときだけ、最後に短く書きます。
+- 設問が大学・学部との関わりを求めていないときは、大学のカリキュラム・特色・AP に寄せた段を作りません。
+- 出力する前に、「大学では」「将来は」「入学後」で始まる文や、大学で学びたいこと・将来の仕事を書いた文が無いか確かめます。
+  設問がそれを求めていなければ消し、空いた字数はその経験の中での判断・工夫・得た見方で埋め直します。`;
+const THREAD_RULE_CUSTOM =
+  "大学の設問に、生徒の経験と考えで答えます。設問が求めていない志望理由・将来像を足しません。";
 
 export function statementKindOf(
   documentType: string | undefined
 ): StatementKind {
+  if (documentType === "独自書類") return STATEMENT_KINDS["独自書類"];
   return STATEMENT_KINDS[documentType ?? ""] ?? STATEMENT_KINDS["志望理由書"];
 }
 
@@ -181,7 +211,7 @@ const STATEMENT_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜の出願書�
 
 ## 生成ルール
 - 文体は「である調」で統一します。
-- 生徒の価値観・経験から、志望分野、大学で取り組みたい問い、将来像へ一貫してつなぎます。
+- {{THREAD_RULE}}
 - APは単語を貼り付けず、生徒の確認済み事実との意味的な接続として表現します。
 - 授業名・教員名・研究室名は、下の「大学・学部への寄せ方」にあるものだけを使い、推測しません。
 - 各段落を自然につなぎ、一つの物語として読めるようにします。
@@ -225,17 +255,34 @@ export function buildStatementDraftPrompt(
   universityResearch = "",
   /** 公式サイトで確かめた学部の特色（facultyInfo） */
   facultyInfo: FacultyInfoForPrompt[] = [],
-  /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
-  companion: CompanionForPrompt | null = null
+  /** 同じ学部に出す、ほかの提出予定の書類（findSubmissionSet） */
+  others: SetDocForPrompt[] = [],
+  /** 独自書類の名前と、募集要項の設問（どの種類でも任意） */
+  brief: { customName?: string; question?: string } = {}
 ): string {
-  const kind = statementKindOf(documentType);
+  const baseKind = statementKindOf(documentType);
+  const isCustom = documentType === "独自書類";
+  const kind: StatementKind = isCustom
+    ? { ...baseKind, name: brief.customName?.trim() || "独自の書類" }
+    : baseKind;
+  const questionRule = buildQuestionRule(brief.question);
+  // 設問が無い書類はプロンプトを変えない（空のときは改行も足さない）
+  const questionBlock = questionRule ? `${questionRule}\n\n` : "";
+  /**
+   * 独自書類は設問に答える書類。志望理由書向けの「最重要の視点（学部で何を実現したいか）」と
+   * 「大学・学部への寄せ方」を入れると、活動報告書でも冒頭から志望理由と将来像を書いた（2026-11-27 の評価）。
+   */
+  const fitBlock = isCustom
+    ? CUSTOM_QUESTION_FIRST_RULE
+    : buildUniversityFitRule(universityResearch, facultyInfo);
   const target = targetWordCount || 800;
   const sectionRatios = STATEMENT_SECTION_RATIOS;
   const referenceData = {
     universityName,
     facultyName,
-    admissionPolicy: admissionPolicy.trim() || null,
-    selfAnalysis,
+    // 独自書類には AP と将来像を渡さない。渡すと設問が求めていなくても「大学では〜」「将来は〜」を書いた（2026-11-27 の評価で6通中4通）
+    admissionPolicy: isCustom ? null : admissionPolicy.trim() || null,
+    selfAnalysis: isCustom ? { ...selfAnalysis, vision: "" } : selfAnalysis,
     activities: activities.length > 0 ? activities : null,
     targetWordCount: target,
     sectionRatios,
@@ -253,6 +300,15 @@ export function buildStatementDraftPrompt(
     () => kind.name
   )
     .replace("{{DOCUMENT_FLOW}}", () => kind.flow)
+    .replace(PROSE_FILL_STANDARD, () =>
+      isCustom ? PROSE_FILL_CUSTOM : PROSE_FILL_STANDARD
+    )
+    .replace(FACULTY_AGENCY_FOCUS_DOCUMENT, () =>
+      isCustom ? "" : FACULTY_AGENCY_FOCUS_DOCUMENT
+    )
+    .replace("{{THREAD_RULE}}", () =>
+      isCustom ? THREAD_RULE_CUSTOM : THREAD_RULE_STANDARD
+    )
     .replace("{{SECTION_ROLES}}", () =>
       (Object.keys(kind.sections) as (keyof typeof kind.sections)[])
         .map((k) => `  - ${k}: ${kind.sections[k]}`)
@@ -262,12 +318,16 @@ export function buildStatementDraftPrompt(
 
 ## 活動実績の扱い
 ${ACTIVITY_GROUNDING_RULE}
-- 自己分析の価値観・将来像を、activities にある具体的な場面・数値・役割で裏づけること。
+${
+  isCustom
+    ? "- 設問への答えを、activities にある具体的な場面・数値・役割で裏づけること。"
+    : "- 自己分析の価値観・将来像を、activities にある具体的な場面・数値・役割で裏づけること。"
+}
   抽象的な言葉だけで段落を埋めないこと。
 
-${buildUniversityFitRule(universityResearch, facultyInfo)}
+${questionBlock}${fitBlock}
 
-${buildCompanionRule(companion, kind.name)}
+${buildSubmissionSetRule(others, { type: documentType, name: kind.name, question: brief.question })}
 
 ${buildStudentEmphasisRule(emphasis)}
 

@@ -5,10 +5,10 @@ import {
   ACTIVITY_GROUNDING_RULE,
   DOCUMENT_COMPLETE_PROSE_RULE,
   buildStudentEmphasisRule,
-  buildCompanionRule,
+  buildSubmissionSetRule,
   buildUniversityFitRule,
-  type CompanionForPrompt,
   type FacultyInfoForPrompt,
+  type SetDocForPrompt,
 } from "./shared";
 
 const TEMPLATE_DRAFT_SYSTEM_PROMPT = `あなたは総合型選抜（旧AO入試）の出願書類作成を支援する専門家です。
@@ -60,8 +60,8 @@ export function buildTemplateDraftPrompt(
   universityResearch = "",
   /** 公式サイトで確かめた学部の特色（facultyInfo） */
   facultyInfo: FacultyInfoForPrompt[] = [],
-  /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書） */
-  companion: CompanionForPrompt | null = null
+  /** 同じ学部に出す、ほかの提出予定の書類（findSubmissionSet） */
+  others: SetDocForPrompt[] = []
 ): string {
   const target = targetWordCount || 800;
   // 比率だけだとモデルが字数に落とせないため、セクションごとの目安字数を実数で渡す
@@ -101,7 +101,7 @@ export function buildTemplateDraftPrompt(
 
 ${buildUniversityFitRule(universityResearch, facultyInfo)}
 
-${buildCompanionRule(companion, documentType)}
+${buildSubmissionSetRule(others, { type: documentType, name: documentType })}
 
 ${buildStudentEmphasisRule(emphasis)}
 

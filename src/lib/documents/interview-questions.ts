@@ -1,3 +1,4 @@
+import { documentTypeLabel } from "./kind";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -93,7 +94,7 @@ export async function generateDocumentInterviewQuestions(params: {
 ${JSON.stringify({
   universityName: data.universityName ?? "未指定",
   facultyName: data.facultyName ?? "未指定",
-  documentType: data.type ?? "出願書類",
+  documentType: documentTypeLabel(data),
   admissionPolicy: admissionPolicy || null,
 })}
 </reference_data>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,8 +33,18 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
-import type { DocumentGeneration, DocumentType } from "@/lib/types/document";
-import { CREATABLE_DOCUMENT_TYPES } from "@/lib/types/document";
+import type {
+  DocumentBundleItem,
+  DocumentGeneration,
+  DocumentType,
+} from "@/lib/types/document";
+import {
+  CUSTOM_DOCUMENT_TYPE,
+  CUSTOM_NAME_MAX,
+  QUESTION_MAX,
+  documentTypeLabel,
+  submissionSlotKey,
+} from "@/lib/documents/kind";
 import type {
   FrameworkType,
   FrameworkDefinition,
@@ -157,12 +167,15 @@ export default function NewDocumentPage() {
   }, [showAllUniversities, allUniversities.length]);
 
   const [step, setStep] = useState(0);
-  const [documentType, setDocumentType] = useState<DocumentType | null>(null);
   /**
-   * 志望理由書と自己推薦書を2通まとめて作る。この書類は志望理由書になり、下書きの後に
-   * 自己推薦書をもう1通作る。2通とも提出予定にして、役割を分けて書かせる
+   * 作る書類の並び（2026-11-27）。1通目がこの書類で、2通目以降は下書きの後に1通ずつ作る。
+   * 2通以上なら「まとめて作る」で、全部を提出予定にして、先に作った書類と書き分けさせる。
+   * 1通目の字数は targetWordCount（下の状態）を使う。
    */
-  const [pairMode, setPairMode] = useState(false);
+  const [plan, setPlan] = useState<PlanItem[]>([]);
+  const documentType: DocumentType | null = plan[0]?.type ?? null;
+  const bundleMode = plan.length > 1;
+  const bundle: DocumentBundleItem[] = useMemo(() => plan.slice(1).map(toBundleItem), [plan]);
   const [selectedUniversity, setSelectedUniversity] =
     useState<UniversityOption | null>(null);
   const [frameworkType, setFrameworkType] = useState<FrameworkType | null>(
@@ -230,7 +243,7 @@ export default function NewDocumentPage() {
       targetWordCount: number;
       emphasis?: string;
       universityResearch?: string;
-      pairMode?: boolean;
+      bundle?: DocumentBundleItem[];
       sections?: { id: string; content: string }[];
     }) => {
       if (!docId) return;
@@ -263,7 +276,7 @@ export default function NewDocumentPage() {
       targetWordCount,
       emphasis,
       universityResearch,
-      pairMode,
+      bundle,
       sections:
         draftResult?.sections.map((s) => ({ id: s.id, content: s.content })) ??
         [],
@@ -277,12 +290,16 @@ export default function NewDocumentPage() {
    * 初回セット（早期作成・再開直後）はスキップして冗長な PUT を避ける。
    */
   const lastSyncedBasicsRef = useRef<string>("");
+  const firstCustomName = plan[0]?.customName.trim() ?? "";
+  const firstQuestion = plan[0]?.question.trim() ?? "";
   useEffect(() => {
     if (!docId || !selectedUniversity || !documentType) return;
     const key = JSON.stringify({
       u: selectedUniversity.universityId,
       f: selectedUniversity.facultyId,
       t: documentType,
+      n: firstCustomName,
+      q: firstQuestion,
     });
     if (lastSyncedBasicsRef.current === "") {
       lastSyncedBasicsRef.current = key;
@@ -299,10 +316,12 @@ export default function NewDocumentPage() {
         universityName: selectedUniversity.universityName,
         facultyName: selectedUniversity.facultyName,
         type: documentType,
+        ...(documentType === CUSTOM_DOCUMENT_TYPE ? { customName: firstCustomName } : {}),
+        question: firstQuestion,
         autosave: true,
       }),
     }).catch((err) => console.error("Basics sync failed:", err));
-  }, [docId, selectedUniversity, documentType]);
+  }, [docId, selectedUniversity, documentType, firstCustomName, firstQuestion]);
 
   /**
    * 生成した本文を書類に保存する（版を積む＝autosave なし）。
@@ -345,7 +364,9 @@ export default function NewDocumentPage() {
           facultyName: selectedUniversity.facultyName,
           targetWordCount,
           initialContent: "",
-          ...(pairMode ? { submissionPlanned: true } : {}),
+          ...(documentType === CUSTOM_DOCUMENT_TYPE ? { customName: firstCustomName } : {}),
+          ...(firstQuestion ? { question: firstQuestion } : {}),
+          ...(bundleMode ? { submissionPlanned: true } : {}),
           wizardState: {
             currentStep: 3,
             writingMode: writingMode ?? undefined,
@@ -354,7 +375,7 @@ export default function NewDocumentPage() {
             targetWordCount,
             emphasis,
             universityResearch,
-            pairMode,
+            bundle,
             completed: false,
           },
         }),
@@ -382,7 +403,10 @@ export default function NewDocumentPage() {
     selectedActivityIds,
     emphasis,
     universityResearch,
-    pairMode,
+    bundleMode,
+    firstCustomName,
+    firstQuestion,
+    bundle,
   ]);
 
   /** 次のステップへ。志望校ステップ(1)を抜けるとき早期作成し、保留中の自動保存を確定する。 */
@@ -426,7 +450,29 @@ export default function NewDocumentPage() {
         if (!res.ok) throw new Error();
         const doc = await res.json();
         setDocId(doc.id ?? resumeId);
-        if (doc.type) setDocumentType(doc.type as DocumentType);
+        if (doc.type) {
+          const ws0 = doc.wizardState;
+          const rest: DocumentBundleItem[] = Array.isArray(ws0?.bundle)
+            ? ws0.bundle
+            : ws0?.pairMode === true
+              ? [
+                  {
+                    type: "自己推薦書",
+                    targetWordCount:
+                      typeof doc.targetWordCount === "number" ? doc.targetWordCount : 800,
+                  },
+                ]
+              : [];
+          setPlan([
+            fromBundleItem({
+              type: doc.type as DocumentType,
+              customName: doc.customName,
+              question: doc.question,
+              targetWordCount: 0,
+            }),
+            ...rest.map(fromBundleItem),
+          ]);
+        }
         if (doc.universityId) {
           setSelectedUniversity({
             universityId: doc.universityId,
@@ -448,7 +494,6 @@ export default function NewDocumentPage() {
         if (typeof ws?.emphasis === "string") setEmphasis(ws.emphasis);
         if (typeof ws?.universityResearch === "string")
           setUniversityResearch(ws.universityResearch);
-        if (ws?.pairMode === true) setPairMode(true);
         // 本体を優先する。編集画面で変えた目標字数は本体にしか入らず、
         // wizardState の値は古いことがある（再開して自動保存すると本体を戻してしまう）
         if (typeof doc.targetWordCount === "number") {
@@ -603,7 +648,7 @@ export default function NewDocumentPage() {
   const canProceed = () => {
     switch (step) {
       case 0:
-        return !!documentType;
+        return planIsValid(plan);
       case 1:
         return !!selectedUniversity;
       case 2:
@@ -720,10 +765,10 @@ export default function NewDocumentPage() {
         targetWordCount,
       };
       if (writingMode === "free") {
-        if (pairMode) {
-          // 1通目（志望理由書）を先に保存してから、それを相手に2通目（自己推薦書）を作る
+        if (bundleMode) {
+          // 1通目を先に保存してから、2通目以降を1通ずつ作る（後の書類は先に作った書類と書き分ける）
           await persistContent(data.draft, generation);
-          await createCompanionDraft();
+          await createRestOfBundle();
           await finishWizard(data.draft, generation, { contentSaved: true });
           return;
         }
@@ -782,71 +827,82 @@ export default function NewDocumentPage() {
    * 編集画面へ移す（以前は「書類として保存」を押すまで道具が使えなかった）。
    */
   /**
-   * 2通まとめて作るときの2通目（自己推薦書）。提出予定で作り、サーバーが1通目（提出予定の志望理由書）を
-   * 相手として渡して下書きを作る。失敗しても1通目は残し、知らせるだけにする。
+   * まとめて作るときの2通目以降。1通ずつ「提出予定で作る → 下書き → 保存」の順に作る。
+   * サーバーが同じ学部の提出予定の書類（先に作った書類）を渡して書き分けさせる。
+   * 失敗した書類は名前を出して知らせ、残りは作り続ける（1通目はもう保存してある）。
    */
-  async function createCompanionDraft() {
+  async function createRestOfBundle() {
     if (!selectedUniversity) return;
-    const fail = () =>
-      toast.error("自己推薦書は作れませんでした。一覧から作り直せます");
-    try {
-      const created = await authFetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "自己推薦書",
-          universityId: selectedUniversity.universityId,
-          facultyId: selectedUniversity.facultyId,
-          universityName: selectedUniversity.universityName,
-          facultyName: selectedUniversity.facultyName,
-          targetWordCount,
-          initialContent: "",
-          submissionPlanned: true,
-          wizardState: {
-            currentStep: 4,
-            writingMode: "free",
-            selectedActivityIds,
-            targetWordCount,
-            emphasis,
-            universityResearch,
-            pairMode: true,
-            completed: true,
-          },
-        }),
-      });
-      if (!created.ok) return fail();
-      const second = (await created.json()) as { id: string };
-      const gen = await authFetch("/api/documents/generate-statement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          universityId: selectedUniversity.universityId,
-          facultyId: selectedUniversity.facultyId,
-          targetWordCount,
-          emphasis: emphasis.trim() || undefined,
-          universityResearch: universityResearch.trim() || undefined,
-          documentType: "自己推薦書",
-          documentId: second.id,
-        }),
-      });
-      if (!gen.ok) return fail();
-      const data = (await gen.json()) as { draft: string };
-      const saved = await authFetch(`/api/documents/${second.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: data.draft,
-          generation: {
-            source: "statement",
+    for (const item of plan.slice(1)) {
+      const name = documentTypeLabel(item);
+      const fail = () =>
+        toast.error(`${name}は作れませんでした。一覧から作り直せます`);
+      try {
+        const created = await authFetch("/api/documents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: item.type,
+            ...(item.type === CUSTOM_DOCUMENT_TYPE ? { customName: item.customName.trim() } : {}),
+            ...(item.question.trim() ? { question: item.question.trim() } : {}),
+            universityId: selectedUniversity.universityId,
+            facultyId: selectedUniversity.facultyId,
+            universityName: selectedUniversity.universityName,
+            facultyName: selectedUniversity.facultyName,
+            targetWordCount: item.targetWordCount,
+            initialContent: "",
+            submissionPlanned: true,
+            wizardState: {
+              currentStep: 4,
+              writingMode: "free",
+              selectedActivityIds,
+              targetWordCount: item.targetWordCount,
+              emphasis,
+              universityResearch,
+              completed: true,
+            },
+          }),
+        });
+        if (!created.ok) {
+          fail();
+          continue;
+        }
+        const doc = (await created.json()) as { id: string };
+        const gen = await authFetch("/api/documents/generate-statement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            universityId: selectedUniversity.universityId,
+            facultyId: selectedUniversity.facultyId,
+            targetWordCount: item.targetWordCount,
             emphasis: emphasis.trim() || undefined,
             universityResearch: universityResearch.trim() || undefined,
-            targetWordCount,
-          } satisfies DocumentGenerationInput,
-        }),
-      });
-      if (!saved.ok) return fail();
-    } catch {
-      fail();
+            documentType: item.type,
+            documentId: doc.id,
+          }),
+        });
+        if (!gen.ok) {
+          fail();
+          continue;
+        }
+        const data = (await gen.json()) as { draft: string; notice?: string };
+        const saved = await authFetch(`/api/documents/${doc.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: data.draft,
+            generation: {
+              source: "statement",
+              emphasis: emphasis.trim() || undefined,
+              universityResearch: universityResearch.trim() || undefined,
+              targetWordCount: item.targetWordCount,
+            } satisfies DocumentGenerationInput,
+          }),
+        });
+        if (!saved.ok) fail();
+      } catch {
+        fail();
+      }
     }
   }
 
@@ -874,7 +930,7 @@ export default function NewDocumentPage() {
             targetWordCount,
             emphasis,
             universityResearch,
-            pairMode,
+            bundle,
             completed: true,
           },
         }),
@@ -1008,41 +1064,57 @@ export default function NewDocumentPage() {
       {/* Step 0: Document type */}
       {step === 0 && (
         <section className="space-y-6">
-          <StepHeading
-            title="どの書類を作りますか"
-            description="作れるのは志望理由書と自己推薦書です。"
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            {CREATABLE_DOCUMENT_TYPES.map((type) => (
+          <StepHeading title="どの書類を作りますか" />
+          <div className="grid gap-4 sm:grid-cols-3">
+            {STANDARD_TYPES.map((type) => (
               <ChoiceCard
                 key={type}
-                selected={documentType === type && !pairMode}
-                onClick={() => {
-                  setDocumentType(type);
-                  setPairMode(false);
-                }}
+                selected={plan.some((item) => item.type === type)}
+                onClick={() => setPlan((prev) => toggleStandard(prev, type))}
                 icon={FileText}
                 title={type}
-                description={
-                  DOCUMENT_TYPE_DESCRIPTIONS[type] ??
-                  DOCUMENT_TEMPLATES.find((t) => t.documentType === type)
-                    ?.sampleStructure.split("\n")[0]
-                    .replace("【", "")
-                    .replace("】", "")
-                }
+                description={DOCUMENT_TYPE_DESCRIPTIONS[type]}
               />
             ))}
             <ChoiceCard
-              selected={pairMode}
-              onClick={() => {
-                setDocumentType("志望理由書");
-                setPairMode(true);
-              }}
+              selected={plan.some((item) => item.type === CUSTOM_DOCUMENT_TYPE)}
+              onClick={() => setPlan((prev) => toggleCustom(prev))}
               icon={Files}
-              title="志望理由書と自己推薦書"
-              description="同じ大学・学部に2通出すとき。役割を分けて2通の下書きを作ります。"
+              title="独自の書類"
+              description={DOCUMENT_TYPE_DESCRIPTIONS[CUSTOM_DOCUMENT_TYPE]}
             />
           </div>
+
+          {plan.length > 0 && (
+            <div className="space-y-4">
+              {plan.map((item) => (
+                <PlanItemFields
+                  key={item.key}
+                  item={item}
+                  duplicate={isDuplicateSlot(plan, item)}
+                  onChange={(next) =>
+                    setPlan((prev) => prev.map((p) => (p.key === item.key ? next : p)))
+                  }
+                  onRemove={
+                    item.type === CUSTOM_DOCUMENT_TYPE
+                      ? () => setPlan((prev) => prev.filter((p) => p.key !== item.key))
+                      : undefined
+                  }
+                />
+              ))}
+              {plan.some((item) => item.type === CUSTOM_DOCUMENT_TYPE) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11"
+                  onClick={() => setPlan((prev) => [...prev, newCustomItem()])}
+                >
+                  <Plus className="size-4" />
+                  独自の書類を追加
+                </Button>
+              )}
+            </div>
+          )}
         </section>
       )}
 
@@ -1232,7 +1304,12 @@ export default function NewDocumentPage() {
               {TARGET_WORD_COUNT_MIN}〜{TARGET_WORD_COUNT_MAX}
               字。AIはこの字数の90〜110%で下書きを書きます。
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {bundleMode && plan[0] && (
+                <Label htmlFor="wordCount" className="min-w-32 text-base">
+                  {documentTypeLabel(plan[0])}
+                </Label>
+              )}
               <Input
                 id="wordCount"
                 inputMode="numeric"
@@ -1255,6 +1332,17 @@ export default function NewDocumentPage() {
               />
               <span className="text-base">字</span>
             </div>
+            {plan.slice(1).map((item) => (
+              <BundleWordCount
+                key={item.key}
+                item={item}
+                onCommit={(n) =>
+                  setPlan((prev) =>
+                    prev.map((p) => (p.key === item.key ? { ...p, targetWordCount: n } : p))
+                  )
+                }
+              />
+            ))}
           </div>
 
           <div className="space-y-3">
@@ -1417,7 +1505,7 @@ export default function NewDocumentPage() {
             <dl className="bg-muted grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 rounded-xl px-4 py-4 text-sm sm:px-6">
               <dt className="text-muted-foreground">書類</dt>
               <dd className="font-medium">
-                {pairMode ? "志望理由書・自己推薦書" : documentType}
+                {plan.map((item) => documentTypeLabel(item)).join("・")}
               </dd>
               <dt className="text-muted-foreground">志望校</dt>
               <dd className="font-medium">
@@ -1433,7 +1521,11 @@ export default function NewDocumentPage() {
                 </>
               )}
               <dt className="text-muted-foreground">目標文字数</dt>
-              <dd className="font-medium tabular-nums">{targetWordCount}字</dd>
+              <dd className="font-medium tabular-nums">
+                {[targetWordCount, ...plan.slice(1).map((item) => item.targetWordCount)]
+                  .map((n) => `${n}字`)
+                  .join("・")}
+              </dd>
               <dt className="text-muted-foreground">活動実績</dt>
               <dd className="font-medium">
                 {selectedActivityIds.length > 0
@@ -1485,7 +1577,7 @@ export default function NewDocumentPage() {
                 </button>
               )}
 
-              {writingMode === "free" && !pairMode && (
+              {writingMode === "free" && !bundleMode && (
                 <button
                   type="button"
                   onClick={handleStartFreeWriting}
@@ -1515,7 +1607,11 @@ export default function NewDocumentPage() {
               mode="area"
               size="sm"
               className="bg-muted rounded-xl px-4 py-12"
-              title={pairMode ? "AIが2通の下書きを書いています" : "AIが下書きを書いています"}
+              title={
+                bundleMode
+                  ? `AIが${plan.length}通の下書きを書いています`
+                  : "AIが下書きを書いています"
+              }
             />
           )}
 
@@ -1676,7 +1772,190 @@ const DOCUMENT_TYPE_DESCRIPTIONS: Partial<Record<DocumentType, string>> = {
   志望理由書:
     "なぜこの大学・学部で学びたいのか、入学後に何をしたいのかを書きます。",
   自己推薦書: "これまでの経験と強みから、自分を大学に推薦する理由を書きます。",
+  独自書類: "活動報告書・ポートフォリオ説明書など、大学が独自に求める書類。名前と設問を入れます。",
 };
+
+const STANDARD_TYPES = ["志望理由書", "自己推薦書"] as const satisfies readonly DocumentType[];
+
+/** 作る書類の1通分（作成画面の中だけ） */
+interface PlanItem {
+  key: string;
+  type: DocumentType;
+  customName: string;
+  question: string;
+  /** 2通目以降の目標字数（1通目は画面の targetWordCount を使う） */
+  targetWordCount: number;
+}
+
+let planKeySeq = 0;
+function nextPlanKey(): string {
+  planKeySeq += 1;
+  return `p${planKeySeq}`;
+}
+
+function newCustomItem(): PlanItem {
+  return { key: nextPlanKey(), type: CUSTOM_DOCUMENT_TYPE, customName: "", question: "", targetWordCount: 800 };
+}
+
+function toBundleItem(item: PlanItem): DocumentBundleItem {
+  return {
+    type: item.type,
+    ...(item.type === CUSTOM_DOCUMENT_TYPE ? { customName: item.customName.trim() } : {}),
+    ...(item.question.trim() ? { question: item.question.trim() } : {}),
+    targetWordCount: item.targetWordCount,
+  };
+}
+
+function fromBundleItem(item: DocumentBundleItem): PlanItem {
+  return {
+    key: nextPlanKey(),
+    type: item.type,
+    customName: typeof item.customName === "string" ? item.customName : "",
+    question: typeof item.question === "string" ? item.question : "",
+    targetWordCount: typeof item.targetWordCount === "number" && item.targetWordCount > 0 ? item.targetWordCount : 800,
+  };
+}
+
+/** 並びは 志望理由書 → 自己推薦書 → 独自の書類（足した順）。1通目がこの書類になる */
+function sortPlan(items: PlanItem[]): PlanItem[] {
+  const rank = (t: DocumentType) => (t === "志望理由書" ? 0 : t === "自己推薦書" ? 1 : 2);
+  return items
+    .map((item, i) => ({ item, i }))
+    .sort((a, b) => rank(a.item.type) - rank(b.item.type) || a.i - b.i)
+    .map((x) => x.item);
+}
+
+function toggleStandard(prev: PlanItem[], type: DocumentType): PlanItem[] {
+  if (prev.some((item) => item.type === type)) return prev.filter((item) => item.type !== type);
+  return sortPlan([...prev, { key: nextPlanKey(), type, customName: "", question: "", targetWordCount: 800 }]);
+}
+
+function toggleCustom(prev: PlanItem[]): PlanItem[] {
+  if (prev.some((item) => item.type === CUSTOM_DOCUMENT_TYPE)) {
+    return prev.filter((item) => item.type !== CUSTOM_DOCUMENT_TYPE);
+  }
+  return sortPlan([...prev, newCustomItem()]);
+}
+
+function isDuplicateSlot(plan: PlanItem[], item: PlanItem): boolean {
+  if (item.type !== CUSTOM_DOCUMENT_TYPE || !item.customName.trim()) return false;
+  const key = submissionSlotKey(item);
+  return plan.filter((p) => submissionSlotKey(p) === key).length > 1;
+}
+
+/** 独自の書類は名前と設問が要る。同じ名前の独自の書類は2通作れない（提出予定が1通に決まらない） */
+function planIsValid(plan: PlanItem[]): boolean {
+  if (plan.length === 0) return false;
+  return plan.every(
+    (item) =>
+      item.type !== CUSTOM_DOCUMENT_TYPE ||
+      (item.customName.trim() !== "" && item.question.trim() !== "" && !isDuplicateSlot(plan, item))
+  );
+}
+
+/** 選んだ書類1通分の入力欄（独自の書類は名前と設問、ほかは設問だけ） */
+function PlanItemFields({
+  item,
+  duplicate,
+  onChange,
+  onRemove,
+}: {
+  item: PlanItem;
+  duplicate: boolean;
+  onChange: (next: PlanItem) => void;
+  onRemove?: () => void;
+}) {
+  const isCustom = item.type === CUSTOM_DOCUMENT_TYPE;
+  return (
+    <div className="bg-muted space-y-3 rounded-xl px-4 py-4 sm:px-6">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-base font-bold">{isCustom ? "独自の書類" : item.type}</span>
+        {onRemove && (
+          <Button type="button" variant="ghost" size="sm" className="min-h-11" onClick={onRemove}>
+            外す
+          </Button>
+        )}
+      </div>
+      {isCustom && (
+        <div className="space-y-1.5">
+          <Label htmlFor={`${item.key}-name`}>書類の名前</Label>
+          <Input
+            id={`${item.key}-name`}
+            value={item.customName}
+            maxLength={CUSTOM_NAME_MAX}
+            placeholder="活動報告書"
+            aria-invalid={duplicate || undefined}
+            onChange={(e) => onChange({ ...item, customName: e.target.value })}
+            className="bg-card h-11 text-base md:text-base"
+          />
+          {duplicate && (
+            <p className="text-destructive text-sm">同じ名前の書類がもう1通あります</p>
+          )}
+        </div>
+      )}
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Label htmlFor={`${item.key}-question`}>募集要項の設問</Label>
+          {!isCustom && <OptionalTag />}
+        </div>
+        <Textarea
+          id={`${item.key}-question`}
+          value={item.question}
+          maxLength={QUESTION_MAX}
+          rows={3}
+          onChange={(e) => onChange({ ...item, question: e.target.value })}
+          className="bg-card text-base md:text-base"
+        />
+      </div>
+    </div>
+  );
+}
+
+/** 2通目以降の目標字数。入力中は文字列で持ち、欄を離れたときに数値へ確定する（1通目の欄と同じ） */
+function BundleWordCount({
+  item,
+  onCommit,
+}: {
+  item: PlanItem;
+  onCommit: (n: number) => void;
+}) {
+  const [value, setValue] = useState(String(item.targetWordCount));
+  const commit = () => {
+    const n = Number(value);
+    const next =
+      Number.isFinite(n) && n > 0
+        ? Math.min(TARGET_WORD_COUNT_MAX, Math.max(TARGET_WORD_COUNT_MIN, Math.round(n)))
+        : item.targetWordCount;
+    setValue(String(next));
+    onCommit(next);
+  };
+  const id = `${item.key}-words`;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Label htmlFor={id} className="min-w-32 text-base">
+        {documentTypeLabel(item)}
+      </Label>
+      <Input
+        id={id}
+        inputMode="numeric"
+        value={value}
+        onChange={(e) =>
+          setValue(
+            e.target.value
+              .replace(/[^0-9０-９]/g, "")
+              .replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0))
+          )
+        }
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+        }}
+        className="bg-card h-11 w-32 text-base tabular-nums md:text-base"
+      />
+      <span className="text-base">字</span>
+    </div>
+  );
+}
 
 /** 手順ごとの見出しと説明 */
 function StepHeading({

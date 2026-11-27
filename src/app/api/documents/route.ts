@@ -1,3 +1,9 @@
+import {
+  CUSTOM_DOCUMENT_TYPE,
+  documentTypeLabel,
+  normalizeCustomName,
+  normalizeDocumentQuestion,
+} from "@/lib/documents/kind";
 import { NextRequest, NextResponse } from "next/server";
 import { defaultDocumentTitle } from "@/lib/documents/title";
 import { requireFeature } from "@/lib/api/subscription";
@@ -79,6 +85,10 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date().toISOString();
+    // 独自書類の名前と設問。作りかけで早めに作る経路があるので、空でも作る（下書きの生成で必須にする）
+    const customName =
+      body.type === CUSTOM_DOCUMENT_TYPE ? normalizeCustomName(body.customName) : "";
+    const question = normalizeDocumentQuestion(body.question);
     const docData = {
       userId: auth.uid,
       type: body.type,
@@ -89,7 +99,7 @@ export async function POST(request: NextRequest) {
       title: defaultDocumentTitle(
         body.universityName ?? "",
         body.facultyName ?? "",
-        body.type ?? ""
+        documentTypeLabel({ type: body.type, customName })
       ),
       content: body.initialContent || "",
       wordCount: body.initialContent ? body.initialContent.length : 0,
@@ -100,6 +110,8 @@ export async function POST(request: NextRequest) {
       linkedActivities: [],
       createdAt: now,
       updatedAt: now,
+      ...(customName ? { customName } : {}),
+      ...(question ? { question } : {}),
     };
 
     if (body.wizardState !== undefined) {
@@ -107,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     const docRef = await adminDb.collection("documents").add(docData);
-    // 2通まとめて作るときは、最初から提出予定にする（同じ学部・同じ種類の前の印は外す）
+    // まとめて作るときは、最初から提出予定にする（同じ学部・同じ枠の前の印は外す）
     if (body.submissionPlanned === true) {
       await setSubmissionPlanned(auth.uid, docRef.id, true);
     }

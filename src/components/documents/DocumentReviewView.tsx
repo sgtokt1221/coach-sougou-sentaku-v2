@@ -173,7 +173,7 @@ export function DocumentReviewView({
    * 詳細（本文と指摘・軸ごとの点・AP・面接）を下に並べる。生徒の編集画面だけ
    */
   digest?: boolean;
-  /** もう一通（書き分けの相手）を開くリンク。無ければ名前だけ出す（管理者） */
+  /** 書き分けの相手の書類を開くリンク。無ければ名前だけ出す（管理者） */
   companionHref?: (companionId: string) => string;
 }) {
   const [questions, setQuestions] = useState<DocumentInterviewQuestion[]>(
@@ -274,24 +274,33 @@ export function DocumentReviewView({
     previousTotal.max === current.max;
 
   const pair = feedback.pairCheck;
+  // v2 から並べた書類の一覧を持つ。旧データ（v1）は companion* の1通
+  const pairOthers = pair
+    ? (pair.others ?? [
+        { id: pair.companionId, type: pair.companionType, title: pair.companionTitle },
+      ])
+    : [];
   const apAndInterview = (
     <>
       {pair && (pair.overlaps.length > 0 || pair.allocation) && (
         <section className="space-y-2">
           <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold">
             <span className={`size-2 rounded-full ${DOT_STYLE.ap}`} />
-            もう一通との書き分け
-            {companionHref ? (
-              <Link
-                href={companionHref(pair.companionId)}
-                className="text-primary text-xs font-normal hover:underline"
-              >
-                {pair.companionTitle}
-              </Link>
-            ) : (
-              <span className="text-muted-foreground text-xs font-normal">
-                {pair.companionTitle}
-              </span>
+            ほかの提出書類との書き分け
+            {pairOthers.map((o) =>
+              companionHref ? (
+                <Link
+                  key={o.id}
+                  href={companionHref(o.id)}
+                  className="text-primary text-xs font-normal hover:underline"
+                >
+                  {o.title}
+                </Link>
+              ) : (
+                <span key={o.id} className="text-muted-foreground text-xs font-normal">
+                  {o.title}
+                </span>
+              )
             )}
           </p>
           {pair.allocation && (
@@ -312,7 +321,7 @@ export function DocumentReviewView({
                   </p>
                   <p className="text-sm leading-snug">
                     <span className="text-muted-foreground mr-1 text-xs">
-                      {pair.companionType}
+                      {(pairOthers.find((x) => x.id === o.otherId) ?? pairOthers[0])?.type}
                     </span>
                     「{o.otherQuote}」
                   </p>

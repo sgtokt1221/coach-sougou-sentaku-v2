@@ -6,7 +6,9 @@ export type DocumentType =
   | "学業活動報告書"
   | "研究計画書"
   | "自己推薦書"
-  | "学びの設計書";
+  | "学びの設計書"
+  /** 大学独自の書類。名前（customName）と設問（question）を生徒が入れる */
+  | "独自書類";
 export type DocumentStatus = "draft" | "in_review" | "reviewed" | "final";
 
 /**
@@ -40,6 +42,14 @@ export interface DocumentReviewHistoryEntry {
   comment?: string;
 }
 
+/** まとめて作る書類の1通分 */
+export interface DocumentBundleItem {
+  type: DocumentType;
+  customName?: string;
+  question?: string;
+  targetWordCount: number;
+}
+
 /** 未完了ウィザードの復元用進行状態。ウィザード完走後は completed:true。 */
 export interface DocumentWizardState {
   /** 0-4（書類タイプ/志望校/フレームワーク/活動実績/下書き生成） */
@@ -55,8 +65,10 @@ export interface DocumentWizardState {
   emphasis?: string;
   /** 生徒が任意で書いた「この大学・学部について調べて知ったこと」 */
   universityResearch?: string;
-  /** 志望理由書と自己推薦書を2通まとめて作る */
+  /** 旧: 志望理由書と自己推薦書を2通まとめて作る（読むだけ。bundle が無ければ自己推薦書1通の束として扱う） */
   pairMode?: boolean;
+  /** まとめて作る2通目以降（1通目は書類本体の type / customName / question） */
+  bundle?: DocumentBundleItem[];
   /** 書き方（構造に沿って書く / 自由に書く） */
   writingMode?: string;
 }
@@ -120,6 +132,10 @@ export interface Document {
    * 志望理由書と自己推薦書の提出予定どうしが組になり、下書きと添削で書き分けを見る。
    */
   submissionPlanned?: boolean;
+  /** 独自書類の名前（例: 活動報告書）。独自書類だけが持つ */
+  customName?: string;
+  /** 募集要項の設問・指示。独自書類は必須、ほかの種類は任意 */
+  question?: string;
 }
 
 export interface DocumentVersion {
@@ -172,9 +188,11 @@ export interface DocumentPairOverlap {
   kind: "same_angle" | "same_sentence" | "contradiction";
   /** この書類の本文から一字一句 */
   thisQuote: string;
-  /** もう一通の本文から一字一句 */
+  /** 相手の書類の本文から一字一句 */
   otherQuote: string;
   advice: string;
+  /** 相手の書類の id（v2〜。旧データは companionId の1通） */
+  otherId?: string;
 }
 
 export interface DocumentPairCheck {
@@ -182,8 +200,10 @@ export interface DocumentPairCheck {
   companionType: string;
   companionTitle: string;
   overlaps: DocumentPairOverlap[];
-  /** この書類が受け持つこと・もう一通に任せること（2文以内） */
+  /** この書類が受け持つこと・ほかの書類に任せること（2文以内） */
   allocation: string;
+  /** 並べて読んだ書類（v2〜）。companion* は1通目を入れ続ける。type は表示名 */
+  others?: { id: string; type: string; title: string }[];
 }
 
 export interface DocumentFeedback {
@@ -328,15 +348,17 @@ export interface DocumentCreateRequest {
   initialContent?: string;
   /** 早期作成時のウィザード進行状態 */
   wizardState?: DocumentWizardState;
-  /** 2通まとめて作るとき、最初から提出予定にする */
+  /** まとめて作るとき、最初から提出予定にする */
   submissionPlanned?: boolean;
+  customName?: string;
+  question?: string;
 }
 
 /**
  * 新しく作れる書類の種類（2026-10-09〜）。ほかの種類（学業活動報告書・研究計画書・
  * 学びの設計書）は既存の書類を開いて直せるように型には残すが、作成画面には出さない。
  */
-export const CREATABLE_DOCUMENT_TYPES = ["志望理由書", "自己推薦書"] as const;
+export const CREATABLE_DOCUMENT_TYPES = ["志望理由書", "自己推薦書", "独自書類"] as const;
 export type CreatableDocumentType = (typeof CREATABLE_DOCUMENT_TYPES)[number];
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
@@ -345,6 +367,7 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   研究計画書: "研究計画書",
   自己推薦書: "自己推薦書",
   学びの設計書: "学びの設計書",
+  独自書類: "独自の書類",
 };
 
 export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {

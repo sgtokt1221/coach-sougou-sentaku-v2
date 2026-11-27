@@ -196,6 +196,78 @@ async function main() {
     );
   }
 
+  // 提出書類のセット（2026-11-27）。同じ学部に提出予定の志望理由書・自己推薦書・独自の書類（活動報告書）。
+  // 書き分けの欄は、旧形式（others なし）と新形式（others・otherId あり）を両方入れて描画を見る
+  const SET_SHI = "私は地域の薬局で高齢者の服薬を手伝った経験から、薬を正しく使い続けてもらう仕組みに関心を持った。".repeat(4);
+  const SET_REC = "私の強みは、相手の困りごとを聞き取り、手順に落として続けられる形にすることである。".repeat(4);
+  const SET_CUSTOM = "高校2年から地域の薬局で、高齢者の服薬カレンダー作りを手伝った。私は聞き取りの担当だった。".repeat(4);
+  const setBase = {
+    userId: uid,
+    // 本文は約180字。書きかけ扱い（5割未満）にならない目標にする
+    targetWordCount: 300,
+    feedbackAt: new Date().toISOString(),
+    status: "draft",
+    universityId: "ritsumeikan-u",
+    facultyId: "pharmacy",
+    universityName: "立命館大学",
+    facultyName: "薬学部",
+    versions: [],
+    submissionPlanned: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  const setFeedback = (pairCheck: Record<string, unknown>) => ({
+    coherenceScore: 6,
+    insightScore: 6,
+    fitScore: 5,
+    planScore: null,
+    readabilityScore: 7,
+    improvements: [],
+    languageCorrections: [],
+    priorityImprovement: "経験の中で何を判断したかを一文足す。",
+    pairCheck,
+  });
+  await db.doc("documents/emu-set-shi").set({ ...setBase, type: "志望理由書", title: "立命館大学薬学部 志望理由書（提出予定）", content: SET_SHI });
+  await db.doc("documents/emu-set-rec").set({
+    ...setBase,
+    type: "自己推薦書",
+    title: "立命館大学薬学部 自己推薦書（提出予定）",
+    content: SET_REC,
+    feedbackContent: SET_REC,
+    feedback: setFeedback({
+      companionId: "emu-set-shi",
+      companionType: "志望理由書",
+      companionTitle: "立命館大学薬学部 志望理由書（提出予定）",
+      overlaps: [
+        { kind: "same_angle", thisQuote: SET_REC.slice(0, 20), otherQuote: SET_SHI.slice(0, 20), advice: "自己推薦書では、聞き取りで本人がどう動いたかに寄せる。" },
+      ],
+      allocation: "強みとその証拠を受け持てている。なぜ薬学部かは志望理由書に任せてよい。",
+    }),
+  });
+  await db.doc("documents/emu-set-custom").set({
+    ...setBase,
+    type: "独自書類",
+    customName: "活動報告書",
+    question: "高校時代に最も力を入れて取り組んだ活動について、内容・役割・得たことを述べてください。",
+    title: "立命館大学薬学部 活動報告書",
+    content: SET_CUSTOM,
+    feedbackContent: SET_CUSTOM,
+    feedback: setFeedback({
+      companionId: "emu-set-shi",
+      companionType: "志望理由書",
+      companionTitle: "立命館大学薬学部 志望理由書（提出予定）",
+      others: [
+        { id: "emu-set-shi", type: "志望理由書", title: "立命館大学薬学部 志望理由書（提出予定）" },
+        { id: "emu-set-rec", type: "自己推薦書", title: "立命館大学薬学部 自己推薦書（提出予定）" },
+      ],
+      overlaps: [
+        { kind: "same_sentence", thisQuote: SET_CUSTOM.slice(0, 20), otherQuote: SET_SHI.slice(0, 20), advice: "活動報告書では、カレンダー作りの手順と役割を具体的に書く。", otherId: "emu-set-shi" },
+        { kind: "contradiction", thisQuote: SET_CUSTOM.slice(20, 40), otherQuote: SET_REC.slice(0, 20), advice: "担当の書き方を自己推薦書とそろえる。", otherId: "emu-set-rec" },
+      ],
+      allocation: "活動の内容と役割を受け持てている。強みの意味づけは自己推薦書に任せてよい。",
+    }),
+  });
+
   // 添削済みの答案（軸ごとのスコア表示の確認用。配点が均等でない軸を含む）
   await db.doc("essays/emu-essay-reviewed").set(
     {
@@ -341,6 +413,7 @@ async function main() {
     `  /admin/students/${uid}                  … 管理者から見た生徒詳細`
   );
   console.log("  /student/documents/emu-doc-over-limit   … 字数警告の確認");
+  console.log("  /student/documents/emu-set-custom       … 独自の書類・提出書類のセットの書き分け");
   console.log(
     "  /student/documents/emu-doc-placeholder  … プレースホルダー警告の確認"
   );

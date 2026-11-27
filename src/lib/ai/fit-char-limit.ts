@@ -94,6 +94,13 @@ export async function fitToCharLimit(
 export const PLACEHOLDER_PATTERN =
   /【[^】]+】|〔[^〕]+〕|〇〇|○○|ここに[^。\n]{0,20}(入れ|書|記入)/;
 
+const DEFAULT_FILL_HINT =
+  "その学問への問題意識、大学・学部の学びとのつながり、大学で学びたいこと、将来の計画";
+
+/** 大学独自の書類（設問に答える書類）の埋め方。大学での学び・将来には広げない */
+export const QUESTION_FILL_HINT =
+  "その場面で何を考え、なぜそう判断したか、工夫したこと、そこから得た見方。設問が求めていない大学での学び・将来の計画は書かない";
+
 /**
  * text が min 文字に足りなければ、事実を足さずに考えを展開して min〜max に伸ばす。
  * 縮める fitToCharLimit と同じく、LLM は1回の指示では日本語の字数を守りきれない
@@ -111,7 +118,9 @@ export async function expandToCharTarget(
   max: number,
   context = "",
   maxRetries = 2,
-  model = DEFAULT_FIT_MODEL
+  model = DEFAULT_FIT_MODEL,
+  /** 足りない分の埋め方。無ければ志望理由書向け（学問への問題意識・大学で学びたいこと・将来の計画） */
+  fillHint = DEFAULT_FILL_HINT
 ): Promise<string> {
   let result = text;
   for (let i = 0; i < maxRetries && result.length < min; i++) {
@@ -123,7 +132,7 @@ export async function expandToCharTarget(
         system: `次の文章を、意味・主張・段落構成を保ったまま、${min}字以上${max}字以内に書き足してください。
 ${context ? `この文章の役割: ${context}\n` : ""}- 入力にない出来事・活動・数値・固有名詞・役職・成果を追加しないこと（体験を作らない）
 - 入力にある体験も、書かれている以上の場面・状況・会話・感じたことを付け足さないこと
-- 足りない分は、考えを展開して埋めること（その学問への問題意識、大学・学部の学びとのつながり、大学で学びたいこと、将来の計画）
+- 足りない分は、考えを展開して埋めること（${fillHint}）
 - 空欄やプレースホルダー（【】〔〕、〇〇、「ここに〜を入れる」など）を作らず、そのまま提出できる完全な文章にすること
 - 入力中の数値と固有名詞の意味を変えないこと
 - 出力前に文字数を数え、${min}字以上${max}字以内にすること
@@ -161,11 +170,12 @@ export async function fitToCharRange(
   min: number,
   max: number,
   context = "",
-  model = DEFAULT_FIT_MODEL
+  model = DEFAULT_FIT_MODEL,
+  fillHint = DEFAULT_FILL_HINT
 ): Promise<string> {
   if (text.length > max) return fitToCharLimit(client, text, max, 2, model);
   if (text.length < min) {
-    const expanded = await expandToCharTarget(client, text, min, max, context, 2, model);
+    const expanded = await expandToCharTarget(client, text, min, max, context, 2, model, fillHint);
     // 伸ばしすぎたら上限に収める
     return expanded.length > max
       ? fitToCharLimit(client, expanded, max, 2, model)

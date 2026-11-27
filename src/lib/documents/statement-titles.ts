@@ -18,6 +18,12 @@ const TITLES: Record<string, Record<StatementSectionId, string>> = {
     strengths: "困難の乗り越え方",
     conclusion: "大学での生かし方",
   },
+  独自書類: {
+    intro: "答えの中心",
+    body: "裏づける経験",
+    strengths: "掘り下げ",
+    conclusion: "まとめ",
+  },
 };
 
 export function statementSectionTitles(

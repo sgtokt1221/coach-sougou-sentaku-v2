@@ -461,15 +461,18 @@ export const AI_PROMPT_VERSIONS = {
     // v14（2026-11-27）: fit の段を決めた。8点以上は確かめ済みの大学固有の学び（AP・生徒が調べたこと・公式サイトの特色）を
     //     本人の問いと結びつけて使えていること。確かめられない名前は点を動かさず、出典を手元に用意する指摘を1件だけ出す
     //     （v13 までは「下げない」と書きつつ、資料に無いとして下げる回があった）
-    promptVersion: "document-review-v14",
+    // v15（2026-11-27）: 独自書類（生徒が名前と設問を入れる。軸は score-axes.ts の 独自書類）と、
+    //     募集要項の設問（あれば coherence で設問への応答を見る）。設問の無い標準の書類は v14 と同じ
+    promptVersion: "document-review-v15",
     // output-v4: 軸のキーを coherence/insight/fit/plan/readability に変え、
     //            overallFeedback・apSpecificNotes をやめ、priorityImprovement を最後に足した
     schemaVersion: "document-review-output-v4",
   },
   documentPairCheck: {
     // v1（2026-11-27）: 同じ学部に出す提出予定の志望理由書⇔自己推薦書と並べ、重なり（同じ切り口・同じ文・食い違い）と配分を出す。点には入れない
-    promptVersion: "document-pair-check-v1",
-    schemaVersion: "document-pair-check-output-v1",
+    // v2（2026-11-27）: 独自書類を含む、同じ学部のほかの提出予定の書類（最大3通）と1回で並べる。重なりごとに相手の番号を返す
+    promptVersion: "document-pair-check-v2",
+    schemaVersion: "document-pair-check-output-v2",
   },
   documentApMap: {
     // v1（2026-10-11）: APを要素に分け、本文が応えているかを要素ごとに判定する。
@@ -505,7 +508,9 @@ export const AI_PROMPT_VERSIONS = {
     //     生徒の希望があっても書き出し1文の形は崩さない
     // v9（2026-11-27）: 公式サイトで確かめた学部の特色（facultyInfo）を <faculty_info> で渡す。生徒が調べたことを先に使う
     // v10（2026-11-27）: 同じ学部の提出予定のもう一通（志望理由書⇔自己推薦書）を <companion_document> で渡し、役割を分けて書く
-    promptVersion: "statement-draft-v10",
+    // v11（2026-11-27）: ほかの提出予定の書類（独自書類を含む最大3通）と書き分ける。独自書類は設問から段を決め、
+    //     設問があれば <document_question> で渡す。設問なしの標準2通は v10 と同じ文面
+    promptVersion: "statement-draft-v11",
     schemaVersion: "statement-draft-output-v2",
   },
   templateDraft: {
@@ -515,7 +520,8 @@ export const AI_PROMPT_VERSIONS = {
     // v6（2026-11-27）: statement-draft-v8 と同じ大学への寄せ方と universityResearch
     // v7（2026-11-27）: statement-draft-v9 と同じ facultyInfo
     // v8（2026-11-27）: statement-draft-v10 と同じ companion
-    promptVersion: "template-draft-v8",
+    // v9（2026-11-27）: statement-draft-v11 と同じセット
+    promptVersion: "template-draft-v9",
     schemaVersion: "template-draft-output-v3",
   },
   storyCheck: {

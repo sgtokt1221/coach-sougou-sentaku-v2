@@ -1,5 +1,6 @@
 "use client";
 
+import { documentTypeLabel } from "@/lib/documents/kind";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -280,7 +281,8 @@ export default function DocumentsPage() {
                       const labels = deleteLabels(doc);
                       const incomplete = isWizardIncomplete(doc);
                       const title = displayTitle(doc);
-                      const showType = !title.includes(doc.type);
+                      const typeLabel = documentTypeLabel(doc);
+                      const showType = !title.includes(typeLabel);
                       const confirming = confirmingDiscardId === doc.id;
                       return (
                         <li key={doc.id} className="hover:bg-muted/50 transition-colors">
@@ -294,7 +296,7 @@ export default function DocumentsPage() {
                                   {title}
                                   {showType && (
                                     <span className="text-muted-foreground ml-2 text-sm font-normal">
-                                      {doc.type}
+                                      {typeLabel}
                                     </span>
                                   )}
                                 </p>

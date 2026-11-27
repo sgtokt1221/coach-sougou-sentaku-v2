@@ -25,6 +25,8 @@ interface DocumentListItem {
   review?: DocumentReview;
   /** 生徒が付けた「提出予定」 */
   submissionPlanned: boolean;
+  /** 独自書類の名前 */
+  customName?: string;
   deadline?: string;
   updatedAt: string;
   /** 点の欄（v10 の軸と旧軸の両方。並びは score-axes.ts が決める） */
@@ -103,6 +105,7 @@ export async function GET(
         status: data.status ?? "draft",
         review: (data.review as DocumentReview) ?? undefined,
         submissionPlanned: data.submissionPlanned === true,
+        customName: typeof data.customName === "string" ? data.customName : undefined,
         deadline: data.deadline ?? undefined,
         updatedAt:
           typeof data.updatedAt === "string"

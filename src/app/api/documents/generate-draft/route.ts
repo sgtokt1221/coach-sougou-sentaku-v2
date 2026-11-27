@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { DraftGenerateRequest } from "@/lib/types/template";
 import { getFrameworkByType } from "@/lib/templates/frameworks";
 import { adminDb } from "@/lib/firebase/admin";
-import { findCompanionDocument } from "@/lib/documents/companion";
+import { findSubmissionSet } from "@/lib/documents/companion";
 import { requireFeature } from "@/lib/api/subscription";
 import { requireRole } from "@/lib/api/auth";
 import {
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       : null;
     // 公式サイトの情報がまだ無い学部は裏で調べ始める（今回は待たない。次回から使う）
     await ensureFacultyInfo(body.universityId, body.facultyId);
-    const companion = await findCompanionDocument({
+    const others = await findSubmissionSet({
       uid: auth.uid,
       universityId: body.universityId,
       facultyId: body.facultyId,
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         targetWordCount: body.targetWordCount || 800,
         emphasis: normalizeStudentEmphasis(body.emphasis),
         universityResearch: normalizeStudentResearch(body.universityResearch),
-        companion,
+        others,
       }
     );
     return NextResponse.json(result);

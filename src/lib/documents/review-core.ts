@@ -27,7 +27,8 @@ import {
   judgeProgress,
 } from "@/lib/documents/progress";
 import { loadFacultyInfo } from "@/lib/universities/faculty-info";
-import { findCompanionDocument, type CompanionDocument } from "./companion";
+import { findSubmissionSet, type SetDocument } from "./companion";
+import { normalizeCustomName, normalizeDocumentQuestion } from "./kind";
 import { judgePair } from "./pair-judge";
 import type { FacultyInfoForPrompt } from "@/lib/ai/prompts/shared";
 import { ensureFacultyInfo } from "@/lib/universities/faculty-info-request";
@@ -91,8 +92,12 @@ export interface DocumentReviewInput {
   universityResearch?: string;
   /** 公式サイトで確かめた学部の特色（facultyInfo）。先生が外した項目は含めない */
   facultyInfo?: FacultyInfoForPrompt[];
-  /** 同じ学部に出す、もう一通の提出予定の書類（志望理由書⇔自己推薦書）。あれば書き分けを見る */
-  companion?: CompanionDocument | null;
+  /** 画面・AIに出す書類名（独自書類は生徒が付けた名前）。無ければ documentType */
+  documentName?: string;
+  /** 募集要項の設問（任意）。あれば構成の評価で設問への応答を見る */
+  question?: string;
+  /** 同じ学部に出す、ほかの提出予定の書類（findSubmissionSet）。あれば書き分けを見る */
+  others?: SetDocument[];
   selfAnalysis?: unknown;
   activities?: unknown[];
   targetWordCount?: number;
@@ -175,9 +180,13 @@ export async function runDocumentReview(
     : null;
 
   const assessPlan = documentAssessesPlan(input.documentType);
+  // 種類で引く表（軸・モデル・計画）は生の type、AIに見せる名前は documentName
+  const documentName = input.documentName?.trim() || input.documentType || "出願書類";
   const systemPrompt = buildDocumentReviewPrompt({
     hasAdmissionPolicy,
     documentType: input.documentType,
+    documentName: input.documentName,
+    question: input.question,
     targetWordCount,
     fillRate,
     hasUniversityResearch: Boolean(input.universityResearch?.trim()),
@@ -186,7 +195,7 @@ export async function runDocumentReview(
   const referenceData = {
     universityName: input.universityName ?? "未指定",
     facultyName: input.facultyName ?? "未指定",
-    documentType: input.documentType ?? "出願書類",
+    documentType: documentName,
     admissionPolicy: hasAdmissionPolicy ? admissionPolicy : null,
     ...(input.universityResearch?.trim()
       ? { universityResearch: input.universityResearch.trim() }
@@ -218,7 +227,7 @@ export async function runDocumentReview(
           model: reviewModel,
           admissionPolicy,
           content,
-          documentType: input.documentType ?? "出願書類",
+          documentType: documentName,
           universityName: input.universityName ?? "未指定",
           facultyName: input.facultyName ?? "未指定",
         })
@@ -226,13 +235,13 @@ export async function runDocumentReview(
 
   /** もう一通との書き分け。APとの対応表と同じく並列の別呼び出しで、点には入れない */
   const pairPromise =
-    input.companion && !incompleteByLength
+    input.others && input.others.length > 0 && !incompleteByLength
       ? judgePair({
           client,
           model: reviewModel,
           content,
-          documentType: input.documentType ?? "出願書類",
-          companion: input.companion,
+          own: { type: input.documentType ?? "出願書類", name: documentName, question: input.question },
+          others: input.others,
           universityName: input.universityName ?? "未指定",
           facultyName: input.facultyName ?? "未指定",
         })
@@ -518,7 +527,7 @@ export async function reviewDocumentCore(params: {
    * 登録済みの実績と突き合わせられないと、書かれている経験が本人のものか
    * 判断できず、逆に強い実績を書き落としていても指摘できない。
    */
-  const [, { selfAnalysis, activities }, facultyInfo, companion] = await Promise.all([
+  const [, { selfAnalysis, activities }, facultyInfo, others] = await Promise.all([
     // まだ無い学部は調べる処理を積むだけ（調べ終わるのは待たない）。次回の添削から使う
     ensureFacultyInfo(universityId, facultyId).then(() => undefined),
     loadStudentDocumentContext(params.ownerUid),
@@ -526,14 +535,15 @@ export async function reviewDocumentCore(params: {
       typeof universityId === "string" ? universityId : undefined,
       typeof facultyId === "string" ? facultyId : undefined
     ),
-    // 添削している書類が提出予定でなくても、相手は同じ学部の提出予定のもう一通
-    findCompanionDocument({
+    // 添削している書類が提出予定でなくても、相手は同じ学部の、ほかの枠の提出予定の書類
+    findSubmissionSet({
       uid: params.ownerUid,
       universityId,
       facultyId,
       type: documentData.type,
+      customName: documentData.customName,
       excludeId: params.documentId,
-    }).catch(() => null),
+    }).catch(() => [] as SetDocument[]),
   ]);
 
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -543,6 +553,11 @@ export async function reviewDocumentCore(params: {
   const { feedback } = await runDocumentReview({
     content,
     documentType: documentData.type,
+    documentName:
+      documentData.type === "独自書類"
+        ? normalizeCustomName(documentData.customName) || "独自の書類"
+        : undefined,
+    question: normalizeDocumentQuestion(documentData.question) || undefined,
     universityName: documentData.universityName,
     facultyName: documentData.facultyName,
     admissionPolicy,
@@ -551,7 +566,7 @@ export async function reviewDocumentCore(params: {
         ? documentData.generation.universityResearch
         : undefined,
     facultyInfo,
-    companion,
+    others,
     selfAnalysis,
     activities,
     targetWordCount: documentData.targetWordCount,
