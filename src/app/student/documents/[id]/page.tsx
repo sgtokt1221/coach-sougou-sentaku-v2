@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { DocumentReviewProgress } from "@/components/documents/DocumentReviewProgress";
 import { DocumentImprovements } from "@/components/documents/DocumentImprovements";
 import { DocumentReviewView } from "@/components/documents/DocumentReviewView";
-import { SegmentControl } from "@/components/shared/SegmentControl";
 import { DocumentTotalScoreCard } from "@/components/documents/DocumentTotalScore";
 import {
   Sheet,
@@ -81,6 +80,7 @@ import { authFetch } from "@/lib/api/client";
 import { toast } from "sonner";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -177,7 +177,8 @@ export default function DocumentEditorPage() {
   /** 添削の履歴（新しい順）。バージョン履歴で版の本文と一緒に出す */
   const [reviews, setReviews] = useState<DocumentReviewRecord[]>([]);
   /** 本文の欄に出すもの。「添削を見る」は添削した本文に指摘の印を付けて出す */
-  const [editorView, setEditorView] = useState<"write" | "review">("write");
+  /** 添削を読むモーダル。本文の欄とは別に開く */
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   /**
@@ -262,7 +263,7 @@ export default function DocumentEditorPage() {
         } else {
           setFeedback(null);
           setReviewedContent(null);
-          setEditorView("write");
+          setReviewOpen(false);
         }
       } catch {
         setDoc(null);
@@ -407,7 +408,7 @@ export default function DocumentEditorPage() {
               : prev
           );
         }
-        setEditorView("review");
+        setReviewOpen(true);
         setToolsOpen(false);
       } else {
         const err = await res.json().catch(() => ({}));
@@ -776,14 +777,13 @@ export default function DocumentEditorPage() {
     );
   }
 
-  const reviewWide =
-    editorView === "review" && !!feedback && reviewedContent !== null;
-  /** 本文の欄の「書く／添削を見る」。添削した本文が分かるときだけ切り替えを出す */
+  const reviewStale = reviewedContent !== null && reviewedContent !== content;
+  /** 本文の欄に出す「添削を見る」。添削した本文が分かるときだけ出す */
   const reviewViewProps = {
-    view: editorView,
-    onViewChange: setEditorView,
-    reviewStale: reviewedContent !== null && reviewedContent !== content,
-    reviewView:
+    onOpenReview:
+      feedback && reviewedContent !== null ? () => setReviewOpen(true) : undefined,
+  };
+  const reviewView =
       feedback && reviewedContent !== null ? (
         <DocumentReviewView
           documentType={doc.type}
@@ -814,8 +814,7 @@ export default function DocumentEditorPage() {
           digest
           companionHref={(companionId) => `/student/documents/${companionId}`}
         />
-      ) : null,
-  };
+      ) : null;
 
   async function saveTitle() {
     setEditingTitle(false);
@@ -1046,7 +1045,7 @@ export default function DocumentEditorPage() {
               : null
           }
           onShowInText={
-            reviewedContent !== null ? () => setEditorView("review") : undefined
+            reviewedContent !== null ? () => setReviewOpen(true) : undefined
           }
         />
       </MobileSlideOverPanel>
@@ -1054,8 +1053,7 @@ export default function DocumentEditorPage() {
       {/* Desktop layout: 左にAIコーチ、右にエディタ。AI添削などの道具は
           右のシートに畳み、書く場所を広く取る（3列は詰まりすぎた） */}
       <div className="hidden gap-6 lg:grid lg:grid-cols-3">
-        {/* 添削を本文の上で読む間はコーチを畳み、本文と指摘を横に並べる幅を取る */}
-        <div className={reviewWide ? "hidden" : "lg:h-[calc(100dvh-12rem)]"}>
+        <div className="lg:h-[calc(100dvh-12rem)]">
           <DocumentSectionCoachPanel
             frameworkType={doc?.type ?? "free"}
             focusedSection={coachSection}
@@ -1079,7 +1077,7 @@ export default function DocumentEditorPage() {
             }}
           />
         </div>
-        <div className={reviewWide ? "lg:col-span-3" : "lg:col-span-2"}>
+        <div className="lg:col-span-2">
           <EditorPanel
             content={content}
             setContent={setContent}
@@ -1108,6 +1106,23 @@ export default function DocumentEditorPage() {
       </div>
 
       {/* AIの道具一式。開いている間も本文が見えるよう、背景は暗転させない */}
+      <Dialog open={reviewOpen && !!reviewView} onOpenChange={setReviewOpen}>
+        {/* スマホは全画面。コーチのつまみ（z-60）より上に出す */}
+        <DialogContent className="bg-muted z-[70] h-[var(--vvh,100dvh)] max-h-none max-w-full rounded-none p-0 pt-[var(--app-safe-top)] sm:h-[calc(var(--vvh,100dvh)-2rem)] sm:max-w-5xl sm:rounded-xl sm:pt-0">
+          <DialogHeader className="px-4 pt-4 pr-12 sm:px-6">
+            <DialogTitle className="flex flex-wrap items-baseline gap-x-3 text-base font-bold">
+              {typeLabel}の添削
+              {reviewStale && (
+                <span className="text-muted-foreground text-xs font-normal">
+                  添削後に書き換えあり
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogBody className="px-4 pb-6 sm:px-6">{reviewView}</DialogBody>
+        </DialogContent>
+      </Dialog>
+
       <Sheet open={toolsOpen} onOpenChange={setToolsOpen}>
         <SheetContent
           side="right"
@@ -1159,7 +1174,7 @@ export default function DocumentEditorPage() {
               onShowInText={
                 reviewedContent !== null
                   ? () => {
-                      setEditorView("review");
+                      setReviewOpen(true);
                       setToolsOpen(false);
                     }
                   : undefined
@@ -1217,10 +1232,7 @@ function EditorPanel({
   lastSavedAt,
   toolbar,
   onSelectionChange,
-  view = "write",
-  onViewChange,
-  reviewView,
-  reviewStale = false,
+  onOpenReview,
 }: {
   content: string;
   setContent: (v: string) => void;
@@ -1237,66 +1249,44 @@ function EditorPanel({
   toolbar?: React.ReactNode;
   /** 選択範囲・カーソル位置。AIコーチの候補を入れる場所に使う */
   onSelectionChange?: (start: number, end: number) => void;
-  view?: "write" | "review";
-  onViewChange?: (view: "write" | "review") => void;
-  /** 添削を本文の上で読む画面。添削が無いときは null（切り替えを出さない） */
-  reviewView?: React.ReactNode;
-  /** 添削の後に本文を書き換えたか */
-  reviewStale?: boolean;
+  /** 添削のモーダルを開く。添削が無いときは undefined（ボタンを出さない） */
+  onOpenReview?: () => void;
 }) {
   // AIの書き換えや下書き復元で本文を丸ごと差し替えるため、
   // ブラウザ標準の取り消しでは戻れない。履歴をアプリ側で持つ
   const history = useTextHistory(content, setContent);
-  // 添削を見るときは、ダイジェストと詳細のカードが自分の面を持つので外の枠を消す
-  const reading = !!reviewView && view === "review";
   return (
-    <Card
-      className={reading ? "border-0 bg-transparent shadow-none" : undefined}
-    >
-      <CardContent className={reading ? "space-y-4 p-0" : "space-y-3 p-4"}>
+    <Card>
+      <CardContent className="space-y-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           {toolbar ?? <span />}
-          <UndoRedoButtons
-            undo={history.undo}
-            redo={history.redo}
-            canUndo={history.canUndo}
-            canRedo={history.canRedo}
-          />
-        </div>
-        {reviewView && onViewChange && (
-          <div className="flex flex-wrap items-center gap-3">
-            <SegmentControl
-              size="sm"
-              value={view}
-              onChange={onViewChange}
-              options={[
-                { id: "write", label: "書く" },
-                { id: "review", label: "添削を見る" },
-              ]}
-            />
-            {view === "review" && reviewStale && (
-              <span className="text-muted-foreground text-xs">
-                添削後に書き換えあり
-              </span>
+          <div className="flex items-center gap-2">
+            {onOpenReview && (
+              <Button size="sm" className="min-h-9" onClick={onOpenReview}>
+                <Sparkles className="mr-1.5 size-4" />
+                添削を見る
+              </Button>
             )}
+            <UndoRedoButtons
+              undo={history.undo}
+              redo={history.redo}
+              canUndo={history.canUndo}
+              canRedo={history.canRedo}
+            />
           </div>
-        )}
-        {reviewView && view === "review" ? (
-          <div>{reviewView}</div>
-        ) : (
-          <textarea
-            className="bg-background focus:ring-ring min-h-[clamp(16rem,45dvh,28rem)] w-full resize-y rounded-md border p-3 text-base focus:ring-2 focus:outline-none lg:min-h-[400px] lg:text-sm"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onSelect={(e) =>
-              onSelectionChange?.(
-                e.currentTarget.selectionStart,
-                e.currentTarget.selectionEnd
-              )
-            }
-            placeholder="書類の内容を入力してください..."
-          />
-        )}
+        </div>
+        <textarea
+          className="bg-background focus:ring-ring min-h-[clamp(16rem,45dvh,28rem)] w-full resize-y rounded-md border p-3 text-base focus:ring-2 focus:outline-none lg:min-h-[400px] lg:text-sm"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onSelect={(e) =>
+            onSelectionChange?.(
+              e.currentTarget.selectionStart,
+              e.currentTarget.selectionEnd
+            )
+          }
+          placeholder="書類の内容を入力してください..."
+        />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* 情報行: 文字数・保存状態（モバイルでは1段目、長い状態文でも横溢れしない） */}
           <div className="text-muted-foreground flex min-w-0 items-center gap-3 text-sm">

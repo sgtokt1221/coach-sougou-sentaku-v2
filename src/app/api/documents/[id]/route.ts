@@ -160,8 +160,9 @@ export async function PUT(
       const title = normalizeDocumentTitle(body.title);
       if (title) updates.title = title;
     }
-    if (body.targetWordCount !== undefined)
-      updates.targetWordCount = body.targetWordCount;
+    // 目標字数は消せない（字数が無いと添削で短さを測れない）。正の数だけ受ける
+    if (typeof body.targetWordCount === "number" && body.targetWordCount > 0)
+      updates.targetWordCount = Math.round(body.targetWordCount);
     if (body.deadline !== undefined) updates.deadline = body.deadline;
     // ウィザード進行状態と書類基本項目（志望校/タイプ変更対応）。ホワイトリストのみ。
     if (body.wizardState !== undefined) updates.wizardState = body.wizardState;

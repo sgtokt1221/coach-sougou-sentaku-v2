@@ -500,6 +500,11 @@ export async function reviewDocumentCore(params: {
   if (typeof content !== "string" || !content.trim()) {
     throw new DocumentReviewError("添削する本文がありません", 400);
   }
+  // 字数が無いと短い書類でも上限がかからず高い点が付く。目標字数のある書類だけを添削する
+  const target = documentData.targetWordCount;
+  if (!(typeof target === "number" && target > 0)) {
+    throw new DocumentReviewError("目標字数を入れてから添削してください", 400);
+  }
 
   // 志望校のAP。取れないときは大学との対応を採点しない（推測させない）
   let admissionPolicy = "";
